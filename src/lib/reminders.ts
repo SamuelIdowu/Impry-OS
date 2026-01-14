@@ -27,7 +27,7 @@ export async function getReminders(filters?: {
         .select(`
             *,
             projects (name),
-            clients (name)
+            clients (name, email)
         `)
         .eq('user_id', user.id);
 
@@ -87,7 +87,7 @@ export async function getDueReminders(): Promise<Reminder[]> {
         .select(`
             *,
             projects (name),
-            clients (name)
+            clients (name, email)
         `)
         .eq('user_id', user.id)
         .eq('is_sent', false)

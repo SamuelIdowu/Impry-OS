@@ -1,5 +1,5 @@
 -- =====================================================
--- Freelancer Client OS - Database Schema
+-- Impry OS - Database Schema
 -- =====================================================
 -- Run this script in Supabase SQL Editor
 -- Dashboard → SQL Editor → New Query → Paste & Run
@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   email TEXT NOT NULL UNIQUE,
   full_name TEXT,
   company_name TEXT,
+  logo_url TEXT,
+  brand_color TEXT DEFAULT '#18181b',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -185,6 +187,8 @@ CREATE TABLE IF NOT EXISTS public.payments (
   invoice_number TEXT,
   line_items JSONB,
   notes TEXT,
+  tax_rate DECIMAL(5, 2) DEFAULT 0,
+  discount_rate DECIMAL(5, 2) DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -9,7 +9,7 @@ export function Footer() {
                     <div className="space-y-4">
                         <div className="flex items-center space-x-2">
                             <Boxes className="h-6 w-6" />
-                            <span className="text-lg font-bold">Freelancer OS</span>
+                            <span className="text-lg font-bold">Impry OS</span>
                         </div>
                         <p className="text-sm text-muted-foreground">
                             The complete operating system for independent freelancers and agencies.
@@ -44,7 +44,7 @@ export function Footer() {
                 </div>
                 <div className="flex flex-col gap-4 sm:flex-row items-center justify-between mt-12 pt-8 border-t">
                     <p className="text-xs text-muted-foreground">
-                        © {new Date().getFullYear()} Freelancer Client OS. All rights reserved.
+                        © {new Date().getFullYear()} Impry OS. All rights reserved.
                     </p>
                     <div className="flex gap-4">
                         {/* Social icons could go here */}

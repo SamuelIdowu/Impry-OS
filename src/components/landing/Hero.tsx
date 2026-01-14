@@ -10,7 +10,7 @@ export function Hero() {
                     <div className="space-y-2">
                         <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 mb-4">
                             <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
-                            Now standard with Freelancer OS
+                            Now standard with Impry OS
                         </div>
                         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
                             Manage your freelance business <br className="hidden sm:inline" />

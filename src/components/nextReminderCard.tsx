@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Calendar, Check, Clock, MoreVertical } from 'lucide-react';
+import { Calendar, Check, Clock, MoreVertical, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from '@/lib/date-utils';
 import { ReminderCreationModal } from '@/components/reminders/reminderCreationModal';
+import { EmailDraftModal } from '@/components/reminders/emailDraftModal';
 import { useRouter } from 'next/navigation';
+import { sendEmailAction } from '@/server/actions/email';
 
 interface ReminderData {
     id: string;
@@ -20,13 +22,16 @@ interface ReminderData {
 interface NextReminderCardProps {
     projectId: string;
     reminders: ReminderData[];
+    clientEmail?: string;
 }
 
-export function NextReminderCard({ projectId, reminders }: NextReminderCardProps) {
+export function NextReminderCard({ projectId, reminders, clientEmail }: NextReminderCardProps) {
     const router = useRouter();
     const nextReminder = reminders
         .filter(r => !r.is_sent)
         .sort((a, b) => new Date(a.reminder_date).getTime() - new Date(b.reminder_date).getTime())[0];
+
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
     if (!nextReminder) {
         return (
@@ -57,6 +62,20 @@ export function NextReminderCard({ projectId, reminders }: NextReminderCardProps
     const dueDate = new Date(nextReminder.reminder_date);
     const timeUntilDue = formatDistanceToNow(nextReminder.reminder_date);
 
+    const handleSendEmail = () => {
+        setIsEmailModalOpen(true);
+    };
+
+    const handleSendEmailFromModal = async (subject: string, body: string) => {
+        if (!clientEmail) return;
+
+        const result = await sendEmailAction(clientEmail, subject, body);
+
+        if (!result.success) {
+            throw new Error(result.error);
+        }
+    };
+
     return (
         <Card className="bg-zinc-900 rounded-2xl p-6 flex flex-col text-white h-full relative overflow-hidden border-none shadow-none">
             <div className="flex justify-between items-start mb-6 z-10 transition-colors">
@@ -80,6 +99,19 @@ export function NextReminderCard({ projectId, reminders }: NextReminderCardProps
                 )}
             </div>
 
+            {clientEmail && (
+                <div className="mb-4 z-10 w-full">
+                    <Button
+                        variant="secondary"
+                        className="w-full bg-white text-zinc-900 hover:bg-zinc-200 font-semibold"
+                        onClick={handleSendEmail}
+                    >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send Follow-up Email
+                    </Button>
+                </div>
+            )}
+
             <div className="flex items-center justify-between z-10 mt-auto">
                 <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-bold text-white">
@@ -99,6 +131,17 @@ export function NextReminderCard({ projectId, reminders }: NextReminderCardProps
                     </button>
                 </div>
             </div>
+
+            {nextReminder && clientEmail && (
+                <EmailDraftModal
+                    isOpen={isEmailModalOpen}
+                    onClose={() => setIsEmailModalOpen(false)}
+                    recipientEmail={clientEmail}
+                    initialSubject={`Follow up: ${nextReminder.title}`}
+                    initialBody={`Hi,\n\nJust following up on the ${nextReminder.title}.\n\nBest,`}
+                    onSend={handleSendEmailFromModal}
+                />
+            )}
         </Card>
     );
 }

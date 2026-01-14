@@ -18,9 +18,10 @@ interface ScopeData {
 interface ScopeSummaryCardProps {
     projectId: string;
     scopes: ScopeData[];
+    onDefineScope?: () => void;
 }
 
-export function ScopeSummaryCard({ projectId, scopes }: ScopeSummaryCardProps) {
+export function ScopeSummaryCard({ projectId, scopes, onDefineScope }: ScopeSummaryCardProps) {
     const latestScopes = scopes.slice(0, 4); // Show latest 4 scopes
     const hasScopes = scopes.length > 0;
 
@@ -35,7 +36,7 @@ export function ScopeSummaryCard({ projectId, scopes }: ScopeSummaryCardProps) {
                     <div className="flex items-center justify-center h-32 rounded-lg bg-muted/50">
                         <p className="text-sm text-muted-foreground">No scope items defined</p>
                     </div>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" onClick={onDefineScope}>
                         Define Scope
                     </Button>
                 </CardContent>

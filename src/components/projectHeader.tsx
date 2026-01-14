@@ -5,6 +5,7 @@ import { Pencil, ListTodo, BellPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusSelector } from '@/components/statusSelector';
 import { ReminderCreationModal } from '@/components/reminders/reminderCreationModal';
+import { EditProjectModal } from '@/components/projects/editProjectModal';
 import type { ProjectWithDetails } from '@/lib/types/project';
 import { mapDatabaseToAppStatus } from '@/lib/types/project';
 
@@ -43,10 +44,16 @@ export function ProjectHeader({ project, onStatusChange, onProjectUpdate }: Proj
                 </p>
             </div>
             <div className="flex items-center gap-3">
-                <Button variant="outline" className="gap-2">
-                    <Pencil className="h-4 w-4" />
-                    Edit Project
-                </Button>
+                <EditProjectModal
+                    project={project}
+                    onSuccess={onProjectUpdate}
+                    trigger={
+                        <Button variant="outline" className="gap-2">
+                            <Pencil className="h-4 w-4" />
+                            Edit Project
+                        </Button>
+                    }
+                />
 
                 <ReminderCreationModal
                     projectId={project.id}

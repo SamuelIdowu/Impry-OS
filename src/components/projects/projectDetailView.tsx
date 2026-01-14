@@ -236,8 +236,12 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
                     {/* Bottom Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <PaymentSummaryCard projectId={project.id} payments={project.payments || []} />
-                        <NextReminderCard projectId={project.id} reminders={project.reminders || []} />
-                        <ScopeSummaryCard projectId={project.id} scopes={project.scopes || []} />
+                        <NextReminderCard projectId={project.id} reminders={project.reminders || []} clientEmail={project.client?.email} />
+                        <ScopeSummaryCard
+                            projectId={project.id}
+                            scopes={project.scopes || []}
+                            onDefineScope={() => setActiveTab('scope')}
+                        />
                     </div>
                 </div>
             )}

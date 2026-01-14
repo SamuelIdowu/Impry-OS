@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { createBrowserClient } from "@/lib/supabase-browser"
+import { UserMenu } from "./userMenu"
 import {
     LayoutGrid,
     CheckSquare,
@@ -12,12 +12,24 @@ import {
     Folder,
     Users,
     Settings,
-    LogOut,
-    ChevronRight,
-    Loader2
+    Plus,
+    X,
+    Loader2,
+    Trash2,
+    ChevronDown,
+    Bell
 } from "lucide-react"
 
 import { User } from "@supabase/supabase-js"
+import { getTeamMembersAction, addTeamMemberAction, deleteTeamMemberAction } from "@/server/actions/team"
+
+interface TeamMember {
+    id: string;
+    name: string;
+    role: string | null;
+    avatar_url: string | null;
+    email: string | null;
+}
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
     user?: User
@@ -25,29 +37,61 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Sidebar({ className, user }: SidebarProps) {
     const pathname = usePathname()
-    const router = useRouter()
-    const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
-    const handleLogout = async () => {
-        try {
-            setIsLoggingOut(true)
-            const supabase = createBrowserClient()
-            await supabase.auth.signOut()
-            router.push("/login")
-        } catch (error) {
-            console.error("Logout failed:", error)
-        } finally {
-            setIsLoggingOut(false)
+    // Team members state
+    const [members, setMembers] = React.useState<TeamMember[]>([])
+    const [isLoadingMembers, setIsLoadingMembers] = React.useState(true)
+    const [showAddMember, setShowAddMember] = React.useState(false)
+    const [isAddingMember, setIsAddingMember] = React.useState(false)
+    const [newMember, setNewMember] = React.useState({ name: '', role: '' })
+    const [dashboardExpanded, setDashboardExpanded] = React.useState(true)
+
+    // Fetch team members on mount
+    React.useEffect(() => {
+        const fetchMembers = async () => {
+            const res = await getTeamMembersAction()
+            if (res.success) {
+                setMembers(res.members)
+            }
+            setIsLoadingMembers(false)
+        }
+        fetchMembers()
+    }, [])
+
+    const handleAddMember = async () => {
+        if (!newMember.name.trim()) return
+
+        setIsAddingMember(true)
+        const res = await addTeamMemberAction({
+            name: newMember.name,
+            role: newMember.role || undefined
+        })
+
+        if (res.success && res.member) {
+            setMembers([...members, res.member])
+            setNewMember({ name: '', role: '' })
+            setShowAddMember(false)
+        }
+        setIsAddingMember(false)
+    }
+
+    const handleDeleteMember = async (memberId: string) => {
+        const res = await deleteTeamMemberAction(memberId)
+        if (res.success) {
+            setMembers(members.filter(m => m.id !== memberId))
         }
     }
 
+    const getInitials = (name: string) => {
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    }
+
+    const dashboardSubItems = [
+        { title: "Overview", href: "/dashboard", exact: true },
+        { title: "Follow-Ups", href: "/dashboard/follow-ups", icon: Bell }
+    ]
+
     const navItems = [
-        {
-            title: "Dashboard",
-            href: "/dashboard",
-            icon: LayoutGrid,
-            exact: true
-        },
         {
             title: "Clients",
             href: "/clients",
@@ -61,33 +105,18 @@ export function Sidebar({ className, user }: SidebarProps) {
         {
             title: "Invoices",
             href: "/invoices",
-            icon: CheckSquare // Using CheckSquare as 'receipt_long' equivalent from lucide
+            icon: CheckSquare
         },
         {
             title: "Reports",
             href: "/reports",
-            icon: Activity // Using Activity for Reports
+            icon: Activity
         },
         {
             title: "Settings",
             href: "/settings",
             icon: Settings
         },
-    ]
-
-    const members = [
-        {
-            name: "Sandra Perry",
-            role: "Product Manager",
-            avatar: "https://i.pravatar.cc/150?u=sandra",
-            initials: "SP"
-        },
-        {
-            name: "Jamal L.",
-            role: "Growth Marketer",
-            avatar: "",
-            initials: "JL"
-        }
     ]
 
     return (
@@ -98,84 +127,172 @@ export function Sidebar({ className, user }: SidebarProps) {
                         <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
                             F
                         </div>
-                        <span>Freelancer OS</span>
+                        <span>Impry OS</span>
                     </div>
                 </div>
                 <div className="px-3 py-2">
                     <div className="space-y-1">
+                        {/* Dashboard with dropdown */}
+                        <div>
+                            <button
+                                onClick={() => setDashboardExpanded(!dashboardExpanded)}
+                                className={cn(
+                                    "w-full group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
+                                    pathname.startsWith("/dashboard")
+                                        ? "bg-zinc-100 text-zinc-900"
+                                        : "text-zinc-500"
+                                )}
+                            >
+                                <div className="flex items-center">
+                                    <LayoutGrid className={cn("mr-2 h-4 w-4",
+                                        pathname.startsWith("/dashboard")
+                                            ? "text-zinc-900"
+                                            : "text-zinc-400 group-hover:text-zinc-900"
+                                    )} />
+                                    <span>Dashboard</span>
+                                </div>
+                                <ChevronDown className={cn(
+                                    "h-4 w-4 text-zinc-400 transition-transform",
+                                    dashboardExpanded ? "rotate-180" : ""
+                                )} />
+                            </button>
+                            {dashboardExpanded && (
+                                <div className="ml-6 mt-1 space-y-1">
+                                    {dashboardSubItems.map((subItem) => (
+                                        <Link
+                                            key={subItem.href}
+                                            href={subItem.href}
+                                            className={cn(
+                                                "group flex items-center rounded-md px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
+                                                (subItem.exact ? pathname === subItem.href : pathname === subItem.href)
+                                                    ? "text-zinc-900 bg-zinc-50"
+                                                    : "text-zinc-500"
+                                            )}
+                                        >
+                                            {subItem.icon && (
+                                                <subItem.icon className={cn("mr-2 h-3.5 w-3.5",
+                                                    pathname === subItem.href
+                                                        ? "text-zinc-900"
+                                                        : "text-zinc-400 group-hover:text-zinc-900"
+                                                )} />
+                                            )}
+                                            <span>{subItem.title}</span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Other nav items */}
                         {navItems.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 className={cn(
                                     "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
-                                    (item.exact ? pathname === item.href : pathname.startsWith(item.href))
+                                    pathname.startsWith(item.href)
                                         ? "bg-zinc-100 text-zinc-900"
                                         : "text-zinc-500"
                                 )}
                             >
                                 <item.icon className={cn("mr-2 h-4 w-4",
-                                    (item.exact ? pathname === item.href : pathname.startsWith(item.href))
+                                    pathname.startsWith(item.href)
                                         ? "text-zinc-900"
                                         : "text-zinc-400 group-hover:text-zinc-900"
                                 )} />
                                 <span>{item.title}</span>
-
                             </Link>
                         ))}
                     </div>
                 </div>
                 <div className="px-6 py-4">
-                    <h3 className="mb-2 px-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                        Members
-                    </h3>
-                    <div className="space-y-3 mt-4">
-                        {members.map((member, i) => (
-                            <div key={i} className="flex items-center gap-3 px-2">
-                                <div className={cn("size-8 rounded-full flex items-center justify-center text-xs font-medium", member.avatar ? "bg-transparent" : "bg-zinc-100 text-zinc-500")}>
-                                    {member.avatar ? (
-                                        <img src={member.avatar} alt={member.name} className="size-8 rounded-full object-cover" />
-                                    ) : (
-                                        member.initials
-                                    )}
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-zinc-700">{member.name}</span>
-                                    <span className="text-xs text-zinc-400">{member.role}</span>
-                                </div>
+                    <div className="flex items-center justify-between mb-2 px-2">
+                        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                            Team Members
+                        </h3>
+                        <button
+                            onClick={() => setShowAddMember(!showAddMember)}
+                            className="p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors"
+                            title="Add team member"
+                        >
+                            {showAddMember ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                        </button>
+                    </div>
+
+                    {/* Add Member Form */}
+                    {showAddMember && (
+                        <div className="mb-4 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+                            <input
+                                type="text"
+                                placeholder="Name"
+                                value={newMember.name}
+                                onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                                className="w-full text-sm px-2.5 py-1.5 rounded border border-zinc-200 bg-white mb-2 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                            />
+                            <input
+                                type="text"
+                                placeholder="Role (optional)"
+                                value={newMember.role}
+                                onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
+                                className="w-full text-sm px-2.5 py-1.5 rounded border border-zinc-200 bg-white mb-2 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                            />
+                            <button
+                                onClick={handleAddMember}
+                                disabled={isAddingMember || !newMember.name.trim()}
+                                className="w-full text-sm font-medium py-1.5 rounded bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                            >
+                                {isAddingMember && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                                Add Member
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Members List */}
+                    <div className="space-y-2 mt-4">
+                        {isLoadingMembers ? (
+                            <div className="flex items-center justify-center py-4">
+                                <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
                             </div>
-                        ))}
+                        ) : members.length === 0 ? (
+                            <p className="text-xs text-zinc-400 text-center py-4 px-2">
+                                No team members yet. Add your first member!
+                            </p>
+                        ) : (
+                            members.map((member) => (
+                                <div key={member.id} className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-zinc-50 group">
+                                    <div className={cn(
+                                        "size-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0",
+                                        member.avatar_url ? "bg-transparent" : "bg-zinc-100 text-zinc-500"
+                                    )}>
+                                        {member.avatar_url ? (
+                                            <img src={member.avatar_url} alt={member.name} className="size-8 rounded-full object-cover" />
+                                        ) : (
+                                            getInitials(member.name)
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col flex-1 min-w-0">
+                                        <span className="text-sm font-medium text-zinc-700 truncate">{member.name}</span>
+                                        {member.role && (
+                                            <span className="text-xs text-zinc-400 truncate">{member.role}</span>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => handleDeleteMember(member.id)}
+                                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-all"
+                                        title="Remove member"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
 
-            <div className="mt-auto px-6 absolute bottom-6 w-full">
-                <div className="border-t border-zinc-100 pt-4 flex items-center gap-3">
-                    <div className="size-9 rounded-full bg-orange-200 flex items-center justify-center overflow-hidden">
-                        {user?.user_metadata?.avatar_url ? (
-                            <img src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name || "User"} className="size-9 object-cover" />
-                        ) : (
-                            <span className="text-sm font-medium text-orange-800">
-                                {user?.email?.charAt(0).toUpperCase() || "U"}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-medium text-zinc-900 truncate max-w-[120px]">
-                            {user?.user_metadata?.full_name || user?.email || "User"}
-                        </span>
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                        className="ml-auto text-zinc-400 hover:text-zinc-900 cursor-pointer disabled:opacity-50"
-                    >
-                        {isLoggingOut ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <LogOut className="h-4 w-4" />
-                        )}
-                    </button>
+            <div className="mt-auto px-3 absolute bottom-4 w-full">
+                <div className="border-t border-zinc-100 pt-4">
+                    {user && <UserMenu user={user} />}
                 </div>
             </div>
         </aside>

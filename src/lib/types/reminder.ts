@@ -21,7 +21,7 @@ export interface Reminder {
 
     // Joined fields (optional)
     projects?: { name: string };
-    clients?: { name: string };
+    clients?: { name: string; email?: string };
 }
 
 export type CreateReminderInput = {

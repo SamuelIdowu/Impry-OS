@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { Avatar } from "@/components/ui/avatar"
 import { NotificationModal } from "./notificationModal"
-import { UserMenu } from "./userMenu"
+
 import { Sidebar } from "./sidebar"
 import { SearchDialog } from "@/components/search/searchDialog"
 import { cn } from "@/lib/utils"
@@ -14,7 +14,7 @@ import { User } from "@supabase/supabase-js"
 
 export function AppHeader({ user }: { user: User }) {
     const [notificationOpen, setNotificationOpen] = React.useState(false)
-    const [userMenuOpen, setUserMenuOpen] = React.useState(false)
+
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
     const [searchOpen, setSearchOpen] = React.useState(false) // Added state
 
@@ -112,11 +112,7 @@ export function AppHeader({ user }: { user: User }) {
                                 onOpenChange={setNotificationOpen}
                             />
 
-                            {/* Divider */}
-                            <div className="h-6 w-[1px] bg-zinc-200"></div>
 
-                            {/* User Menu */}
-                            <UserMenu user={user} open={userMenuOpen} onOpenChange={setUserMenuOpen} />
                         </div>
                     </div>
                 </div>

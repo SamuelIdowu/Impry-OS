@@ -10,7 +10,10 @@ import {
     Send,
     Plus,
     Trash2,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    Download,
+    Settings,
+    Mail
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,10 +22,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { InvoiceDocument } from "@/components/invoices/InvoiceDocument"
 import { createStandaloneInvoice, updateStandaloneInvoice } from "@/server/actions/payments"
+import { getProfileAction, updateBrandingAction } from "@/server/actions/user"
+import { sendInvoiceEmailAction } from "@/server/actions/email"
+import { updateClientAction } from "@/server/actions/clients"
+import { ClientEmailDialog } from "@/components/invoices/ClientEmailDialog"
 import { formatCurrency } from "@/lib/types/payment"
+import { pdfStyles } from "@/lib/pdf-styles"
+import { applyPdfSafeStyles, removePdfSafeStyles } from "@/lib/pdf-color-utils"
+import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
 
 interface InvoiceEditorProps {
-    clients: { id: string; name: string }[]
+    clients: { id: string; name: string; email?: string }[]
     projects: { id: string; name: string; clientId: string }[]
     initialData?: any
 }
@@ -31,6 +42,8 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     const router = useRouter()
     const [showPreview, setShowPreview] = useState(true)
     const [isLoading, setIsLoading] = useState(false)
+    const [isSending, setIsSending] = useState(false)
+    const [showEmailDialog, setShowEmailDialog] = useState(false)
 
     // Form State
     const [clientId, setClientId] = useState(initialData?.client_id || "")
@@ -39,6 +52,16 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     const [issueDate, setIssueDate] = useState(initialData?.issue_date || new Date().toISOString().split('T')[0])
     const [dueDate, setDueDate] = useState(initialData?.due_date || "")
     const [notes, setNotes] = useState(initialData?.notes || "")
+
+    // New Feature State
+    const [currency, setCurrency] = useState(initialData?.currency || "USD")
+    const [taxRate, setTaxRate] = useState<number>(initialData?.tax_rate || 0)
+    const [discountRate, setDiscountRate] = useState<number>(initialData?.discount_rate || 0)
+
+    // Branding State
+    const [brandColor, setBrandColor] = useState("#18181b")
+    const [logoUrl, setLogoUrl] = useState("")
+    const [isBrandingLoading, setIsBrandingLoading] = useState(true)
 
     const [items, setItems] = useState<any[]>(initialData?.line_items || [
         { description: "Services Rendered", quantity: 1, rate: 0, amount: 0, details: "" }
@@ -58,6 +81,17 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             date.setDate(date.getDate() + 14)
             setDueDate(date.toISOString().split('T')[0])
         }
+
+        // Fetch Branding
+        const loadBranding = async () => {
+            const res = await getProfileAction()
+            if (res.success && res.profile) {
+                if (res.profile.brand_color) setBrandColor(res.profile.brand_color)
+                if (res.profile.logo_url) setLogoUrl(res.profile.logo_url)
+            }
+            setIsBrandingLoading(false)
+        }
+        loadBranding()
     }, [initialData])
 
     // Filter projects by client
@@ -86,7 +120,11 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     }
 
     const calculateTotal = () => {
-        return items.reduce((sum, item) => sum + (item.amount || 0), 0)
+        const subtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0)
+        const discountAmount = subtotal * (discountRate / 100)
+        const afterDiscount = subtotal - discountAmount
+        const taxAmount = afterDiscount * (taxRate / 100)
+        return afterDiscount + taxAmount
     }
 
     const handleSave = async (status: 'pending') => {
@@ -103,10 +141,12 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                 issue_date: issueDate,
                 due_date: dueDate,
                 amount: calculateTotal(),
-                currency: 'USD',
+                currency: currency,
                 status: status, // This will be 'pending' as 'draft' is not yet supported in DB
                 line_items: items,
-                notes: notes
+                notes: notes,
+                tax_rate: taxRate,
+                discount_rate: discountRate
             }
 
             if (initialData?.id) {
@@ -114,6 +154,10 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             } else {
                 await createStandaloneInvoice(invoiceData)
             }
+
+            // Also update branding if changed
+            await updateBrandingAction({ brand_color: brandColor, logo_url: logoUrl })
+
             router.push('/invoices')
             router.refresh()
         } catch (error) {
@@ -121,7 +165,98 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             alert("Failed to save invoice")
             setIsLoading(false) // Only stop loading on error, as success navigates away
         }
-        // We do not set loading false on success to prevent flashes before navigation
+    }
+
+    const handleDownloadPdf = async () => {
+        const element = document.getElementById("invoice-document")
+        if (!element) return
+
+        try {
+            // Force light mode and ensure no modern color functions are used
+            const htmlElement = document.documentElement
+            const originalClass = htmlElement.className
+            const wasLight = !htmlElement.classList.contains('dark')
+
+            // Temporarily remove dark mode to ensure consistent color rendering
+            htmlElement.classList.remove('dark')
+
+            // Wait for styles to be applied
+            await new Promise(resolve => setTimeout(resolve, 50))
+
+            // Apply PDF-safe inline styles to all elements
+            applyPdfSafeStyles(element as HTMLElement)
+
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight,
+                // Disable SVG rendering which might contain unsupported colors
+                foreignObjectRendering: false,
+            })
+
+            // Remove the inline styles and restore original class
+            removePdfSafeStyles(element as HTMLElement)
+            htmlElement.className = originalClass
+
+            const imgData = canvas.toDataURL("image/png")
+            const pdf = new jsPDF("p", "mm", "a4")
+            const pdfWidth = pdf.internal.pageSize.getWidth()
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+
+            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
+            pdf.save(`${invoiceNumber}.pdf`)
+        } catch (err) {
+            console.error("PDF generation failed", err)
+            alert(`Failed to generate PDF: ${err instanceof Error ? err.message : String(err)}`)
+        }
+    }
+
+    const handleSendEmail = async () => {
+        if (!initialData?.id) {
+            alert("Please save the invoice first")
+            return
+        }
+
+        const clientEmail = clients.find(c => c.id === clientId)?.email
+        if (!clientEmail) {
+            setShowEmailDialog(true)
+            return
+        }
+
+        if (!confirm(`Send invoice to ${clientEmail}?`)) return
+
+        setIsSending(true)
+        const res = await sendInvoiceEmailAction(initialData.id, clientEmail)
+        setIsSending(false)
+
+        if (res.success) {
+            alert("Email sent successfully!")
+        } else {
+            alert("Failed to send email: " + res.error)
+        }
+    }
+
+    const handleEmailConfirm = async (email: string, saveToProfile: boolean) => {
+        if (!initialData?.id) return
+
+        setIsSending(true)
+
+        if (saveToProfile && clientId) {
+            await updateClientAction(clientId, { email })
+        }
+
+        const res = await sendInvoiceEmailAction(initialData.id, email)
+        setIsSending(false)
+
+        if (res.success) {
+            alert("Email sent successfully!")
+            router.refresh()
+        } else {
+            alert("Failed to send email: " + res.error)
+        }
     }
 
     // Construct preview object
@@ -134,6 +269,9 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         line_items: items,
         client_id: clientId,
         project_id: projectId,
+        currency,
+        tax_rate: taxRate,
+        discount_rate: discountRate,
         // Enriched data for preview
         clientName: clients.find(c => c.id === clientId)?.name,
         projectName: projects.find(p => p.id === projectId)?.name,
@@ -153,11 +291,11 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowPreview(!showPreview)}
-                        className="hidden lg:flex"
-                    >
+                    <Button variant="outline" onClick={handleDownloadPdf} title="Download PDF">
+                        <Download className="h-4 w-4 mr-2" />
+                        PDF
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowPreview(!showPreview)} className="hidden lg:flex">
                         {showPreview ? (
                             <>
                                 <EyeOff className="h-4 w-4 mr-2" />
@@ -173,11 +311,11 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                     <div className="h-6 w-px bg-zinc-200 mx-2 hidden lg:block" />
                     <Button variant="outline" onClick={() => handleSave('pending')} disabled={isLoading}>
                         <Save className="h-4 w-4 mr-2" />
-                        Save as Draft
+                        Save
                     </Button>
-                    <Button onClick={() => handleSave('pending')} disabled={isLoading}>
-                        <Send className="h-4 w-4 mr-2" />
-                        Send Invoice
+                    <Button onClick={handleSendEmail} disabled={isLoading || isSending || !initialData?.id} title={!initialData?.id ? "Save first to send" : "Send Email"}>
+                        <Mail className="h-4 w-4 mr-2" />
+                        {isSending ? "Sending..." : "Send"}
                     </Button>
                 </div>
             </div>
@@ -189,7 +327,10 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                     <div className="space-y-8 pb-20">
                         {/* Invoice Details Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-                            <h2 className="text-lg font-semibold mb-6">Invoice Details</h2>
+                            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <Settings className="h-5 w-5 text-zinc-400" />
+                                Invoice Details
+                            </h2>
                             <div className="grid gap-6">
                                 <div className="space-y-2">
                                     <Label>Client</Label>
@@ -208,10 +349,31 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                     </Select>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label>Address</Label>
-                                    <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-md text-sm text-zinc-500 h-[80px]">
-                                        {clientId ? "123 Client St, City, Country (Placeholder)" : "Select a client to see address"}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Project</Label>
+                                        <Select value={projectId} onValueChange={setProjectId} disabled={!clientId}>
+                                            <SelectTrigger><SelectValue placeholder="No Project" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">No Project</SelectItem>
+                                                {clientProjects.map(p => (
+                                                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Currency</Label>
+                                        <Select value={currency} onValueChange={setCurrency}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="USD">USD ($)</SelectItem>
+                                                <SelectItem value="EUR">EUR (€)</SelectItem>
+                                                <SelectItem value="GBP">GBP (£)</SelectItem>
+                                                <SelectItem value="CAD">CAD ($)</SelectItem>
+                                                <SelectItem value="AUD">AUD ($)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 
@@ -221,25 +383,45 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                         <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Currency</Label>
-                                        <Select value="USD">
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="USD">US Dollar ($)</SelectItem>
-                                                <SelectItem value="EUR">Euro (€)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label>Issued Date</Label>
+                                        <Label>Issue Date</Label>
                                         <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
                                     </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Due Date</Label>
+                                    <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Settings / Branding Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
+                            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                                <Settings className="h-5 w-5 text-zinc-400" />
+                                Branding & Settings
+                            </h2>
+                            <div className="grid gap-6">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Due Date</Label>
-                                        <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                                        <Label>Brand Color</Label>
+                                        <div className="flex gap-2">
+                                            <Input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-12 p-1 h-10" />
+                                            <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} placeholder="#000000" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Tax Rate (%)</Label>
+                                        <Input type="number" value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Logo URL</Label>
+                                        <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Discount (%)</Label>
+                                        <Input type="number" value={discountRate} onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)} />
                                     </div>
                                 </div>
                             </div>
@@ -290,7 +472,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                             </div>
                                             <div className="col-span-2 flex items-center gap-2">
                                                 <div className="flex-1 text-right font-medium py-2">
-                                                    {formatCurrency(item.amount, 'USD')}
+                                                    {formatCurrency(item.amount, currency)}
                                                 </div>
                                                 <button
                                                     onClick={() => removeItem(index)}
@@ -322,16 +504,29 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                     <Button variant="ghost" size="icon" className="h-8 w-8">
                                         <CalendarIcon className="h-4 w-4" />
                                     </Button>
-                                    {/* Additional preview controls can go here */}
                                 </div>
                             </div>
                             <div className="origin-top scale-[0.9]">
-                                <InvoiceDocument invoice={previewInvoice} previewMode={true} />
+                                <div id="invoice-document" style={pdfStyles}>
+                                    <InvoiceDocument
+                                        invoice={previewInvoice}
+                                        previewMode={true}
+                                        brandColor={brandColor}
+                                        logoUrl={logoUrl}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
                 )}
             </div>
+
+            <ClientEmailDialog
+                isOpen={showEmailDialog}
+                onClose={() => setShowEmailDialog(false)}
+                onConfirm={handleEmailConfirm}
+                clientName={clients.find(c => c.id === clientId)?.name || "Client"}
+            />
         </div>
     )
 }

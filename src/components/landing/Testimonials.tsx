@@ -5,7 +5,7 @@ const testimonials = [
     {
         name: "Sarah Chen",
         role: "UX Designer",
-        content: "Freelancer OS changed how I manage my design business. I spend less time on admin and more time creating.",
+        content: "Impry OS changed how I manage my design business. I spend less time on admin and more time creating.",
         initials: "SC",
     },
     {
@@ -31,7 +31,7 @@ export function Testimonials() {
                         Trusted by freelancers worldwide
                     </h2>
                     <p className="max-w-[600px] text-muted-foreground md:text-lg/relaxed lg:text-base/relaxed xl:text-lg/relaxed">
-                        Join thousands of independent professionals who rely on Freelancer OS daily.
+                        Join thousands of independent professionals who rely on Impry OS daily.
                     </p>
                 </div>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

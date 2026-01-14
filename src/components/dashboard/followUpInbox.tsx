@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import {
     Bell,
     Receipt,
@@ -29,9 +30,10 @@ import { Reminder } from "@/lib/types"
 
 interface FollowUpInboxProps {
     reminders: Reminder[]
+    showViewAll?: boolean
 }
 
-export function FollowUpInbox({ reminders }: FollowUpInboxProps) {
+export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxProps) {
     const router = useRouter()
     const [actionLoading, setActionLoading] = React.useState<string | null>(null)
 
@@ -118,10 +120,15 @@ export function FollowUpInbox({ reminders }: FollowUpInboxProps) {
                         {dueCount} Due
                     </Badge>
                 </div>
-                <button className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-100">
-                    View All
-                    <ChevronRight className="h-4 w-4" />
-                </button>
+                {showViewAll && (
+                    <Link
+                        href="/dashboard/follow-ups"
+                        className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-100"
+                    >
+                        View All
+                        <ChevronRight className="h-4 w-4" />
+                    </Link>
+                )}
             </div>
 
             {/* Table */}

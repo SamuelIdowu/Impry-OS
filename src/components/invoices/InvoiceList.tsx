@@ -42,16 +42,19 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
     const router = useRouter()
     const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState("All Invoices")
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+    // const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false) // Unused
     const [invoices, setInvoices] = useState<PaymentWithClient[]>(initialInvoices)
+
+    // Filter states
+    const [isFilterOpen, setIsFilterOpen] = useState(false)
+    const [dateRange, setDateRange] = useState<{ start: string, end: string }>({ start: "", end: "" })
+    const [selectedClientId, setSelectedClientId] = useState<string>("all")
 
     // Calculate status counts
     const statusCounts = {
         all: invoices.length,
         pending: invoices.filter(i => i.status === 'pending').length,
         paid: invoices.filter(i => i.status === 'paid').length,
-        // draft: invoices.filter(i => i.status === 'draft').length, // 'draft' not in PaymentStatus currently, maybe we map 'pending' w/ no sent date?
-        // For now let's map 'pending' to 'Pending'. We don't have explicit 'draft' status in db schema yet, assuming 'pending'
         overdue: invoices.filter(i => i.status === 'overdue').length
     }
 
@@ -59,15 +62,30 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
         const clientName = inv.client?.name || ''
         const invoiceNum = inv.invoice_number || ''
 
+        // Search text matching
         const matchesSearch =
             invoiceNum.toLowerCase().includes(searchTerm.toLowerCase()) ||
             clientName.toLowerCase().includes(searchTerm.toLowerCase())
 
-        if (activeTab === "All Invoices") return matchesSearch
-        if (activeTab === "Pending") return matchesSearch && inv.status === 'pending'
-        if (activeTab === "Paid") return matchesSearch && inv.status === 'paid'
-        if (activeTab === "Overdue") return matchesSearch && inv.status === 'overdue'
-        return matchesSearch
+        // Tab Status matching
+        let matchesStatus = true
+        if (activeTab === "Pending") matchesStatus = inv.status === 'pending'
+        if (activeTab === "Paid") matchesStatus = inv.status === 'paid'
+        if (activeTab === "Overdue") matchesStatus = inv.status === 'overdue'
+
+        // Client matching
+        const matchesClient = selectedClientId === "all" || inv.client_id === selectedClientId
+
+        // Date Range matching (using due_date)
+        let matchesDate = true
+        if (dateRange.start) {
+            matchesDate = matchesDate && new Date(inv.due_date!) >= new Date(dateRange.start)
+        }
+        if (dateRange.end) {
+            matchesDate = matchesDate && new Date(inv.due_date!) <= new Date(dateRange.end)
+        }
+
+        return matchesSearch && matchesStatus && matchesClient && matchesDate
     })
 
     const handleStatusChange = async (id: string, status: PaymentStatus) => {
@@ -100,12 +118,36 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
         }
     }
 
+    const handleExport = () => {
+        // Dynamic import to avoid SSR issues if any, though standard import usually fine
+        import('papaparse').then(({ unparse }) => {
+            const dataToExport = filteredInvoices.map(inv => ({
+                "Invoice ID": inv.invoice_number,
+                "Client": inv.client?.name || "Unknown",
+                "Project": (inv as any).project?.name || "N/A",
+                "Amount": inv.amount,
+                "Status": inv.status,
+                "Due Date": inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '',
+                "Created At": new Date(inv.created_at).toLocaleDateString()
+            }))
+
+            const csv = unparse(dataToExport)
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `invoices_export_${new Date().toISOString().split('T')[0]}.csv`)
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+        })
+    }
+
     const tabs = [
         { name: "All Invoices", count: undefined },
         { name: "Pending", count: statusCounts.pending },
         { name: "Overdue", count: statusCounts.overdue },
         { name: "Paid", count: statusCounts.paid },
-        // { name: "Drafts", count: statusCounts.draft }
     ]
 
     return (
@@ -208,16 +250,64 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <button className="h-10 px-4 rounded-lg border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm">
+                            <button
+                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                className={cn(
+                                    "h-10 px-4 rounded-lg border text-sm font-medium shadow-sm flex items-center gap-2 transition-colors",
+                                    isFilterOpen
+                                        ? "border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800"
+                                        : "border-zinc-200 bg-white text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
+                                )}
+                            >
                                 <Filter className="h-4 w-4" />
                                 <span className="hidden sm:inline">Filter</span>
                             </button>
-                            <button className="h-10 px-4 rounded-lg border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm">
+                            <button
+                                onClick={handleExport}
+                                className="h-10 px-4 rounded-lg border border-zinc-200 bg-white text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
+                            >
                                 <Download className="h-4 w-4" />
                                 <span className="hidden sm:inline">Export</span>
                             </button>
                         </div>
                     </div>
+
+                    {/* Expanded Filter Panel */}
+                    {isFilterOpen && (
+                        <div className="p-4 bg-zinc-50/50 border border-zinc-200 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-semibold text-zinc-500 uppercase">From Date</label>
+                                <input
+                                    type="date"
+                                    className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900"
+                                    value={dateRange.start}
+                                    onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-semibold text-zinc-500 uppercase">To Date</label>
+                                <input
+                                    type="date"
+                                    className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900"
+                                    value={dateRange.end}
+                                    onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-semibold text-zinc-500 uppercase">Client</label>
+                                <select
+                                    className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900"
+                                    value={selectedClientId}
+                                    onChange={(e) => setSelectedClientId(e.target.value)}
+                                >
+                                    <option value="all">All Clients</option>
+                                    {clients.map(client => (
+                                        <option key={client.id} value={client.id}>{client.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Invoices Table */}

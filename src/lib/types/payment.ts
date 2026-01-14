@@ -1,4 +1,4 @@
-// Payment type definitions for Freelancer Client OS
+// Payment type definitions for Impry OS
 // Maps database payment statuses to application layer
 
 export type PaymentStatus = 'pending' | 'paid' | 'partial' | 'overdue' | 'cancelled';
@@ -20,6 +20,8 @@ export interface Payment {
     invoice_number?: string | null;
     line_items?: InvoiceLineItem[] | null;
     notes?: string | null;
+    tax_rate?: number;
+    discount_rate?: number;
     created_at: string;
     updated_at: string;
 }
@@ -48,6 +50,8 @@ export interface CreatePaymentInput {
     currency?: string;
     due_date?: string;
     notes?: string;
+    tax_rate?: number;
+    discount_rate?: number;
 }
 
 export interface UpdatePaymentInput {
@@ -56,6 +60,8 @@ export interface UpdatePaymentInput {
     amount?: number;
     due_date?: string;
     notes?: string;
+    tax_rate?: number;
+    discount_rate?: number;
 }
 
 export interface UpdatePaymentStatusInput {
@@ -72,6 +78,8 @@ export interface CreateInvoiceInput {
     due_date: string;
     line_items: InvoiceLineItem[];
     notes?: string;
+    tax_rate?: number;
+    discount_rate?: number;
 }
 
 export interface CreateStandaloneInvoiceInput {
@@ -84,6 +92,8 @@ export interface CreateStandaloneInvoiceInput {
     due_date: string;
     line_items?: InvoiceLineItem[];
     notes?: string;
+    tax_rate?: number;
+    discount_rate?: number;
 }
 
 export interface PaymentSummary {

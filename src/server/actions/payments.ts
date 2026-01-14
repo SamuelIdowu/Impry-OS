@@ -97,16 +97,15 @@ export async function getInvoice(id: string): Promise<Payment> {
             *,
             projects:project_id (
                 id,
+                name
+            ),
+            clients:client_id (
+                id,
                 name,
-                client_id,
-                clients:client_id (
-                    id,
-                    name,
-                    email,
-                    company,
-                    address,
-                    phone
-                )
+                email,
+                company,
+                address,
+                phone
             )
         `)
         .eq('id', id)
@@ -193,10 +192,15 @@ export async function createPayment(input: CreatePaymentInput): Promise<Payment>
         throw new Error('Project not found or does not belong to user');
     }
 
+    // Destructure to exclude 'description' which doesn't exist in the database
+    // Use 'notes' field instead for any description content
+    const { description, ...restInput } = input;
+
     const { data, error } = await supabase
         .from('payments')
         .insert({
-            ...input,
+            ...restInput,
+            notes: description || restInput.notes,
             user_id: user.id,
             client_id: project.client_id,
             amount_paid: 0,
@@ -231,10 +235,14 @@ export async function updatePayment(id: string, input: UpdatePaymentInput): Prom
         throw new Error('User not authenticated');
     }
 
+    // Destructure to exclude 'description' which doesn't exist in the database
+    const { description, ...restInput } = input;
+
     const { data, error } = await supabase
         .from('payments')
         .update({
-            ...input,
+            ...restInput,
+            notes: description || restInput.notes,
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -544,6 +552,8 @@ export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInpu
             due_date: input.due_date,
             line_items: input.line_items,
             notes: input.notes,
+            tax_rate: input.tax_rate || 0,
+            discount_rate: input.discount_rate || 0
         })
         .select()
         .single();
@@ -585,6 +595,8 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
             due_date: input.due_date,
             line_items: input.line_items as any,
             notes: input.notes,
+            tax_rate: input.tax_rate || 0,
+            discount_rate: input.discount_rate || 0,
             updated_at: new Date().toISOString(),
         })
         .eq('id', id)

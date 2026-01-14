@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { format, isPast, isToday, isTomorrow, addDays } from 'date-fns';
 import { Reminder } from '@/lib/types/reminder';
 import { completeReminderAction, snoozeReminderAction } from '@/server/actions/reminders';
+import { sendEmailAction } from '@/server/actions/email';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,16 +15,21 @@ import {
     AlertCircle,
     CalendarClock,
     DollarSign,
-    StickyNote
+    StickyNote,
+    Mail,
+    Copy,
+    Send,
 } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from '@/components/ui/dropdownMenu';
 import Link from 'next/link';
-import { cn } from '@/lib/utils'; // Assuming cn exists
+import { cn } from '@/lib/utils';
+import { EmailDraftModal } from '@/components/reminders/emailDraftModal';
 
 interface ReminderCardProps {
     reminder: Reminder;
@@ -31,6 +37,9 @@ interface ReminderCardProps {
 
 export function ReminderCard({ reminder }: ReminderCardProps) {
     const [isPending, startTransition] = useTransition();
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [hasSent, setHasSent] = useState(false);
+
     // Optimistic UI state could be added here, but for now relying on revalidate
 
     const handleComplete = () => {
@@ -70,6 +79,33 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
         deadline: 'text-red-500 bg-red-50',
         general: 'text-gray-500 bg-gray-50',
     }[reminder.reminder_type];
+
+    console.log('ReminderCard Debug:', { id: reminder.id, client: reminder.clients });
+
+    const clientEmail = reminder.clients?.email;
+
+    const handleSendEmail = () => {
+        setIsEmailModalOpen(true);
+    };
+
+    const handleSendEmailFromModal = async (subject: string, body: string) => {
+        if (!clientEmail) return;
+
+        const result = await sendEmailAction(clientEmail, subject, body);
+
+        if (result.success) {
+            setHasSent(true);
+            setTimeout(() => setHasSent(false), 3000);
+        } else {
+            throw new Error(result.error);
+        }
+    };
+
+    const handleCopyEmail = () => {
+        if (!clientEmail) return;
+        navigator.clipboard.writeText(clientEmail);
+        // Could add toast here
+    };
 
     return (
         <Card className={cn(
@@ -121,7 +157,7 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                         </p>
                     )}
 
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs mb-3">
                         <span className={cn(
                             "font-medium",
                             isOverdue ? "text-red-600" : isDueToday ? "text-yellow-600" : "text-muted-foreground"
@@ -130,6 +166,32 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                             {" • " + format(new Date(reminder.reminder_date), "h:mm a")}
                         </span>
                     </div>
+
+                    {clientEmail && (
+                        <Button
+                            variant="outline"
+                            className={cn(
+                                "w-full justify-center gap-2 font-medium h-9 transition-all",
+                                hasSent
+                                    ? "bg-green-50 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-600"
+                                    : "text-foreground hover:bg-accent/50"
+                            )}
+                            onClick={handleSendEmail}
+                            disabled={isPending}
+                        >
+                            {hasSent ? (
+                                <>
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    Sent!
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="w-3.5 h-3.5" />
+                                    {isPending ? "Sending..." : "Follow Up"}
+                                </>
+                            )}
+                        </Button>
+                    )}
                 </div>
 
                 {/* Actions */}
@@ -150,6 +212,19 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                             <DropdownMenuItem onClick={() => handleSnooze(7)}>
                                 Snooze 1 Week
                             </DropdownMenuItem>
+                            {clientEmail && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleSendEmail}>
+                                        <Mail className="mr-2 h-4 w-4" />
+                                        Send Email
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleCopyEmail}>
+                                        <Copy className="mr-2 h-4 w-4" />
+                                        Copy Email
+                                    </DropdownMenuItem>
+                                </>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
@@ -160,8 +235,31 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                             </Button>
                         </Link>
                     )}
+
+                    {clientEmail && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            onClick={handleSendEmail}
+                            title={`Email ${clientEmail}`}
+                        >
+                            <Mail className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
             </CardContent>
+
+            {clientEmail && (
+                <EmailDraftModal
+                    isOpen={isEmailModalOpen}
+                    onClose={() => setIsEmailModalOpen(false)}
+                    recipientEmail={clientEmail}
+                    initialSubject={`Follow up: ${reminder.title}`}
+                    initialBody={`Hi,\n\nJust following up on the ${reminder.title}.\n\nBest,`}
+                    onSend={handleSendEmailFromModal}
+                />
+            )}
         </Card>
     );
 }

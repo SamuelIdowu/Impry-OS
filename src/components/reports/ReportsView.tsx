@@ -29,26 +29,29 @@ import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { RevenueChart } from "@/components/reports/RevenueChart"
 import { FunnelChart } from "@/components/reports/FunnelChart"
+import { convertToCSV, downloadCSV } from "@/lib/csv-export"
 import { addDays, isAfter, parse, format, subDays, isSameYear, parseISO, startOfYear } from "date-fns"
 import { Project } from "@/lib/types/project"
 import { Payment } from "@/lib/types/payment"
 
-type DateRange = "7days" | "30days" | "90days" | "year" | "all"
+type DateRange = "7days" | "30days" | "90days" | "year" | "all" | "creation"
 
 const DATE_RANGES: { label: string; value: DateRange }[] = [
     { label: "Last 7 Days", value: "7days" },
     { label: "Last 30 Days", value: "30days" },
     { label: "Last 90 Days", value: "90days" },
     { label: "This Year", value: "year" },
+    { label: "Since Creation", value: "creation" },
     { label: "All Time", value: "all" },
 ]
 
 interface ReportsViewProps {
     projects: any[]; // Using any for now to facilitate mapping flexibility, ideally strict types 
     invoices: Payment[];
+    userCreatedAt: string;
 }
 
-export function ReportsView({ projects, invoices }: ReportsViewProps) {
+export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewProps) {
     const [searchQuery, setSearchQuery] = React.useState("")
     const [statusFilter, setStatusFilter] = React.useState<string>("All")
     const [dateRange, setDateRange] = React.useState<DateRange>("30days")
@@ -61,6 +64,7 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
             case "30days": return subDays(today, 30)
             case "90days": return subDays(today, 90)
             case "year": return startOfYear(today)
+            case "creation": return new Date(userCreatedAt)
             case "all": return new Date(0) // Beginning of time
             default: return subDays(today, 30)
         }
@@ -82,7 +86,7 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
 
             return matchesSearch && matchesStatus && matchesDate
         })
-    }, [searchQuery, statusFilter, dateRange, projects])
+    }, [searchQuery, statusFilter, dateRange, projects, userCreatedAt])
 
     // Calculate Stats based on Date Range
     const stats = React.useMemo(() => {
@@ -111,13 +115,16 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
 
 
         return {
-            totalRevenue: `$${totalRevenue.toLocaleString()}`,
-            outstandingAmount: `$${outstandingAmount.toLocaleString()}`,
-            outstandingCount: `${outstandingClients} Clients`,
-            successRate: `${successRateVal}%`
+            totalRevenue,
+            outstandingAmount,
+            outstandingClients,
+            successRate: successRateVal,
+            filteredInvoices, // Return these for export
+            relevantProjects  // Return these for export
         }
-    }, [dateRange, invoices, projects])
+    }, [dateRange, invoices, projects, userCreatedAt])
 
+    // Prepare Chart Data
     // Prepare Chart Data
     const revenueChartData = React.useMemo(() => {
         const startDateLimit = getStartDate(dateRange)
@@ -142,6 +149,33 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
                 data.push({ month: dayStr, revenue: dayRevenue })
             }
             return data
+        } else if (dateRange === "creation" || dateRange === "all") {
+            // Monthly breakdown from creation date or very beginning
+            const start = dateRange === "creation" ? new Date(userCreatedAt) : new Date(invoices.length > 0 ? Math.min(...invoices.map(i => new Date(i.created_at!).getTime())) : Date.now())
+            const end = new Date()
+            const data = []
+
+            let current = new Date(start)
+            // Normalize to start of month
+            current.setDate(1)
+
+            while (current <= end || format(current, "MMM yyyy") === format(end, "MMM yyyy")) {
+                const monthStr = format(current, "MMM yyyy")
+                const monthRevenue = invoices
+                    .filter(inv => inv.status === 'paid')
+                    .filter(inv => {
+                        if (!inv.created_at) return false;
+                        const invDate = new Date(inv.created_at)
+                        return format(invDate, "MMM yyyy") === monthStr
+                    })
+                    .reduce((sum, inv) => sum + inv.amount_paid, 0)
+
+                data.push({ month: format(current, "MMM ''yy"), revenue: monthRevenue }) // MMM 'yy for compact display
+
+                // Next month
+                current.setMonth(current.getMonth() + 1)
+            }
+            return data
         } else {
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
             const currentYear = new Date().getFullYear()
@@ -158,7 +192,7 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
                 return { month, revenue: monthRevenue }
             })
         }
-    }, [dateRange, invoices])
+    }, [dateRange, invoices, userCreatedAt])
 
     // Status filtering
     const uniqueStatuses = ["All", "active", "completed", "pending"] // Simplified for now, could be dynamic
@@ -202,7 +236,7 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
                     {[
                         {
                             title: "Total Revenue",
-                            value: stats.totalRevenue,
+                            value: `$${stats.totalRevenue.toLocaleString()}`,
                             icon: DollarSign,
                             // trend: "+12%", // Dynamic calculation possible later
                             // trendLabel: "from last period",
@@ -211,7 +245,7 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
                         },
                         {
                             title: "Project Success Rate",
-                            value: stats.successRate,
+                            value: `${stats.successRate}%`,
                             icon: CheckCircle2,
                             // trend: "+2%",
                             // trendLabel: "completion efficiency",
@@ -220,9 +254,9 @@ export function ReportsView({ projects, invoices }: ReportsViewProps) {
                         },
                         {
                             title: "Outstanding Invoices",
-                            value: stats.outstandingAmount,
+                            value: `$${stats.outstandingAmount.toLocaleString()}`,
                             icon: Clock,
-                            trend: stats.outstandingCount,
+                            trend: `${stats.outstandingClients} Clients`,
                             trendLabel: "payment pending",
                             trendDirection: "down" as const,
                             iconColor: "bg-orange-50 text-orange-600"

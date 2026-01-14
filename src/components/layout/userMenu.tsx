@@ -88,7 +88,7 @@ export function UserMenu({ open, onOpenChange, user }: UserMenuProps) {
                     </svg>
                     Dashboard
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/account")}>
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
                     <svg
                         className="mr-2 size-4"
                         fill="none"

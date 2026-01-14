@@ -46,23 +46,6 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         router.push(url)
     }
 
-    // Effect to handle keyboard shortcut (Cmd+K)
-    React.useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-            if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault()
-                onOpenChange(true) // We rely on parent to pass open/onOpenChange or we should control it here?
-                // Actually AppHeader controls it usually. But if we want global shortcut...
-                // The parent AppHeader likely handles the open state passed to this. 
-                // However, usually the shortcut listener is at the top level or header level.
-                // We'll let AppHeader handle the shortcut opening mostly, but keeping this here just in case this component is mounted and we want to toggle.
-                // But typically onOpenChange is from parent.
-            }
-        }
-        document.addEventListener("keydown", down)
-        return () => document.removeEventListener("keydown", down)
-    }, [onOpenChange])
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[550px] p-0 gap-0 overflow-hidden">

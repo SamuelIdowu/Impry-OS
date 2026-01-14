@@ -4,13 +4,14 @@ import { Card } from '@/components/ui/card';
 import { fetchScopeByShareToken } from '@/server/actions/scopes';
 
 interface PublicScopePageProps {
-    params: {
+    params: Promise<{
         token: string;
-    };
+    }>;
 }
 
 export default async function PublicScopePage({ params }: PublicScopePageProps) {
-    const result = await fetchScopeByShareToken(params.token);
+    const { token } = await params;
+    const result = await fetchScopeByShareToken(token);
 
     if (!result.success || !result.data) {
         notFound();
