@@ -5847,3 +5847,285 @@ Error: Cookies can only be modified in a Server Action or Route Handler. Read mo
     at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
 ---
 [2026-01-09T23:32:26.891Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T10:32:16.547Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T10:32:16.562Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-14T10:32:16.646Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T10:32:16.646Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-14T10:32:16.681Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T10:32:16.779Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-14T10:32:16.812Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T10:32:16.813Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-14T10:32:17.012Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T10:32:17.015Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-14T10:32:19.728Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T10:32:19.753Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T11:31:21.394Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T11:31:21.409Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-14T11:31:21.475Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T11:31:21.477Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-14T11:31:24.343Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-14T11:31:24.375Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:24:08.299Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:24:08.301Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-15T09:24:08.366Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:24:08.367Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-15T09:24:08.419Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:24:08.420Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-15T09:24:08.454Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:24:08.455Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-15T09:24:08.500Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:24:08.501Z] ERROR: Failed to set cookies in createClient
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at Proxy.callable (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:32:18685)
+    at C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:82
+    at Array.forEach (<anonymous>)
+    at setAll (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__4000baf9._.js:107:34)
+    at applyServerStorage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18228:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Object.callback (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:18358:13)
+    at async C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15831:21
+    at async Promise.all (index 1)
+    at async SupabaseAuthClient._notifyAllSubscribers (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15836:13)
+    at async SupabaseAuthClient._callRefreshToken (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15791:13)
+    at async SupabaseAuthClient.__loadSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14927:46)
+    at async SupabaseAuthClient._useSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:14857:28)
+    at async SupabaseAuthClient._emitInitialSession (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\node_modules__pnpm_878e0d4e._.js:15411:16)
+---
+[2026-01-15T09:24:29.416Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:24:29.483Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-01-15T09:28:14.192Z] ERROR: Error fetching clients
+Error: User not authenticated
+    at getClients (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\_9be2092c._.js:924:15)
+    at async fetchClients (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\_9be2092c._.js:1116:25)
+    at async Promise.all (index 1)
+    at async InvoicesPage (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\dev\server\chunks\ssr\[root-of-the-server]__29619c5c._.js:86:55)
+---
+[2026-01-15T09:42:19.438Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /clients couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:4:11054)
+    at cx (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:62:53)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2184)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__004cad0a._.js:1:1408)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-01-15T09:42:19.735Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /invoices/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:4:11054)
+    at cx (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:62:53)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2184)
+    at f (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__e5e983e1._.js:1:1455)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-01-15T09:42:19.902Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /invoices couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:4:11054)
+    at cx (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:62:53)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2184)
+    at g (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__4c856604._.js:1:1470)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-01-15T09:42:19.920Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /projects couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:4:11054)
+    at cx (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_dac6154c._.js:62:53)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2184)
+    at f (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__59b4a228._.js:1:1499)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-01-15T15:18:30.628Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1

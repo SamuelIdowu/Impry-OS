@@ -19,6 +19,7 @@ export interface Project {
     name: string;
     description?: string | null;
     status: DatabaseProjectStatus;
+    progress: number;
     start_date?: string | null;
     deadline?: string | null;
     budget?: number | null;
@@ -68,6 +69,7 @@ export interface CreateProjectInput {
     client_id: string;
     description?: string;
     status?: DatabaseProjectStatus;
+    progress?: number;
     start_date?: string;
     deadline?: string;
     budget?: number;
@@ -79,6 +81,7 @@ export interface UpdateProjectInput {
     name?: string;
     description?: string;
     status?: DatabaseProjectStatus;
+    progress?: number;
     start_date?: string;
     deadline?: string;
     budget?: number;
@@ -111,11 +114,27 @@ export function mapAppToDatabaseStatus(appStatus: ProjectStatus): DatabaseProjec
 
 // Get status label and styling
 export function getStatusConfig(status: ProjectStatus) {
-    const configs: Record<ProjectStatus, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-        'lead': { label: 'Lead', variant: 'secondary' },
-        'active': { label: 'Active', variant: 'default' },
-        'waiting': { label: 'Waiting', variant: 'outline' },
-        'completed': { label: 'Completed', variant: 'outline' },
+    const configs: Record<ProjectStatus, { label: string; color: string; iconColor: string }> = {
+        'lead': {
+            label: 'Lead',
+            color: 'bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200',
+            iconColor: 'text-blue-500 fill-blue-500'
+        },
+        'active': {
+            label: 'Active',
+            color: 'bg-green-50 text-green-700 hover:bg-green-100 border-green-200',
+            iconColor: 'text-green-500 fill-green-500'
+        },
+        'waiting': {
+            label: 'Waiting',
+            color: 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200',
+            iconColor: 'text-amber-500 fill-amber-500'
+        },
+        'completed': {
+            label: 'Completed',
+            color: 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200',
+            iconColor: 'text-slate-500 fill-slate-500'
+        },
     };
     return configs[status];
 }

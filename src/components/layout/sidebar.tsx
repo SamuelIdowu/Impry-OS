@@ -17,7 +17,8 @@ import {
     Loader2,
     Trash2,
     ChevronDown,
-    Bell
+    Bell,
+    Calendar
 } from "lucide-react"
 
 import { User } from "@supabase/supabase-js"
@@ -101,6 +102,11 @@ export function Sidebar({ className, user }: SidebarProps) {
             title: "Projects",
             href: "/projects",
             icon: Folder
+        },
+        {
+            title: "Calendar",
+            href: "/calendar",
+            icon: Calendar
         },
         {
             title: "Invoices",

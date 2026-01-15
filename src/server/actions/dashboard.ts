@@ -7,6 +7,7 @@ import {
     markReminderDone,
     snoozeReminder,
 } from '@/lib/dashboard';
+import { deleteReminder } from '@/lib/reminders';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -87,6 +88,23 @@ export async function snoozeReminderAction(reminderId: string, days: number = 1)
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Failed to snooze reminder',
+        };
+    }
+}
+
+/**
+ * Delete a reminder
+ */
+export async function deleteReminderAction(reminderId: string) {
+    try {
+        await deleteReminder(reminderId);
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting reminder:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to delete reminder',
         };
     }
 }

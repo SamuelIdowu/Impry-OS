@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/auth';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
 import type {
     Payment,
     CreatePaymentInput,
@@ -297,6 +299,9 @@ export async function updatePaymentStatus(
 
     if (statusInput.amount_paid !== undefined) {
         updateData.amount_paid = statusInput.amount_paid;
+    } else if (statusInput.status === 'paid' && currentPayment.amount) {
+        // Automatically set amount_paid to full amount if marking as paid
+        updateData.amount_paid = currentPayment.amount;
     }
 
     if (statusInput.paid_date) {
@@ -617,4 +622,68 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
     }
 
     return data;
+}
+
+/**
+ * Get a single public invoice by ID (bypasses RLS)
+ */
+export async function getPublicInvoice(id: string): Promise<Payment> {
+    // Check for Service Role Key availability
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!serviceRoleKey) {
+        console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
+        throw new Error('Server configuration error: Unable to fetch public invoice.');
+    }
+
+    // Use service role client to bypass RLS
+    const supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        serviceRoleKey
+    );
+
+    const { data, error } = await supabase
+        .from('payments')
+        .select(`
+            *,
+            projects:project_id (
+                id,
+                name
+            ),
+            clients:client_id (
+                id,
+                name,
+                email,
+                company,
+                address,
+                phone
+            ),
+            user:users (
+                brand_color,
+                logo_url,
+                full_name,
+                company_name
+            )
+        `)
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error("Error fetching public invoice:", error);
+        throw new Error('Invoice not found');
+    }
+
+    if (!data.invoice_number) {
+        throw new Error('This payment does not have an invoice generated.');
+    }
+
+    // Attach user branding info to the result so the public page can render it
+    const enrichedData = {
+        ...data,
+        brandColor: data.user?.brand_color,
+        logoUrl: data.user?.logo_url,
+        companyName: data.user?.company_name || data.user?.full_name
+    };
+
+    return enrichedData as unknown as Payment;
 }

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
     Search,
     Filter,
@@ -55,6 +56,7 @@ function mapDbProjectToUiProject(dbProject: ProjectWithClient): UIProject {
 }
 
 export function ProjectList({ initialProjects, clients }: ProjectListProps) {
+    const router = useRouter()
     const [view, setView] = useState<"list" | "grid">("list")
     const [searchTerm, setSearchTerm] = useState("")
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
@@ -220,7 +222,11 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                             </thead>
                             <tbody className="divide-y divide-zinc-200">
                                 {filteredProjects.map((project) => (
-                                    <tr key={project.id} className="hover:bg-zinc-50/50 transition-colors group">
+                                    <tr
+                                        key={project.id}
+                                        onClick={() => router.push(`/projects/${project.id}`)}
+                                        className="hover:bg-zinc-50/50 transition-colors group cursor-pointer"
+                                    >
                                         <td className="py-4 px-6">
                                             <div className="font-medium text-sm text-zinc-900">{project.name}</div>
                                             <div className="text-xs text-zinc-500 mt-0.5">{project.description?.substring(0, 20)}...</div>
@@ -252,7 +258,11 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                                             <StatusBadge status={project.status} />
                                         </td>
                                         <td className="py-4 px-6 text-right">
-                                            <Link href={`/projects/${project.id}`} className="inline-flex text-zinc-500 hover:text-zinc-900 p-1 rounded hover:bg-zinc-100 transition-colors">
+                                            <Link
+                                                href={`/projects/${project.id}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="inline-flex text-zinc-500 hover:text-zinc-900 p-1 rounded hover:bg-zinc-100 transition-colors"
+                                            >
                                                 <ArrowRight className="h-[18px] w-[18px]" />
                                             </Link>
                                         </td>

@@ -42,6 +42,8 @@ export default async function DashboardPage() {
         dueDate: new Date(r.reminder_date).toLocaleDateString() === new Date().toLocaleDateString() ? "Today" : new Date(r.reminder_date).toLocaleDateString(),
         type: r.reminder_type as any, // Cast to 'payment' | 'deadline' | 'follow_up'
         clientName: r.client_name || 'Unknown Client',
+        clientEmail: r.client_email || undefined,
+        clientId: r.client_id || undefined,
         projectName: r.project_name || 'General',
         overdue: r.overdue
     }));

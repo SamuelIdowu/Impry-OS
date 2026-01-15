@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -83,9 +84,11 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
                         </p>
                     </div>
                     {activity.metadata?.invoiceId && (
-                        <Button variant="outline" size="sm" className="h-9 border-zinc-200 text-zinc-700 font-medium hover:bg-zinc-50">
-                            View Invoice
-                        </Button>
+                        <Link href={`/invoices/${activity.metadata.invoiceId}`}>
+                            <Button variant="outline" size="sm" className="h-9 border-zinc-200 text-zinc-700 font-medium hover:bg-zinc-50">
+                                View Invoice
+                            </Button>
+                        </Link>
                     )}
                 </div>
             </div>
@@ -134,7 +137,7 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
                         {activity.metadata?.version && (
                             <div className="ml-8">
                                 <Badge variant="secondary" className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-100 rounded-md font-bold text-[10px]">
-                                    SCOPE {activity.metadata.version.toUpperCase()}
+                                    SCOPE {activity.metadata.version}
                                 </Badge>
                             </div>
                         )}

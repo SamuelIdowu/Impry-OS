@@ -14,8 +14,6 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { InvoiceStatusControls } from "./InvoiceStatusControls"
 import { pdfStyles } from "@/lib/pdf-styles"
 import { applyPdfSafeStyles, removePdfSafeStyles } from "@/lib/pdf-color-utils"
-import html2canvas from "html2canvas"
-import jsPDF from "jspdf"
 import { InvoiceDocument } from "./InvoiceDocument"
 import { ClientEmailDialog } from "./ClientEmailDialog"
 import { sendInvoiceEmailAction } from "@/server/actions/email"
@@ -65,6 +63,10 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
 
             // Apply PDF-safe inline styles to all elements
             applyPdfSafeStyles(element as HTMLElement)
+
+            // Lazy load libraries
+            const html2canvas = (await import("html2canvas")).default
+            const jsPDF = (await import("jspdf")).default
 
             const canvas = await html2canvas(element, {
                 scale: 2,

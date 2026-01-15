@@ -53,6 +53,7 @@ export function EditProjectModal({
     const [name, setName] = useState(project.name);
     const [description, setDescription] = useState(project.description || '');
     const [status, setStatus] = useState<DatabaseProjectStatus>(project.status);
+    const [progress, setProgress] = useState(project.progress || 0);
     const [startDate, setStartDate] = useState(project.start_date?.split('T')[0] || '');
     const [deadline, setDeadline] = useState(project.deadline?.split('T')[0] || '');
     const [budget, setBudget] = useState(project.budget?.toString() || '');
@@ -69,6 +70,7 @@ export function EditProjectModal({
                 name,
                 description: description || undefined,
                 status,
+                progress,
                 start_date: startDate ? new Date(startDate).toISOString() : undefined,
                 deadline: deadline ? new Date(deadline).toISOString() : undefined,
                 budget: budget ? parseFloat(budget) : undefined,
@@ -141,6 +143,19 @@ export function EditProjectModal({
                                 placeholder="USD"
                             />
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="progress" className="text-xs font-semibold text-zinc-600">Progress: {progress}%</Label>
+                        <input
+                            id="progress"
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={progress}
+                            onChange={(e) => setProgress(Number(e.target.value))}
+                            className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-zinc-900"
+                        />
                     </div>
 
                     <div className="space-y-2">

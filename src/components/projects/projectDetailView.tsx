@@ -70,7 +70,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     // Calculate paid amount from payments
     const paidAmount = project.payments?.reduce((sum, p) => p.status === 'paid' ? sum + p.amount : sum, 0) || 0;
     const pendingAmount = totalValue - paidAmount;
-    const progress = 0; // TODO: Calculate progress based on milestones or manual field
+    const progress = project.progress || 0;
 
     // Helper for dates
     const startDate = project.start_date ? new Date(project.start_date) : new Date();
@@ -125,6 +125,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
                 project={project}
                 onStatusChange={() => router.refresh()}
                 onProjectUpdate={() => router.refresh()}
+                onTabChange={setActiveTab}
             />
 
             <div className="flex flex-col gap-1">
@@ -235,7 +236,11 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
 
                     {/* Bottom Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <PaymentSummaryCard projectId={project.id} payments={project.payments || []} />
+                        <PaymentSummaryCard
+                            projectId={project.id}
+                            payments={project.payments || []}
+                            onViewInvoices={() => setActiveTab('payments')}
+                        />
                         <NextReminderCard projectId={project.id} reminders={project.reminders || []} clientEmail={project.client?.email} />
                         <ScopeSummaryCard
                             projectId={project.id}

@@ -12,7 +12,9 @@ import {
     Clock,
     ExternalLink,
     ChevronRight,
-    CheckCircle2
+    CheckCircle2,
+    Mail,
+    Trash2
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -25,7 +27,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { markReminderDoneAction, snoozeReminderAction } from "@/server/actions/dashboard"
+import { markReminderDoneAction, snoozeReminderAction, deleteReminderAction } from "@/server/actions/dashboard"
 import { Reminder } from "@/lib/types"
 
 interface FollowUpInboxProps {
@@ -57,6 +59,19 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
             await snoozeReminderAction(reminderId);
         } catch (error) {
             console.error("Failed to snooze reminder", error)
+        } finally {
+            setActionLoading(null)
+        }
+    }
+
+    const handleDelete = async (reminderId: string) => {
+        if (!confirm('Are you sure you want to delete this reminder?')) return
+
+        setActionLoading(reminderId)
+        try {
+            await deleteReminderAction(reminderId);
+        } catch (error) {
+            console.error("Failed to delete reminder", error)
         } finally {
             setActionLoading(null)
         }
@@ -202,6 +217,28 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                                             disabled={!reminder.projectId || actionLoading === reminder.id}
                                         >
                                             <ExternalLink className="h-4 w-4" />
+                                        </button>
+
+                                        {reminder.clientEmail && (
+                                            <a
+                                                href={`mailto:${reminder.clientEmail}`}
+                                                className={cn(
+                                                    "size-8 rounded-lg bg-white border border-zinc-200 hover:border-blue-400 hover:text-blue-600 text-zinc-500 shadow-sm flex items-center justify-center transition-all",
+                                                    actionLoading === reminder.id && "opacity-50 pointer-events-none"
+                                                )}
+                                                title={`Email ${reminder.clientName}`}
+                                            >
+                                                <Mail className="h-4 w-4" />
+                                            </a>
+                                        )}
+
+                                        <button
+                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-red-400 hover:text-red-600 text-zinc-500 shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                                            title="Delete"
+                                            onClick={() => handleDelete(reminder.id)}
+                                            disabled={actionLoading === reminder.id}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
                                         </button>
                                     </div>
                                 </TableCell>

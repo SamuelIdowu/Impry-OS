@@ -51,7 +51,7 @@ export async function sendInvoiceEmailAction(invoiceId: string, email: string) {
                     <p>Please find attached invoice for <strong>$${invoice.amount}</strong>.</p>
                     <p>Due Date: ${invoice.due_date}</p>
                     <br/>
-                    <a href="${baseUrl}/invoices/${invoiceId}" style="background-color: ${brandColor}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Invoice</a>
+                    <a href="${baseUrl}/public/invoices/${invoiceId}" style="background-color: ${brandColor}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Invoice</a>
                     <br/><br/>
                     <p>Thank you,<br/>${companyName}</p>
                 </div>

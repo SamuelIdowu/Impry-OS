@@ -9,6 +9,7 @@ import type {
     mapDatabaseToAppStatus,
     mapAppToDatabaseStatus,
 } from './types/project';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Get all projects for the authenticated user
@@ -125,6 +126,7 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
             ...input,
             user_id: user.id,
             status: input.status || 'planning', // Default to 'planning' (maps to 'lead')
+            progress: input.progress ?? 0,
         })
         .select()
         .single();
@@ -221,6 +223,64 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
 
     return data;
 }
+
+/**
+ * Update project progress
+ */
+export async function updateProjectProgress(id: string, progress: number): Promise<Project> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('User not authenticated');
+    }
+
+    // Get current project progress for timeline logging
+    const { data: currentProject, error: currentProjectError } = await supabase
+        .from('projects')
+        .select('name, progress')
+        .eq('id', id)
+        .single();
+
+    if (currentProjectError && currentProjectError.code !== 'PGRST116') {
+        throw currentProjectError;
+    }
+
+    const { data, error } = await supabase
+        .from('projects')
+        .update({
+            progress: progress,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+    if (error) {
+        throw error;
+    }
+
+    // Log the progress change
+    if (currentProject && currentProject.progress !== progress) {
+        // Import dynamically to avoid circular dependencies if any
+        const { logTimelineEvent } = await import('./timeline');
+        await logTimelineEvent({
+            project_id: id,
+            event_type: 'status_change',
+            title: 'Project Progress Updated',
+            description: `Progress changed from ${currentProject.progress}% to ${progress}%`,
+            metadata: {
+                old_progress: currentProject.progress,
+                new_progress: progress,
+            }
+        });
+    }
+
+    return data;
+}
+
+
 
 /**
  * Delete a project

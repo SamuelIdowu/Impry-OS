@@ -12,6 +12,7 @@ export interface DashboardReminder {
     payment_id: string | null;
     client_name: string | null;
     project_name: string | null;
+    client_email: string | null;
     overdue: boolean;
 }
 
@@ -62,7 +63,8 @@ export async function getDashboardReminders(): Promise<DashboardReminder[]> {
             client_id,
             project_id,
             payment_id,
-            clients (name),
+            payment_id,
+            clients (name, email),
             projects (name)
         `)
         .eq('user_id', user.id)
@@ -86,6 +88,7 @@ export async function getDashboardReminders(): Promise<DashboardReminder[]> {
         project_id: reminder.project_id,
         payment_id: reminder.payment_id,
         client_name: (reminder.clients as any)?.name || null,
+        client_email: (reminder.clients as any)?.email || null,
         project_name: (reminder.projects as any)?.name || null,
         overdue: new Date(reminder.reminder_date) < new Date(),
     }));

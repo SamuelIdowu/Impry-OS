@@ -34,8 +34,6 @@ export async function createClient() {
                 fetch: (url, options) => {
                     return fetch(url, {
                         ...options,
-                        // @ts-ignore
-                        duplex: 'half',
                     });
                 },
             },

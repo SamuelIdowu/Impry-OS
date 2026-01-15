@@ -102,6 +102,8 @@ export interface Reminder {
     dueDate: string; // "Today", "Tomorrow", etc.
     overdue: boolean;
     projectId?: string;
+    clientId?: string;
+    clientEmail?: string;
 }
 
 export interface Risk {

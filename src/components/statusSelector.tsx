@@ -54,16 +54,16 @@ export function StatusSelector({ projectId, currentStatus, onStatusChange }: Sta
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
-                    variant={config.variant}
+                    variant="outline"
                     size="sm"
-                    className="gap-2"
+                    className={`gap-2 border transition-all ${config.color}`}
                     disabled={isUpdating}
                 >
-                    <Circle className={`h-3 w-3 ${optimisticStatus === 'active' ? 'fill-current' : ''}`} />
-                    {config.label}
+                    <Circle className={`h-2.5 w-2.5 ${config.iconColor}`} />
+                    <span className="font-semibold">{config.label}</span>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent align="start" className="p-1">
                 {statuses.map((status) => {
                     const statusConfig = getStatusConfig(status);
                     const isActive = status === optimisticStatus;
@@ -71,13 +71,15 @@ export function StatusSelector({ projectId, currentStatus, onStatusChange }: Sta
                         <DropdownMenuItem
                             key={status}
                             onClick={() => handleStatusChange(status)}
-                            className="gap-2"
+                            className="gap-2 focus:bg-zinc-50"
                         >
                             <div className="flex items-center justify-center w-4">
-                                {isActive && <Check className="h-4 w-4" />}
+                                {isActive && <Check className="h-4 w-4 text-zinc-900" />}
                             </div>
-                            <Circle className={`h-3 w-3 ${status === 'active' ? 'fill-current' : ''}`} />
-                            {statusConfig.label}
+                            <Circle className={`h-2.5 w-2.5 ${statusConfig.iconColor}`} />
+                            <span className={isActive ? "font-medium text-zinc-900" : "text-zinc-600"}>
+                                {statusConfig.label}
+                            </span>
                         </DropdownMenuItem>
                     );
                 })}

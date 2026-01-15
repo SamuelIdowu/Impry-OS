@@ -99,7 +99,12 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
             return isAfter(invDate, startDateLimit)
         })
 
-        const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + (inv.status === 'paid' ? inv.amount_paid : 0), 0)
+        const totalRevenue = filteredInvoices.reduce((sum, inv) => {
+            const paidVal = (inv.status === 'paid')
+                ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                : 0;
+            return sum + paidVal;
+        }, 0)
         const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? (inv.amount - inv.amount_paid) : 0), 0)
         // Count unique clients with outstanding
         const outstandingClients = new Set(filteredInvoices.filter(inv => inv.status !== 'paid').map(inv => inv.client_id)).size
@@ -144,7 +149,12 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                         const invDate = new Date(inv.created_at)
                         return format(invDate, "MMM dd") === dayStr && isSameYear(invDate, date)
                     })
-                    .reduce((sum, inv) => sum + inv.amount_paid, 0)
+                    .reduce((sum, inv) => {
+                        const paidVal = (inv.status === 'paid')
+                            ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                            : 0;
+                        return sum + paidVal;
+                    }, 0)
 
                 data.push({ month: dayStr, revenue: dayRevenue })
             }
@@ -168,7 +178,12 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                         const invDate = new Date(inv.created_at)
                         return format(invDate, "MMM yyyy") === monthStr
                     })
-                    .reduce((sum, inv) => sum + inv.amount_paid, 0)
+                    .reduce((sum, inv) => {
+                        const paidVal = (inv.status === 'paid')
+                            ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                            : 0;
+                        return sum + paidVal;
+                    }, 0)
 
                 data.push({ month: format(current, "MMM ''yy"), revenue: monthRevenue }) // MMM 'yy for compact display
 
@@ -188,7 +203,12 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                         const invDate = new Date(inv.created_at)
                         return format(invDate, "MMM") === month && invDate.getFullYear() === currentYear
                     })
-                    .reduce((sum, inv) => sum + inv.amount_paid, 0)
+                    .reduce((sum, inv) => {
+                        const paidVal = (inv.status === 'paid')
+                            ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                            : 0;
+                        return sum + paidVal;
+                    }, 0)
                 return { month, revenue: monthRevenue }
             })
         }

@@ -69,26 +69,32 @@ export function applyPdfSafeStyles(element: HTMLElement) {
     const computedStyle = window.getComputedStyle(element)
 
     // Properties that might contain colors
+    // Properties that might contain colors
     const colorProperties = [
         'color',
-        'backgroundColor',
-        'borderColor',
-        'borderTopColor',
-        'borderRightColor',
-        'borderBottomColor',
-        'borderLeftColor',
-        'outlineColor',
+        'background-color',
+        'border-color',
+        'border-top-color',
+        'border-right-color',
+        'border-bottom-color',
+        'border-left-color',
+        'outline-color',
         'fill',
         'stroke',
+        'text-decoration-color',
+        'caret-color',
+        'accent-color'
     ]
 
     // Apply safe inline styles
     colorProperties.forEach(prop => {
         const value = computedStyle.getPropertyValue(prop)
         if (value && value !== 'transparent' && value !== 'none') {
-            const safeProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase()
             const safeValue = sanitizeColor(value)
-            element.style.setProperty(safeProp, safeValue, 'important')
+            if (safeValue !== value) {
+                // Only apply if changed or if we want to enforce it (we enforce it to be safe)
+                element.style.setProperty(prop, safeValue, 'important')
+            }
         }
     })
 
@@ -115,6 +121,9 @@ export function removePdfSafeStyles(element: HTMLElement) {
         'outline-color',
         'fill',
         'stroke',
+        'text-decoration-color',
+        'caret-color',
+        'accent-color'
     ]
 
     // Remove inline styles

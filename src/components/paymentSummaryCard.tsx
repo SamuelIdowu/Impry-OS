@@ -17,9 +17,10 @@ interface PaymentData {
 interface PaymentSummaryCardProps {
     projectId: string;
     payments: PaymentData[];
+    onViewInvoices?: () => void;
 }
 
-export function PaymentSummaryCard({ projectId, payments }: PaymentSummaryCardProps) {
+export function PaymentSummaryCard({ projectId, payments, onViewInvoices }: PaymentSummaryCardProps) {
     const totalExpected = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
     const totalPaid = payments
         .filter(p => p.status.toLowerCase() === 'paid')
@@ -86,7 +87,10 @@ export function PaymentSummaryCard({ projectId, payments }: PaymentSummaryCardPr
                     </div>
                 </div>
 
-                <Button className="w-full border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900 text-sm font-semibold py-2.5 rounded-lg transition-colors h-auto shadow-none">
+                <Button
+                    onClick={onViewInvoices}
+                    className="w-full border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-900 text-sm font-semibold py-2.5 rounded-lg transition-colors h-auto shadow-none"
+                >
                     View Invoices
                 </Button>
             </CardContent>

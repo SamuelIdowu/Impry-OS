@@ -183,7 +183,11 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                         },
                         {
                             title: "Total Paid",
-                            value: `$${invoices.filter(i => i.status === 'paid' || i.status === 'partial').reduce((acc, curr) => acc + curr.amount_paid, 0).toLocaleString()}`,
+                            value: `$${invoices.filter(i => i.status === 'paid' || i.status === 'partial').reduce((acc, curr) => {
+                                // Fallback for legacy data: if paid but amount_paid is 0, use full amount
+                                const paidAmount = (curr.amount_paid === 0 && curr.status === 'paid') ? curr.amount : curr.amount_paid;
+                                return acc + paidAmount;
+                            }, 0).toLocaleString()}`,
                             icon: CheckCircle2,
                             trend: "+15%", // Placeholder logic can be improved later
                             trendLabel: "vs last month",
