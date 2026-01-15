@@ -17,8 +17,10 @@ import {
     AlertTriangle,
     X,
     Copy,
-    Check
+    Check,
+    CreditCard
 } from "lucide-react"
+import { PricingTable } from "@/components/stripe/pricing-table"
 import {
     updateProfileAction,
     updatePasswordAction,
@@ -31,7 +33,7 @@ import {
 } from "@/server/actions/user"
 import { useRouter } from "next/navigation"
 
-type SettingsTab = 'general' | 'security'
+type SettingsTab = 'general' | 'security' | 'billing'
 
 interface MfaFactor {
     id: string;
@@ -42,9 +44,10 @@ interface MfaFactor {
 
 interface SettingsFormProps {
     user: any; // User object from Supabase
+    profile?: any; // Public profile with subscription info
 }
 
-export function SettingsForm({ user }: SettingsFormProps) {
+export function SettingsForm({ user, profile }: SettingsFormProps) {
     const router = useRouter()
     const [activeTab, setActiveTab] = React.useState<SettingsTab>('general')
 
@@ -295,6 +298,16 @@ export function SettingsForm({ user }: SettingsFormProps) {
                             <Lock className="h-5 w-5" />
                             <span className="text-sm font-medium">Security</span>
                         </button>
+                        <button
+                            onClick={() => setActiveTab('billing')}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left w-full ${activeTab === 'billing'
+                                ? 'bg-zinc-900/10 text-zinc-900 font-medium'
+                                : 'text-zinc-500 hover:bg-zinc-100'
+                                }`}
+                        >
+                            <CreditCard className="h-5 w-5" />
+                            <span className="text-sm font-medium">Billing</span>
+                        </button>
                     </nav>
                 </div>
             </aside>
@@ -322,6 +335,16 @@ export function SettingsForm({ user }: SettingsFormProps) {
                     >
                         <Lock className="h-4 w-4" />
                         Security
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('billing')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'billing'
+                            ? 'bg-white text-zinc-900 shadow-sm'
+                            : 'text-zinc-500'
+                            }`}
+                    >
+                        <CreditCard className="h-4 w-4" />
+                        Billing
                     </button>
                 </div>
 
@@ -391,6 +414,28 @@ export function SettingsForm({ user }: SettingsFormProps) {
                                                 value={email}
                                                 disabled
                                             />
+                                        </div>
+                                    </label>
+                                    <label className="flex flex-col gap-2">
+                                        <span className="text-zinc-900 text-sm font-medium">Subscription Plan</span>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                                                <CreditCard className="h-5 w-5" />
+                                            </span>
+                                            <div className="flex items-center gap-2 w-full rounded-lg border border-zinc-200 bg-zinc-50 h-11 pl-10 pr-4 text-zinc-900 text-sm">
+                                                <span className="capitalize">{profile?.subscription_plan || 'free'}</span>
+                                                {profile?.subscription_plan === 'pro' && (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                                                        PRO
+                                                    </span>
+                                                )}
+                                                <button
+                                                    onClick={() => setActiveTab('billing')}
+                                                    className="ml-auto text-xs text-blue-600 hover:underline font-medium"
+                                                >
+                                                    Manage
+                                                </button>
+                                            </div>
                                         </div>
                                     </label>
                                     <label className="flex flex-col gap-2 md:col-span-2">
@@ -746,6 +791,19 @@ export function SettingsForm({ user }: SettingsFormProps) {
                                 </div>
                             </div>
                         )}
+                    </>
+                )}
+
+                {activeTab === 'billing' && (
+                    <>
+                        <div className="mb-8">
+                            <h1 className="text-zinc-900 text-3xl font-bold leading-tight tracking-tight mb-2">Billing & Subscription</h1>
+                            <p className="text-zinc-500 text-base font-normal">Manage your plan and billing information.</p>
+                        </div>
+
+                        <div className="max-w-4xl">
+                            <PricingTable currentPlan={profile?.subscription_plan || 'free'} />
+                        </div>
                     </>
                 )}
             </main>

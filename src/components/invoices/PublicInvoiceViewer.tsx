@@ -1,11 +1,13 @@
 "use client"
 
-import React from "react"
-import { Download, Zap } from "lucide-react"
+import React, { useState } from "react"
+import { Download, Zap, CreditCard, CheckCircle } from "lucide-react"
 import { pdfStyles } from "@/lib/pdf-styles"
 import { applyPdfSafeStyles, removePdfSafeStyles } from "@/lib/pdf-color-utils"
 import { InvoiceDocument } from "./InvoiceDocument"
 import { Payment } from "@/lib/types/payment"
+import { PaymentModal } from "@/components/stripe/PaymentModal"
+import { Button } from "@/components/ui/button"
 
 interface PublicInvoiceViewerProps {
     invoice: Payment & {
@@ -17,6 +19,7 @@ interface PublicInvoiceViewerProps {
 }
 
 export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, companyName }: PublicInvoiceViewerProps) {
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
     // PDF Generation Logic (Reused)
     const handleDownloadPdf = async () => {
@@ -68,6 +71,8 @@ export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, 
         }
     }
 
+    const isPaid = invoice.status === 'paid';
+
     return (
         <div className="flex flex-col min-h-screen bg-zinc-50">
             {/* Minimal Header */}
@@ -84,13 +89,30 @@ export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, 
                         <span>{companyName || 'FreelanceOS'}</span>
                     </div>
 
-                    <button
-                        onClick={handleDownloadPdf}
-                        className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors shadow-sm"
-                    >
-                        <Download className="h-4 w-4" />
-                        <span className="hidden sm:inline">Download PDF</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {!isPaid ? (
+                            <Button
+                                onClick={() => setIsPaymentModalOpen(true)}
+                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            >
+                                <CreditCard className="h-4 w-4" />
+                                Pay Invoice
+                            </Button>
+                        ) : (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium">
+                                <CheckCircle className="h-4 w-4" />
+                                Paid
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleDownloadPdf}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 text-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-50 transition-colors shadow-sm"
+                        >
+                            <Download className="h-4 w-4" />
+                            <span className="hidden sm:inline">PDF</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -111,6 +133,13 @@ export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, 
                     <p>Powered by FreelanceOS</p>
                 </div>
             </div>
+
+            <PaymentModal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                amount={(invoice.amount || 0) * 100} // Convert to cents
+                invoiceId={invoice.id}
+            />
         </div>
     )
 }

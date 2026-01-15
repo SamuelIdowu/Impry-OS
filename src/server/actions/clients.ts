@@ -105,6 +105,37 @@ export async function fetchClient(id: string) {
  */
 export async function createClientAction(data: CreateClientInput) {
     try {
+        const supabase = await createSupabaseClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { success: false, error: 'Not authenticated' };
+        }
+
+        // Check subscription limits
+        const { data: profile } = await supabase
+            .from('users')
+            .select('subscription_plan')
+            .eq('id', user.id)
+            .single();
+
+        const plan = profile?.subscription_plan || 'free';
+
+        if (plan === 'free') {
+            const { count } = await supabase
+                .from('clients')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id); // Ensure we count only user's clients
+
+            const clientLimit = 3;
+            if ((count || 0) >= clientLimit) {
+                return {
+                    success: false,
+                    error: 'Free plan limit reached (3 clients). Please upgrade to Pro for unlimited clients.'
+                };
+            }
+        }
+
         const newClient = await createClient(data);
         revalidatePath('/clients');
         return { success: true, data: newClient };

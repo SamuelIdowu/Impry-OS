@@ -10,5 +10,11 @@ export default async function SettingsPage() {
         return <div>Please log in to view settings.</div>
     }
 
-    return <SettingsForm user={user} />
+    const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+    return <SettingsForm user={user} profile={profile} />
 }

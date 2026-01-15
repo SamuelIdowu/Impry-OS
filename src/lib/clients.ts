@@ -86,6 +86,31 @@ export async function createClient(input: CreateClientInput): Promise<Client> {
         throw new Error('User not authenticated');
     }
 
+    const { data: userProfile, error: profileError } = await supabase
+        .from('users')
+        .select('subscription_plan')
+        .eq('id', user.id)
+        .single();
+
+    if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError;
+    }
+
+    const { count, error: countError } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+    if (countError) {
+        throw countError;
+    }
+
+    const plan = userProfile?.subscription_plan || 'free';
+
+    if (plan !== 'pro' && (count || 0) >= 3) {
+        throw new Error('Free plan limit reached. Upgrade to Pro to add more clients.');
+    }
+
     const { data, error } = await supabase
         .from('clients')
         .insert({

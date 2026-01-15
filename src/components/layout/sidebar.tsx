@@ -18,11 +18,13 @@ import {
     Trash2,
     ChevronDown,
     Bell,
-    Calendar
+    Calendar,
+    Zap
 } from "lucide-react"
 
 import { User } from "@supabase/supabase-js"
 import { getTeamMembersAction, addTeamMemberAction, deleteTeamMemberAction } from "@/server/actions/team"
+import { getProfileAction } from "@/server/actions/user"
 
 interface TeamMember {
     id: string;
@@ -46,17 +48,25 @@ export function Sidebar({ className, user }: SidebarProps) {
     const [isAddingMember, setIsAddingMember] = React.useState(false)
     const [newMember, setNewMember] = React.useState({ name: '', role: '' })
     const [dashboardExpanded, setDashboardExpanded] = React.useState(true)
+    const [subscriptionPlan, setSubscriptionPlan] = React.useState<string>('free') // Default to free until fetched
 
-    // Fetch team members on mount
+    // Fetch team members and profile on mount
     React.useEffect(() => {
-        const fetchMembers = async () => {
-            const res = await getTeamMembersAction()
-            if (res.success) {
-                setMembers(res.members)
+        const fetchData = async () => {
+            const [membersRes, profileRes] = await Promise.all([
+                getTeamMembersAction(),
+                getProfileAction()
+            ]);
+
+            if (membersRes.success) {
+                setMembers(membersRes.members)
+            }
+            if (profileRes.success && profileRes.profile) {
+                setSubscriptionPlan(profileRes.profile.subscription_plan)
             }
             setIsLoadingMembers(false)
         }
-        fetchMembers()
+        fetchData()
     }, [])
 
     const handleAddMember = async () => {
@@ -126,8 +136,8 @@ export function Sidebar({ className, user }: SidebarProps) {
     ]
 
     return (
-        <aside className={cn("pb-12 w-64 border-r border-zinc-200 bg-white hidden md:block", className)}>
-            <div className="space-y-4 py-4">
+        <aside className={cn("w-64 border-r border-zinc-200 bg-white hidden md:flex md:flex-col h-full", className)}>
+            <div className="space-y-4 py-4 flex-1 overflow-y-auto">
                 <div className="px-6 py-2">
                     <div className="flex items-center gap-2 font-bold text-xl">
                         <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
@@ -296,9 +306,26 @@ export function Sidebar({ className, user }: SidebarProps) {
                 </div>
             </div>
 
-            <div className="mt-auto px-3 absolute bottom-4 w-full">
+            <div className="mt-auto px-3 w-full">
+                {subscriptionPlan === 'free' && (
+                    <div className="mb-4 mx-2 p-4 bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl text-white shadow-lg relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Zap className="w-12 h-12" />
+                        </div>
+                        <h4 className="font-bold text-sm mb-1 relative z-10">Upgrade to Pro</h4>
+                        <p className="text-xs text-zinc-300 mb-3 relative z-10 leading-relaxed">
+                            Get unlimited clients, advanced analytics, and custom branding.
+                        </p>
+                        <Link
+                            href="/pricing"
+                            className="block w-full text-center py-2 bg-white text-zinc-900 rounded-lg text-xs font-bold hover:bg-zinc-100 transition-colors relative z-10"
+                        >
+                            View Plans
+                        </Link>
+                    </div>
+                )}
                 <div className="border-t border-zinc-100 pt-4">
-                    {user && <UserMenu user={user} />}
+                    {user && <UserMenu user={user} subscriptionPlan={subscriptionPlan} />}
                 </div>
             </div>
         </aside>

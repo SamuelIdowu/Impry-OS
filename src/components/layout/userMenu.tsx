@@ -18,9 +18,10 @@ interface UserMenuProps {
     open?: boolean
     onOpenChange?: (open: boolean) => void
     user: User
+    subscriptionPlan?: string
 }
 
-export function UserMenu({ open, onOpenChange, user }: UserMenuProps) {
+export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMenuProps) {
     const router = useRouter()
 
     const handleLogout = async () => {
@@ -65,9 +66,21 @@ export function UserMenu({ open, onOpenChange, user }: UserMenuProps) {
                         size="md"
                     />
                     <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-semibold truncate">
-                            {user?.user_metadata?.full_name || "User"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold truncate">
+                                {user?.user_metadata?.full_name || "User"}
+                            </span>
+                            {subscriptionPlan === 'pro' && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                                    PRO
+                                </span>
+                            )}
+                            {subscriptionPlan === 'free' && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 border border-zinc-200">
+                                    FREE
+                                </span>
+                            )}
+                        </div>
                         <span className="text-xs text-zinc-500 truncate">{user?.email}</span>
                     </div>
                 </div>
@@ -87,6 +100,17 @@ export function UserMenu({ open, onOpenChange, user }: UserMenuProps) {
                         />
                     </svg>
                     Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/pricing")}>
+                    <svg
+                        className="mr-2 size-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    Subscription
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push("/settings")}>
                     <svg
