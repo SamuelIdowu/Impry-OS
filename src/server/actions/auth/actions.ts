@@ -27,22 +27,28 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
             };
         }
 
+        console.log('Creating Supabase client...');
         const supabase = await createClient();
+
+        console.log('Attempting sign in with password...');
         const { error } = await supabase.auth.signInWithPassword({
             email: validated.data.email,
             password: validated.data.password,
         });
 
         if (error) {
+            console.error('Supabase auth error:', error);
             return {
                 success: false,
                 error: error.message,
             };
         }
 
+        console.log('Sign in successful, redirecting...');
         // Redirect to dashboard on success
         redirect("/dashboard");
     } catch (error) {
+        console.error('Sign in exception:', error);
         if ((error as any)?.digest?.startsWith("NEXT_REDIRECT")) {
             throw error;
         }

@@ -1,23 +1,22 @@
 'use client';
 
-import { PricingTable } from '@/components/stripe/pricing-table';
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function PricingPage() {
-    // In a real implementation, you might fetch the current user's plan here
-    // For now, we default to 'free', or we could fetch it client-side if we had a hook.
-    // However, since this page is public or semi-public, 'free' is a safe default.
-    // If we want to show "Current Plan", we'd need to know.
-
     return (
-        <div className="container mx-auto py-12 px-4">
-            <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
-                <p className="text-lg text-gray-500">Choose the plan that's right for your freelance business.</p>
-            </div>
-
-            <div className="max-w-4xl mx-auto">
-                <PricingTable currentPlan="free" />
-            </div>
+        <div className="container mx-auto py-24 px-4 text-center">
+            <h1 className="text-4xl font-bold mb-6">Subscriptions Paused</h1>
+            <p className="text-lg text-gray-500 mb-8 max-w-lg mx-auto">
+                We are currently upgrading our payment system. Please check back later or contact support if you have any questions.
+            </p>
+            <Button asChild>
+                <Link href="/dashboard">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Dashboard
+                </Link>
+            </Button>
         </div>
     );
 }

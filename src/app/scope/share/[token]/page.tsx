@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { CheckCircle2, XCircle, HelpCircle, Lock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { fetchScopeByShareToken } from '@/server/actions/scopes';
@@ -7,6 +8,22 @@ interface PublicScopePageProps {
     params: Promise<{
         token: string;
     }>;
+}
+
+export async function generateMetadata({ params }: PublicScopePageProps): Promise<Metadata> {
+    const { token } = await params;
+    const result = await fetchScopeByShareToken(token);
+
+    if (!result.success || !result.data) {
+        return {
+            title: 'Scope Not Found',
+        };
+    }
+
+    return {
+        title: `${result.data.project?.name || 'Project'} - Scope Snapshot`,
+        description: 'View the project scope, deliverables, and assumptions.',
+    };
 }
 
 export default async function PublicScopePage({ params }: PublicScopePageProps) {

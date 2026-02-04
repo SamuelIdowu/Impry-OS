@@ -298,6 +298,7 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                             <Lock className="h-5 w-5" />
                             <span className="text-sm font-medium">Security</span>
                         </button>
+                        {/* Billing tab disabled
                         <button
                             onClick={() => setActiveTab('billing')}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left w-full ${activeTab === 'billing'
@@ -308,6 +309,7 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                             <CreditCard className="h-5 w-5" />
                             <span className="text-sm font-medium">Billing</span>
                         </button>
+                        */}
                     </nav>
                 </div>
             </aside>
@@ -336,6 +338,7 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                         <Lock className="h-4 w-4" />
                         Security
                     </button>
+                    {/* Billing tab mobile disabled
                     <button
                         onClick={() => setActiveTab('billing')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'billing'
@@ -346,6 +349,7 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                         <CreditCard className="h-4 w-4" />
                         Billing
                     </button>
+                    */}
                 </div>
 
                 {activeTab === 'general' && (
@@ -429,12 +433,14 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                                                         PRO
                                                     </span>
                                                 )}
+                                                {/* Manage Subscription disabled
                                                 <button
                                                     onClick={() => setActiveTab('billing')}
                                                     className="ml-auto text-xs text-blue-600 hover:underline font-medium"
                                                 >
                                                     Manage
                                                 </button>
+                                                */}
                                             </div>
                                         </div>
                                     </label>

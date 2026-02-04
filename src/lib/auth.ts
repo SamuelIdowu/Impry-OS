@@ -1,5 +1,34 @@
 import { cookies } from 'next/headers';
 import { createServerClient, createBrowserClient as createSupabaseBrowserClient } from '@supabase/ssr';
+import { lookup } from 'dns/promises';
+
+// Custom fetch with DNS resolution fallback for Node.js on Windows
+const customFetch: typeof fetch = async (url, options) => {
+    try {
+        const urlObj = new URL(url.toString());
+
+        // Try to resolve DNS first to provide better error messages
+        try {
+            await lookup(urlObj.hostname);
+        } catch (dnsError) {
+            console.error(`DNS resolution failed:`, dnsError);
+            throw new Error('Unable to connect to the authentication service. Please check your internet connection and try again.');
+        }
+
+        // Proceed with fetch if DNS resolves
+        const headers = new Headers(options?.headers);
+        headers.set('Connection', 'keep-alive');
+
+        const response = await fetch(url, {
+            ...options,
+            headers,
+        });
+        return response;
+    } catch (error) {
+        console.error('Fetch error:', error, 'URL:', url);
+        throw error;
+    }
+};
 
 export async function createClient() {
     const cookieStore = await cookies();
@@ -31,11 +60,7 @@ export async function createClient() {
                 },
             },
             global: {
-                fetch: (url, options) => {
-                    return fetch(url, {
-                        ...options,
-                    });
-                },
+                fetch: customFetch,
             },
         }
     );

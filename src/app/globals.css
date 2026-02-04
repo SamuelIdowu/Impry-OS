@@ -49,12 +49,12 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #ffffff;
-  --foreground: #09090b;
+  --background: #fafafa;
+  --foreground: #18181b;
   --card: #ffffff;
-  --card-foreground: #09090b;
+  --card-foreground: #18181b;
   --popover: #ffffff;
-  --popover-foreground: #09090b;
+  --popover-foreground: #18181b;
   --primary: #18181b;
   --primary-foreground: #fafafa;
   --secondary: #f4f4f5;

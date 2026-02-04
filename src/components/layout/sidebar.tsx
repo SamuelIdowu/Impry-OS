@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { UserMenu } from "./userMenu"
+import { Logo } from "@/components/ui/logo"
 import {
     LayoutGrid,
     CheckSquare,
@@ -139,12 +140,7 @@ export function Sidebar({ className, user }: SidebarProps) {
         <aside className={cn("w-64 border-r border-zinc-200 bg-white hidden md:flex md:flex-col h-full", className)}>
             <div className="space-y-4 py-4 flex-1 overflow-y-auto">
                 <div className="px-6 py-2">
-                    <div className="flex items-center gap-2 font-bold text-xl">
-                        <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-                            F
-                        </div>
-                        <span>Impry OS</span>
-                    </div>
+                    <Logo textClassName="text-xl font-bold" />
                 </div>
                 <div className="px-3 py-2">
                     <div className="space-y-1">

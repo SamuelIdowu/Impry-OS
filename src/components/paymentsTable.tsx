@@ -19,9 +19,10 @@ interface PaymentsTableProps {
     onMarkPartial: (payment: Payment) => void;
     onGenerateInvoice: (payment: Payment) => void;
     onDelete: (payment: Payment) => void;
+    onSendReminder: (payment: Payment) => void;
 }
 
-export function PaymentsTable({ payments, onMarkPaid, onMarkPartial, onGenerateInvoice, onDelete }: PaymentsTableProps) {
+export function PaymentsTable({ payments, onMarkPaid, onMarkPartial, onGenerateInvoice, onDelete, onSendReminder }: PaymentsTableProps) {
     return (
         <div className="w-full">
             <table className="w-full text-left border-collapse">
@@ -43,6 +44,7 @@ export function PaymentsTable({ payments, onMarkPaid, onMarkPartial, onGenerateI
                             onMarkPartial={onMarkPartial}
                             onGenerateInvoice={onGenerateInvoice}
                             onDelete={onDelete}
+                            onSendReminder={onSendReminder}
                         />
                     ))}
                 </tbody>
@@ -73,9 +75,10 @@ interface PaymentRowProps {
     onMarkPartial: (payment: Payment) => void;
     onGenerateInvoice: (payment: Payment) => void;
     onDelete: (payment: Payment) => void;
+    onSendReminder: (payment: Payment) => void;
 }
 
-function PaymentRow({ payment, onMarkPaid, onMarkPartial, onGenerateInvoice, onDelete }: PaymentRowProps) {
+function PaymentRow({ payment, onMarkPaid, onMarkPartial, onGenerateInvoice, onDelete, onSendReminder }: PaymentRowProps) {
     // Custom Badge Component for this table
     const StatusBadge = ({ status }: { status: string }) => {
         const styles = {
@@ -138,6 +141,12 @@ function PaymentRow({ payment, onMarkPaid, onMarkPartial, onGenerateInvoice, onD
                             <FileText className="mr-2 h-4 w-4" />
                             View Details
                         </DropdownMenuItem>
+                        {payment.status !== 'paid' && (
+                            <DropdownMenuItem onClick={() => onSendReminder(payment)}>
+                                <Clock className="mr-2 h-4 w-4" />
+                                Send Reminder
+                            </DropdownMenuItem>
+                        )}
                         {payment.status !== 'paid' && (
                             <DropdownMenuItem onClick={() => onMarkPaid(payment)}>
                                 <CheckCircle className="mr-2 h-4 w-4 text-green-600" />

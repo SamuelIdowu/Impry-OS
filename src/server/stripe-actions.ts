@@ -17,6 +17,7 @@ export async function createPaymentIntent(
     currency: string = 'usd',
     metadata: Record<string, string>
 ) {
+    throw new Error('Payments are currently disabled.');
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -30,7 +31,7 @@ export async function createPaymentIntent(
             currency,
             metadata: {
                 ...metadata,
-                userId: user.id, // Track who created it
+                userId: user!.id, // Track who created it
             },
             automatic_payment_methods: {
                 enabled: true,
@@ -60,6 +61,7 @@ export async function createPaymentIntent(
  * @param priceId The Stripe Price ID (monthly or yearly)
  */
 export async function createCheckoutSession(priceId: string) {
+    throw new Error('Subscriptions are currently disabled.');
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -75,7 +77,7 @@ export async function createCheckoutSession(priceId: string) {
     const { data: userProfile } = await supabase
         .from('users')
         .select('stripe_customer_id, email')
-        .eq('id', user.id)
+        .eq('id', user!.id)
         .single();
 
     let customerId = userProfile?.stripe_customer_id;
@@ -96,7 +98,7 @@ export async function createCheckoutSession(priceId: string) {
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?checkout_success=true`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
         metadata: {
-            userId: user.id,
+            userId: user!.id,
         },
         allow_promotion_codes: true,
     };
@@ -104,7 +106,7 @@ export async function createCheckoutSession(priceId: string) {
     if (customerId) {
         sessionParams.customer = customerId;
     } else {
-        sessionParams.customer_email = userProfile?.email || user.email;
+        sessionParams.customer_email = userProfile?.email || user!.email;
         sessionParams.customer_creation = 'always';
     }
 

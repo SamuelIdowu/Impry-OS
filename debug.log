@@ -6632,3 +6632,235 @@ Error: Cookies can only be modified in a Server Action or Route Handler. Read mo
 [2026-01-15T17:23:44.788Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
 [2026-01-15T17:23:44.793Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
 [2026-01-15T17:23:48.238Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier, sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-02-04T17:31:41.463Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /clients couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:4:11054)
+    at i (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:62:460)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2553)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__004cad0a._.js:1:1408)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-02-04T17:31:41.838Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /invoices/new couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:4:11054)
+    at i (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:62:460)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2553)
+    at f (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__e5e983e1._.js:1:1455)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-02-04T17:31:42.209Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /invoices couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:4:11054)
+    at i (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:62:460)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2553)
+    at g (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__4c856604._.js:1:1470)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-02-04T17:31:42.249Z] ERROR: Error fetching clients
+Error: Dynamic server usage: Route /projects couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at w (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:1:10511)
+    at n (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:4:11054)
+    at i (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\_8a0bdbd2._.js:62:460)
+    at d (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:10:6550)
+    at m (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\src_server_actions_4b9abb06._.js:16:2553)
+    at f (C:\Users\USER\Desktop\content2\freelancer-client-os\.next\server\chunks\ssr\[root-of-the-server]__59b4a228._.js:1:1499)
+    at eC (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:27277)
+    at e (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:31392)
+    at eU (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:33397)
+    at Array.toJSON (C:\Users\USER\Desktop\content2\freelancer-client-os\node_modules\.pnpm\next@16.1.1_@babel+core@7.2_cd686fafa065e16de73e229f5879b04d\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.prod.js:5:28935)
+---
+[2026-02-04T17:52:51.849Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-02-04T17:57:18.229Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-02-04T17:59:17.460Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
+[2026-02-04T17:59:17.465Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
+[2026-02-04T17:59:44.294Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
+[2026-02-04T17:59:44.296Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
+[2026-02-04T18:08:38.101Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
+[2026-02-04T18:08:38.114Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier
+[2026-02-04T18:08:43.953Z] INFO: Setting cookies: sb-vpgwxmzmkcujkhpjvscj-auth-token-code-verifier, sb-vpgwxmzmkcujkhpjvscj-auth-token.0, sb-vpgwxmzmkcujkhpjvscj-auth-token.1
+[2026-02-04T18:11:31.587Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:41.236Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:41.261Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:41.607Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:41.773Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:41.864Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:42.045Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:42.379Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:42.641Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:42.912Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:43.148Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:43.392Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:43.670Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:43.963Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:44.378Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:44.454Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:44.711Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:44.951Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:45.204Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:45.465Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:45.786Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:46.079Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:46.288Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:46.578Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:47.039Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:47.670Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:48.388Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:48.412Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:49.091Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:49.866Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:50.946Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:51.309Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:51.590Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:51.935Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:52.233Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:52.598Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:52.822Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:53.108Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:53.406Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:53.712Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:53.955Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:54.231Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:54.538Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:54.937Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:55.942Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:55.972Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:56.555Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:57.205Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:57.310Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:57.339Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:58.205Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:58.226Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:58.842Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:58.947Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:59.034Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:59.052Z] ERROR: Error fetching clients
+[object Object]
+---
+[2026-02-04T18:15:59.435Z] ERROR: Error fetching clients
+[object Object]
+---

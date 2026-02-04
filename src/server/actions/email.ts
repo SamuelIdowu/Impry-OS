@@ -6,7 +6,7 @@ import { createClient } from '@/lib/auth';
 const resend = new Resend(process.env.RESEND_API_KEY);
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-export async function sendInvoiceEmailAction(invoiceId: string, email: string) {
+export async function sendInvoiceEmailAction(invoiceId: string, email?: string) {
     try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -42,7 +42,7 @@ export async function sendInvoiceEmailAction(invoiceId: string, email: string) {
         // Send Email
         const { data, error } = await resend.emails.send({
             from: 'Invoices <onboarding@resend.dev>', // Update this with verified domain in prod
-            to: email, // In free tier this must be the verified user email usually, or allow sending to anyone if domain verified
+            to: email || invoice.client?.email, // Use provided email or client's email from DB
             subject: `Invoice ${invoice.invoice_number} from ${companyName}`,
             html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">

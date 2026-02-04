@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Boxes } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
 
 export function Footer() {
     return (
@@ -7,10 +7,7 @@ export function Footer() {
             <div className="container px-4 md:px-6 mx-auto">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
                     <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                            <Boxes className="h-6 w-6" />
-                            <span className="text-lg font-bold">Impry OS</span>
-                        </div>
+                        <Logo textClassName="text-lg font-bold" />
                         <p className="text-sm text-muted-foreground">
                             The complete operating system for independent freelancers and agencies.
                         </p>

@@ -1,53 +1,92 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Shield, Bell, DollarSign } from "lucide-react";
+import Image from "next/image";
+import { NotchedImage } from "@/components/ui/notched-image";
 
 export function Hero() {
     return (
-        <section className="relative overflow-hidden pt-16 md:pt-24 lg:pt-32">
-            <div className="container px-4 md:px-6 mx-auto">
-                <div className="flex flex-col items-center space-y-4 text-center">
-                    <div className="space-y-2">
-                        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 mb-4">
-                            <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
-                            Now standard with Impry OS
+        <section className="relative overflow-hidden bg-background">
+            <div className="container px-6 lg:px-10 py-16 md:py-20 lg:py-24 mx-auto max-w-[1400px]">
+                {/* Trust Badges */}
+                <div className="flex flex-wrap items-center justify-center gap-8 mb-12 md:mb-16">
+                    <div className="flex items-start gap-2">
+                        <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
-                        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                            Manage your freelance business <br className="hidden sm:inline" />
-                            <span className="text-primary">with absolute clarity</span>
-                        </h1>
-                        <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                            Stop juggling spreadsheets and emails. Track clients, invoices, and projects in one diverse operating system designed for growth.
-                        </p>
-                    </div>
-                    <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                        <Link href="/dashboard">
-                            <Button size="lg" className="h-12 px-8">
-                                Get Started
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </Link>
-                        <Link href="#features">
-                            <Button size="lg" variant="outline" className="h-12 px-8">
-                                View Demo
-                            </Button>
-                        </Link>
-                    </div>
-                    <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground pt-8">
-                        <div className="flex items-center">
-                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                            <span>No credit card required</span>
+                        <div>
+                            <h3 className="text-sm font-bold text-zinc-900">Follow Up</h3>
+                            <p className="text-xs text-zinc-600 max-w-[140px]">Never miss a client interaction again</p>
                         </div>
-                        <div className="flex items-center">
-                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                            <span>14-day free trial</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-zinc-900">Scope Guard</h3>
+                            <p className="text-xs text-zinc-600 max-w-[140px]">Prevent scope creep with snapshots</p>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-zinc-900">Get Paid</h3>
+                            <p className="text-xs text-zinc-600 max-w-[140px]">Track payments and milestones</p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Abstract Background Gradient */}
-            <div className="absolute top-0 z-[-1] h-screen w-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
+                {/* Main Content Grid */}
+                <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                    {/* Left Column - Text Content */}
+                    <div className="space-y-8">
+                        <div className="space-y-6">
+                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1]">
+                                <span className="italic font-normal">Authentic, honest</span>{" "}
+                                revenue protection{" "}
+                                <span className="italic font-normal">works.</span>
+                            </h1>
+                            <p className="text-lg md:text-xl text-zinc-600 max-w-[500px]">
+                                Help freelance developers and designers avoid losing money, time, and clients with a lightweight system that enforces follow-ups, protects scope, and tracks payments.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <Link href="/register">
+                                <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-lg">
+                                    Get Started Free
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>
+                            </Link>
+                            <Link href="#pricing">
+                                <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold rounded-lg">
+                                    View Pricing
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Right Column - Hero Image */}
+                    <div className="relative">
+                        <NotchedImage
+                            src="/hero-freelancer.png"
+                            alt="Freelancer working on laptop in modern workspace"
+                            width={300}
+                            height={300}
+                            priority
+                        />
+                    </div>
+                </div>
+            </div>
         </section>
     );
 }

@@ -101,6 +101,7 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     </svg>
                     Dashboard
                 </DropdownMenuItem>
+                {/* Subscription menu item disabled
                 <DropdownMenuItem onClick={() => router.push("/pricing")}>
                     <svg
                         className="mr-2 size-4"
@@ -112,6 +113,7 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     </svg>
                     Subscription
                 </DropdownMenuItem>
+                */}
                 <DropdownMenuItem onClick={() => router.push("/settings")}>
                     <svg
                         className="mr-2 size-4"

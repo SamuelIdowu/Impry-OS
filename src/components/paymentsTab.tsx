@@ -11,6 +11,7 @@ import { formatCurrency } from '@/lib/types/payment';
 import { useRouter } from 'next/navigation';
 import { AddPaymentDialog } from '@/components/forms/addPaymentDialog';
 import { updatePaymentStatus } from '@/server/actions/payments';
+import { sendInvoiceEmailAction } from '@/server/actions/email';
 // import { toast } from 'sonner';
 
 interface PaymentsTabProps {
@@ -137,6 +138,23 @@ export function PaymentsTab({ projectId, payments = [], totalValue, paidAmount }
                         onMarkPartial={() => { }} // TODO: Implement partial flow if needed
                         onGenerateInvoice={() => { }} // TODO: Implement invoice generation
                         onDelete={() => { }} // TODO: Implement delete
+                        onSendReminder={async (payment) => {
+                            try {
+                                setLoading(true);
+                                const res = await sendInvoiceEmailAction(payment.id);
+                                if (res.success) {
+                                    alert(`Reminder sent for ${payment.milestone_name}`);
+                                    router.refresh();
+                                } else {
+                                    alert(`Failed to send reminder: ${res.error}`);
+                                }
+                            } catch (e) {
+                                console.error(e);
+                                alert('An error occurred while sending reminder');
+                            } finally {
+                                setLoading(false);
+                            }
+                        }}
                     />
                 </div>
             </div>
