@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${montserratAlternates.variable} ${poppins.variable}`}>
-      <body className="antialiased font-sans">
+      <body className={`antialiased ${montserratAlternates.className}`}>
         <AuthListener />
         {children}
       </body>
