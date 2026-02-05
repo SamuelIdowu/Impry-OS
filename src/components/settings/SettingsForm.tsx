@@ -20,7 +20,6 @@ import {
     Check,
     CreditCard
 } from "lucide-react"
-import { PricingTable } from "@/components/stripe/pricing-table"
 import {
     updateProfileAction,
     updatePasswordAction,
@@ -800,18 +799,7 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                     </>
                 )}
 
-                {activeTab === 'billing' && (
-                    <>
-                        <div className="mb-8">
-                            <h1 className="text-zinc-900 text-3xl font-bold leading-tight tracking-tight mb-2">Billing & Subscription</h1>
-                            <p className="text-zinc-500 text-base font-normal">Manage your plan and billing information.</p>
-                        </div>
 
-                        <div className="max-w-4xl">
-                            <PricingTable currentPlan={profile?.subscription_plan || 'free'} />
-                        </div>
-                    </>
-                )}
             </main>
         </div>
     )

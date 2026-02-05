@@ -303,23 +303,6 @@ export function Sidebar({ className, user }: SidebarProps) {
             </div>
 
             <div className="mt-auto px-3 w-full">
-                {subscriptionPlan === 'free' && (
-                    <div className="mb-4 mx-2 p-4 bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl text-white shadow-lg relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Zap className="w-12 h-12" />
-                        </div>
-                        <h4 className="font-bold text-sm mb-1 relative z-10">Upgrade to Pro</h4>
-                        <p className="text-xs text-zinc-300 mb-3 relative z-10 leading-relaxed">
-                            Get unlimited clients, advanced analytics, and custom branding.
-                        </p>
-                        <Link
-                            href="/pricing"
-                            className="block w-full text-center py-2 bg-white text-zinc-900 rounded-lg text-xs font-bold hover:bg-zinc-100 transition-colors relative z-10"
-                        >
-                            View Plans
-                        </Link>
-                    </div>
-                )}
                 <div className="border-t border-zinc-100 pt-4">
                     {user && <UserMenu user={user} subscriptionPlan={subscriptionPlan} />}
                 </div>

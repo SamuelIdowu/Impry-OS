@@ -1,13 +1,11 @@
 "use client"
 
-import React, { useState } from "react"
-import { Download, Zap, CreditCard, CheckCircle } from "lucide-react"
+import React from "react"
+import { Download, Zap, CheckCircle } from "lucide-react"
 import { pdfStyles } from "@/lib/pdf-styles"
 import { applyPdfSafeStyles, removePdfSafeStyles } from "@/lib/pdf-color-utils"
 import { InvoiceDocument } from "./InvoiceDocument"
 import { Payment } from "@/lib/types/payment"
-import { PaymentModal } from "@/components/stripe/PaymentModal"
-import { Button } from "@/components/ui/button"
 
 interface PublicInvoiceViewerProps {
     invoice: Payment & {
@@ -19,7 +17,6 @@ interface PublicInvoiceViewerProps {
 }
 
 export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, companyName }: PublicInvoiceViewerProps) {
-    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
     // PDF Generation Logic (Reused)
     const handleDownloadPdf = async () => {
@@ -90,15 +87,7 @@ export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, 
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {!isPaid ? (
-                            <Button
-                                onClick={() => setIsPaymentModalOpen(true)}
-                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                            >
-                                <CreditCard className="h-4 w-4" />
-                                Pay Invoice
-                            </Button>
-                        ) : (
+                        {isPaid && (
                             <div className="flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-medium">
                                 <CheckCircle className="h-4 w-4" />
                                 Paid
@@ -134,12 +123,6 @@ export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, 
                 </div>
             </div>
 
-            <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                amount={(invoice.amount || 0) * 100} // Convert to cents
-                invoiceId={invoice.id}
-            />
         </div>
     )
 }

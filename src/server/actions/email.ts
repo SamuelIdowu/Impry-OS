@@ -3,7 +3,11 @@
 import { Resend } from 'resend';
 import { createClient } from '@/lib/auth';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors
+function getResendClient() {
+    return new Resend(process.env.RESEND_API_KEY);
+}
+
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export async function sendInvoiceEmailAction(invoiceId: string, email?: string) {
@@ -40,6 +44,7 @@ export async function sendInvoiceEmailAction(invoiceId: string, email?: string) 
         const companyName = profile?.company_name || profile?.full_name || 'FreelanceOS User';
 
         // Send Email
+        const resend = getResendClient();
         const { data, error } = await resend.emails.send({
             from: 'Invoices <onboarding@resend.dev>', // Update this with verified domain in prod
             to: email || invoice.client?.email, // Use provided email or client's email from DB
@@ -100,6 +105,7 @@ export async function sendEmailAction(email: string, subject: string, htmlBody: 
         `;
 
         // Send Email
+        const resend = getResendClient();
         const { data, error } = await resend.emails.send({
             from: 'FreelanceOS <onboarding@resend.dev>', // Update this with verified domain in prod
             to: email,
