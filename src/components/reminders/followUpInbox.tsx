@@ -14,21 +14,21 @@ interface FollowUpInboxProps {
 export function FollowUpInbox({ reminders }: FollowUpInboxProps) {
     // Filter logic:
     // Show if status != completed
-    // If status == snoozed, show ONLY if snoozed_until < now
+    // If status == snoozed, show ONLY if snoozedUntil < now
     // Actually, backend 'getDueReminders' already filters completed.
     // We just need to filter snoozed that are not yet due.
 
     const now = new Date();
     const visibleReminders = reminders.filter(r => {
-        if (r.status === 'snoozed' && r.snoozed_until) {
-            return new Date(r.snoozed_until) <= now;
+        if (r.status === 'snoozed' && r.snoozedUntil) {
+            return new Date(r.snoozedUntil) <= now;
         }
         return true;
     });
 
     // Sort by date (asc)
     const sortedReminders = [...visibleReminders].sort((a, b) =>
-        new Date(a.reminder_date).getTime() - new Date(b.reminder_date).getTime()
+        new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime()
     );
 
     const hasReminders = sortedReminders.length > 0;

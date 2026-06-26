@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { format, isSameMonth, isToday } from 'date-fns'
 import { cn } from '@/lib/utils'
-import type { CalendarEvent } from '@/server/actions/calendar'
+import type { CalendarEvent } from '@/lib/calendar'
 
 interface CalendarDayProps {
     date: Date

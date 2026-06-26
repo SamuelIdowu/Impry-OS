@@ -31,7 +31,7 @@ export function MarkPaidDialog({ payment, open, onOpenChange, onSuccess }: MarkP
 
     if (!payment) return null;
 
-    const remainingAmount = payment.amount - payment.amount_paid;
+    const remainingAmount = Number(payment.amount) - Number(payment.amountPaid);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,15 +39,15 @@ export function MarkPaidDialog({ payment, open, onOpenChange, onSuccess }: MarkP
 
         try {
             const amountPaid = paymentType === 'full'
-                ? payment.amount
-                : payment.amount_paid + parseFloat(partialAmount);
+                ? Number(payment.amount)
+                : Number(payment.amountPaid) + parseFloat(partialAmount);
 
-            const status = amountPaid >= payment.amount ? 'paid' : 'partial';
+            const status = amountPaid >= Number(payment.amount) ? 'paid' : 'partial';
 
             await updatePaymentStatus(payment.id, {
                 status,
-                amount_paid: amountPaid,
-                paid_date: paidDate,
+                amountPaid: amountPaid,
+                paidDate: paidDate,
             });
 
             onOpenChange(false);
@@ -71,7 +71,7 @@ export function MarkPaidDialog({ payment, open, onOpenChange, onSuccess }: MarkP
                     <DialogHeader>
                         <DialogTitle>Mark Payment</DialogTitle>
                         <DialogDescription>
-                            Update payment status for: {payment.milestone_name}
+                            Update payment status for: {payment.milestoneName}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -79,13 +79,13 @@ export function MarkPaidDialog({ payment, open, onOpenChange, onSuccess }: MarkP
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Total Amount:</span>
                                 <span className="font-semibold">
-                                    {formatCurrency(payment.amount, payment.currency)}
+                                    {formatCurrency(Number(payment.amount), payment.currency)}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Already Paid:</span>
                                 <span className="font-semibold">
-                                    {formatCurrency(payment.amount_paid, payment.currency)}
+                                    {formatCurrency(Number(payment.amountPaid), payment.currency)}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm border-t border-border pt-2">

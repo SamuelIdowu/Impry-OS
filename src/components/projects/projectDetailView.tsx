@@ -73,7 +73,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     const progress = project.progress || 0;
 
     // Helper for dates
-    const startDate = project.start_date ? new Date(project.start_date) : new Date();
+    const startDate = project.startDate ? new Date(project.startDate) : new Date();
     const dueDate = project.deadline ? new Date(project.deadline) : new Date();
     const totalDuration = dueDate.getTime() - startDate.getTime();
     const elapsed = Date.now() - startDate.getTime();
@@ -99,7 +99,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     const projectForScope = {
         id: project.id,
         name: project.name,
-        clientId: project.client_id || '',
+        clientId: project.clientId || '',
         clientName: project.client?.name || '',
         status: project.status as any,
         progress: progress,

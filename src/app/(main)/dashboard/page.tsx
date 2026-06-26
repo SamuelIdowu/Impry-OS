@@ -22,10 +22,10 @@ export default async function DashboardPage() {
     // Map Metrics (snake_case from DB -> camelCase for UI)
     const rawMetrics = metricsRes.success && metricsRes.data ? metricsRes.data : null;
     const metrics = {
-        totalRevenue: rawMetrics?.monthly_revenue || 0,
-        totalRevenueChange: rawMetrics?.revenue_change_percent || 0,
-        outstandingInvoicesAmount: rawMetrics?.pending_invoices_total || 0,
-        outstandingInvoicesCount: rawMetrics?.pending_invoices_count || 0,
+        totalRevenue: rawMetrics?.monthlyRevenue || 0,
+        totalRevenueChange: rawMetrics?.revenueChangePercent || 0,
+        outstandingInvoicesAmount: rawMetrics?.pendingInvoicesTotal || 0,
+        outstandingInvoicesCount: rawMetrics?.pendingInvoicesCount || 0,
         activeProjectsCount: 0 // Not provided by this specific endpoint yet
     };
 
@@ -39,12 +39,12 @@ export default async function DashboardPage() {
         id: r.id,
         title: r.title,
         description: r.description || '',
-        dueDate: new Date(r.reminder_date).toLocaleDateString() === new Date().toLocaleDateString() ? "Today" : new Date(r.reminder_date).toLocaleDateString(),
-        type: r.reminder_type as any, // Cast to 'payment' | 'deadline' | 'follow_up'
-        clientName: r.client_name || 'Unknown Client',
-        clientEmail: r.client_email || undefined,
-        clientId: r.client_id || undefined,
-        projectName: r.project_name || 'General',
+        dueDate: new Date(r.reminderDate).toLocaleDateString() === new Date().toLocaleDateString() ? "Today" : new Date(r.reminderDate).toLocaleDateString(),
+        type: r.reminderType as any, // Cast to 'payment' | 'deadline' | 'follow_up'
+        clientName: r.clientName || 'Unknown Client',
+        clientEmail: r.clientEmail || undefined,
+        clientId: r.clientId || undefined,
+        projectName: r.projectName || 'General',
         overdue: r.overdue
     }));
 
@@ -53,14 +53,14 @@ export default async function DashboardPage() {
     const risks: Risk[] = rawRisks.map(r => ({
         id: r.id,
         projectName: r.name,
-        clientName: r.client_name || 'Unknown',
-        type: r.risk_type,
+        clientName: r.clientName || 'Unknown',
+        type: r.riskType,
         // Map metadata to string representation for UI
-        metadata: r.risk_metadata.days_overdue
-            ? `${r.risk_metadata.days_overdue} days overdue • $${r.risk_metadata.amount || 0}`
-            : `Last contact ${r.risk_metadata.last_contact_days} days ago`,
-        badgeLabel: r.risk_type === 'payment' ? 'Payment Risk' : 'Ghosting Risk',
-        actionLabel: r.risk_type === 'payment' ? 'Send Reminder' : 'Follow Up',
+        metadata: r.riskMetadata.daysOverdue
+            ? `${r.riskMetadata.daysOverdue} days overdue • $${r.riskMetadata.amount || 0}`
+            : `Last contact ${r.riskMetadata.lastContactDays} days ago`,
+        badgeLabel: r.riskType === 'payment' ? 'Payment Risk' : 'Ghosting Risk',
+        actionLabel: r.riskType === 'payment' ? 'Send Reminder' : 'Follow Up',
         progress: undefined // Optional in Risk type
     }));
 

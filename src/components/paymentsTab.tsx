@@ -36,20 +36,20 @@ export function PaymentsTab({ projectId, payments = [], totalValue, paidAmount }
     // for now let's map what we have from ProjectWithDetails
     const mappedPayments: Payment[] = payments.map(p => ({
         id: p.id,
-        project_id: projectId,
-        milestone_name: p.description || 'Payment',
+        projectId: projectId,
+        milestoneName: p.description || 'Payment',
         amount: p.amount,
         currency: p.currency,
         status: p.status as any,
-        due_date: p.due_date || '',
-        amount_paid: p.status === 'paid' ? p.amount : 0,
+        dueDate: p.dueDate || '',
+        amountPaid: p.status === 'paid' ? p.amount : 0,
         invoice_id: p.id, // Using payment ID as invoice ID for now
-        invoice_number: p.id.substring(0, 8).toUpperCase(),
+        invoiceNumber: p.id.substring(0, 8).toUpperCase(),
         description: p.description || 'Payment',
-        user_id: '',
-        client_id: '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        userId: p.userId || '',
+        clientId: null,
+        createdAt: p.updatedAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString()
     }));
 
     return (
@@ -143,7 +143,7 @@ export function PaymentsTab({ projectId, payments = [], totalValue, paidAmount }
                                 setLoading(true);
                                 const res = await sendInvoiceEmailAction(payment.id);
                                 if (res.success) {
-                                    alert(`Reminder sent for ${payment.milestone_name}`);
+                                    alert(`Reminder sent for ${payment.milestoneName}`);
                                     router.refresh();
                                 } else {
                                     alert(`Failed to send reminder: ${res.error}`);

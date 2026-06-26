@@ -53,7 +53,7 @@ import { EmptyClientProjects } from "@/components/emptyClientProjects"
 interface ClientDetailViewProps {
     client: ClientWithProjects;
     projects: Project[];
-    payments: Payment[];
+    payments: any[];
 }
 
 // ... helpers ...
@@ -66,9 +66,9 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
 
     // Derived stats
-    const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0)
+    const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0)
     const outstandingInvoices = payments.filter(p => p.status !== 'paid')
-    const outstandingAmount = outstandingInvoices.reduce((sum, p) => sum + p.amount, 0)
+    const outstandingAmount = outstandingInvoices.reduce((sum, p) => sum + Number(p.amount || 0), 0)
 
     const uiProjects: UIProject[] = projects.map(p => {
         const appStatus = mapDatabaseToAppStatus(p.status);
@@ -89,7 +89,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
             status: uiStatus,
             progress: 0, // Default for now
             dueDate: p.deadline || new Date().toISOString(), // Fallback
-            startDate: p.start_date || new Date().toISOString(),
+            startDate: p.startDate || new Date().toISOString(),
             totalValue: p.budget || 0,
             paidAmount: 0, // Needs calculation from payments if linked
             description: p.description || undefined,
@@ -120,10 +120,10 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
         try {
             const res = await createProjectAction({
                 name: data.name,
-                client_id: client.id,
+                clientId: client.id,
                 description: data.description,
                 status: 'planning', // Default status
-                start_date: new Date().toISOString(),
+                startDate: new Date().toISOString(),
                 deadline: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
                 budget: Number(data.budget) || 0
             });

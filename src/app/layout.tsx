@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat_Alternates, Poppins } from "next/font/google";
 import "./globals.css";
-import { AuthListener } from "@/components/auth/AuthListener";
 import { defaultMetadata } from "@/lib/metadata-config";
 
 const montserratAlternates = Montserrat_Alternates({
@@ -38,7 +37,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserratAlternates.variable} ${poppins.variable}`}>
       <body className={`antialiased ${montserratAlternates.className}`}>
-        <AuthListener />
         {children}
       </body>
     </html>

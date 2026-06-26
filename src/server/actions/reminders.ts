@@ -32,19 +32,19 @@ export async function createReminderAction(input: CreateReminderInput) {
         const reminder = await createReminder(input);
 
         // Log to timeline if linked to a project
-        if (input.project_id) {
+        if (input.projectId) {
             await logTimelineEvent({
-                project_id: input.project_id,
+                project_id: input.projectId,
                 event_type: 'reminder',
                 title: `Reminder created: ${input.title}`,
                 description: input.description,
                 event_date: new Date().toISOString(),
                 metadata: {
                     reminder_id: reminder.id,
-                    due_date: input.reminder_date
+                    dueDate: input.reminderDate
                 }
             });
-            revalidatePath(`/projects/${input.project_id}`);
+            revalidatePath(`/projects/${input.projectId}`);
         }
 
         revalidatePath('/dashboard');
@@ -96,12 +96,12 @@ export async function snoozeReminderAction(
     projectId?: string
 ) {
     try {
-        // Reschedule: update reminder_date, set status to pending (active)
+        // Reschedule: update reminderDate, set status to pending (active)
         const reminder = await updateReminder(id, {
-            reminder_date: newDate,
+            reminderDate: newDate,
             // status: 'pending', // Removed
             is_sent: false, // Ensure it's active
-            snoozed_until: null // Reset snoozed_until if we are treating this as "moved"
+            snoozedUntil: null // Reset snoozedUntil if we are treating this as "moved"
         } as any);
 
         if (projectId) {

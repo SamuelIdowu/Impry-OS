@@ -1,228 +1,113 @@
-import { createClient as createSupabaseClient } from './auth';
+import { db } from '@/server/db';
+import { clients, projects, users } from '@/server/db/schema';
+import { eq, desc, and } from 'drizzle-orm';
+import { getUser } from './auth';
 import type { Client, CreateClientInput, UpdateClientInput, ClientWithProjects } from './types/client';
 
-/**
- * Get all clients for the authenticated user
- */
 export async function getClients(): Promise<ClientWithProjects[]> {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.clients.findMany({
+        where: eq(clients.userId, user.id),
+        orderBy: [desc(clients.createdAt)],
+        with: {
+            projects: {
+                columns: { id: true, name: true, status: true }
+            }
+        }
+    });
 
-    const { data, error } = await supabase
-        .from('clients')
-        .select(`
-      *,
-      projects:projects(id, name, status)
-    `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        throw error;
-    }
-
-    // Calculate active projects count for each client
-    const clientsWithCounts = (data || []).map(client => ({
+    return result.map((client: any) => ({
         ...client,
         active_projects_count: client.projects?.filter(
-            (p: { status: string }) =>
-                p.status === 'in_progress' ||
-                p.status === 'review' ||
-                p.status === 'planning'
+            (p: any) => p.status === 'in_progress' || p.status === 'review' || p.status === 'planning'
         ).length || 0,
-    }));
-
-    return clientsWithCounts;
+    })) as unknown as ClientWithProjects[];
 }
 
-/**
- * Get a single client by ID with related data
- */
 export async function getClientById(id: string): Promise<ClientWithProjects | null> {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { data, error } = await supabase
-        .from('clients')
-        .select(`
-      *,
-      projects:projects(id, name, status)
-    `)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
-
-    if (error) {
-        if (error.code === 'PGRST116') {
-            return null;
+    const client = await db.query.clients.findFirst({
+        where: and(eq(clients.id, id), eq(clients.userId, user.id)),
+        with: {
+            projects: {
+                columns: { id: true, name: true, status: true }
+            }
         }
-        throw error;
-    }
+    });
+
+    if (!client) return null;
 
     return {
-        ...data,
-        active_projects_count: data.projects?.filter(
-            (p: { status: string }) => p.status === 'active' || p.status === 'lead'
+        ...client,
+        active_projects_count: client.projects?.filter(
+            (p: any) => p.status === 'in_progress' || p.status === 'review' || p.status === 'planning'
         ).length || 0,
-    };
+    } as unknown as ClientWithProjects;
 }
 
-/**
- * Create a new client
- */
 export async function createClient(input: CreateClientInput): Promise<Client> {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { data: userProfile, error: profileError } = await supabase
-        .from('users')
-        .select('subscription_plan')
-        .eq('id', user.id)
-        .single();
-
-    if (profileError && profileError.code !== 'PGRST116') {
-        throw profileError;
-    }
-
-    const { count, error: countError } = await supabase
-        .from('clients')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-    if (countError) {
-        throw countError;
-    }
-
-    const plan = userProfile?.subscription_plan || 'free';
-
-    if (plan !== 'pro' && (count || 0) >= 3) {
+    const existingClients = await db.select({ id: clients.id }).from(clients).where(eq(clients.userId, user.id));
+    
+    // Free plan check (assuming all users are free unless we add subscription_plan column)
+    if (existingClients.length >= 3) {
         throw new Error('Free plan limit reached. Upgrade to Pro to add more clients.');
     }
 
-    const { data, error } = await supabase
-        .from('clients')
-        .insert({
-            ...input,
-            user_id: user.id,
-            last_contact_date: new Date().toISOString(),
-        })
-        .select()
-        .single();
+    const [newClient] = await db.insert(clients).values({
+        ...input,
+        userId: user.id,
+        lastContactDate: new Date(),
+    }).returning();
 
-    if (error) {
-        throw error;
-    }
-
-    return data;
+    return newClient as unknown as Client;
 }
 
-/**
- * Update an existing client
- */
 export async function updateClient(id: string, input: UpdateClientInput): Promise<Client> {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const [updatedClient] = await db.update(clients).set({
+        ...input,
+        updatedAt: new Date(),
+    })
+    .where(and(eq(clients.id, id), eq(clients.userId, user.id)))
+    .returning();
 
-    const { data, error } = await supabase
-        .from('clients')
-        .update({
-            ...input,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
+    return updatedClient as unknown as Client;
 }
 
-/**
- * Delete a client
- */
 export async function deleteClient(id: string): Promise<void> {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-    if (error) {
-        throw error;
-    }
+    await db.delete(clients).where(and(eq(clients.id, id), eq(clients.userId, user.id)));
 }
 
-/**
- * Update last contact date for a client
- */
 export async function updateLastContactDate(id: string): Promise<void> {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { error } = await supabase
-        .from('clients')
-        .update({ last_contact_date: new Date().toISOString() })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-    if (error) {
-        throw error;
-    }
+    await db.update(clients)
+        .set({ lastContactDate: new Date() })
+        .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
 }
 
-/**
- * Update client notes
- */
 export async function updateClientNotes(id: string, notes: string): Promise<void> {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { error } = await supabase
-        .from('clients')
-        .update({
+    await db.update(clients)
+        .set({ 
             notes,
-            last_contact_date: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            lastContactDate: new Date(),
+            updatedAt: new Date(),
         })
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-    if (error) {
-        throw error;
-    }
+        .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
 }

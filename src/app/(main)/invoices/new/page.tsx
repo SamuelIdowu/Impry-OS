@@ -16,7 +16,7 @@ export default async function NewInvoicePage() {
     const projects = projectsWithClients.map(p => ({
         id: p.id,
         name: p.name,
-        clientId: p.client_id || ''
+        clientId: p.clientId || ''
     }))
 
     return (

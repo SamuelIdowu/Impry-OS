@@ -18,7 +18,7 @@ export default async function InvoicesPage() {
     const projects = projectsWithClients.map(p => ({
         id: p.id,
         name: p.name,
-        clientId: p.client_id || ''
+        clientId: p.clientId || ''
     }))
 
     return <InvoiceList invoices={invoices} clients={clients} projects={projects} />

@@ -40,10 +40,10 @@ export function AddPaymentDialog({ projectId, onPaymentAdded, trigger }: AddPaym
 
         try {
             await createPayment({
-                project_id: projectId,
-                milestone_name: formData.milestone_name,
+                projectId: projectId,
+                milestoneName: formData.milestone_name,
                 amount: parseFloat(formData.amount),
-                due_date: formData.due_date || undefined,
+                dueDate: formData.due_date || undefined,
                 description: formData.description || undefined,
                 currency: formData.currency,
             });

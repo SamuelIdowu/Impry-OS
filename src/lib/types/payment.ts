@@ -5,25 +5,25 @@ export type PaymentStatus = 'pending' | 'paid' | 'partial' | 'overdue' | 'cancel
 
 export interface Payment {
     id: string;
-    user_id: string;
-    project_id: string | null;
-    client_id: string | null;
-    milestone_name?: string | null;
+    userId: string;
+    projectId: string | null;
+    clientId: string | null;
+    milestoneName?: string | null;
     description?: string | null;
-    amount: number;
-    amount_paid: number;
+    amount: string | number;
+    amountPaid: string | number;
     currency: string;
     status: PaymentStatus;
-    due_date?: string | null;
-    paid_date?: string | null;
-    payment_method?: string | null;
-    invoice_number?: string | null;
-    line_items?: InvoiceLineItem[] | null;
+    dueDate?: string | null;
+    paidDate?: string | null;
+    paymentMethod?: string | null;
+    invoiceNumber?: string | null;
+    lineItems?: InvoiceLineItem[] | null;
     notes?: string | null;
-    tax_rate?: number;
-    discount_rate?: number;
-    created_at: string;
-    updated_at: string;
+    taxRate?: string | number | null;
+    discountRate?: string | number | null;
+    createdAt: Date | string;
+    updatedAt: Date | string;
 }
 
 export interface InvoiceLineItem {
@@ -37,63 +37,63 @@ export interface PaymentWithClient extends Payment {
     client?: {
         id: string;
         name: string;
-        email?: string;
-        company?: string;
+        email?: string | null;
+        company?: string | null;
     } | null;
 }
 
 export interface CreatePaymentInput {
-    project_id: string;
-    milestone_name: string;
+    projectId: string;
+    milestoneName: string;
     description?: string;
-    amount: number;
+    amount: string | number;
     currency?: string;
-    due_date?: string;
+    dueDate?: string;
     notes?: string;
-    tax_rate?: number;
-    discount_rate?: number;
+    taxRate?: string | number;
+    discountRate?: string | number;
 }
 
 export interface UpdatePaymentInput {
-    milestone_name?: string;
+    milestoneName?: string;
     description?: string;
-    amount?: number;
-    due_date?: string;
+    amount?: string | number;
+    dueDate?: string;
     notes?: string;
-    tax_rate?: number;
-    discount_rate?: number;
+    taxRate?: string | number;
+    discountRate?: string | number;
 }
 
 export interface UpdatePaymentStatusInput {
     status: PaymentStatus;
-    amount_paid?: number;
-    paid_date?: string;
-    payment_method?: string;
+    amountPaid?: string | number;
+    paidDate?: string;
+    paymentMethod?: string;
 }
 
 export interface CreateInvoiceInput {
-    payment_id: string;
-    invoice_number: string;
-    issue_date: string;
-    due_date: string;
-    line_items: InvoiceLineItem[];
+    paymentId: string;
+    invoiceNumber: string;
+    issueDate: string;
+    dueDate: string;
+    lineItems: InvoiceLineItem[];
     notes?: string;
-    tax_rate?: number;
-    discount_rate?: number;
+    taxRate?: string | number;
+    discountRate?: string | number;
 }
 
 export interface CreateStandaloneInvoiceInput {
-    client_id: string;
-    project_id?: string;
-    amount: number;
+    clientId: string;
+    projectId?: string;
+    amount: string | number;
     currency?: string;
     status?: PaymentStatus;
-    invoice_number: string;
-    due_date: string;
-    line_items?: InvoiceLineItem[];
+    invoiceNumber: string;
+    dueDate: string;
+    lineItems?: InvoiceLineItem[];
     notes?: string;
-    tax_rate?: number;
-    discount_rate?: number;
+    taxRate?: string | number;
+    discountRate?: string | number;
 }
 
 export interface PaymentSummary {

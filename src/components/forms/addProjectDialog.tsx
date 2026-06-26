@@ -51,7 +51,7 @@ export function AddProjectDialog({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [formData, setFormData] = useState<CreateProjectInput>({
         name: '',
-        client_id: clientId || '',
+        clientId: clientId || '',
         description: '',
         status: 'planning', // Maps to 'lead'
     });
@@ -63,7 +63,7 @@ export function AddProjectDialog({
             newErrors.name = 'Project name is required';
         }
 
-        if (!formData.client_id) {
+        if (!formData.clientId) {
             newErrors.client_id = 'Client is required';
         }
 
@@ -91,7 +91,7 @@ export function AddProjectDialog({
             // Reset form but keep clientId if provided as prop
             setFormData({
                 name: '',
-                client_id: clientId || '',
+                clientId: clientId || '',
                 description: '',
                 status: 'planning',
             });
@@ -128,11 +128,11 @@ export function AddProjectDialog({
                             <div className="grid gap-2">
                                 <Label htmlFor="client_id">Client <span className="text-destructive">*</span></Label>
                                 <Select
-                                    value={formData.client_id}
+                                    value={formData.clientId}
                                     onValueChange={(value) =>
                                         setFormData({
                                             ...formData,
-                                            client_id: value,
+                                            clientId: value,
                                         })
                                     }
                                 >

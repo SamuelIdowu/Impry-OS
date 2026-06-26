@@ -1,14 +1,15 @@
 import { AppShell } from "@/components/layout/app-shell"
-import { createClient } from "@/lib/auth"
+
 import { redirect } from "next/navigation"
+
+import { getUser } from "@/lib/auth"
 
 export default async function MainLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getUser()
 
     if (!user) {
         redirect("/login")

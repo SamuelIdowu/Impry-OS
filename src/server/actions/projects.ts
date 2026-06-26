@@ -9,8 +9,7 @@ import {
     updateProjectStatus,
     deleteProject,
     getProjectPaymentSummary,
-    getProjectNextReminder,
-    updateProjectProgress
+    getProjectNextReminder
 } from '@/lib/projects';
 import { CreateProjectInput, UpdateProjectInput, ProjectStatus } from '@/lib/types/project';
 import { revalidatePath } from 'next/cache';
@@ -64,7 +63,7 @@ export async function createProjectAction(data: CreateProjectInput) {
     try {
         const newProject = await createProject(data);
         revalidatePath('/projects');
-        revalidatePath('/clients/' + data.client_id);
+        revalidatePath('/clients/' + data.clientId);
         revalidatePath('/'); // Dashboard
         return { success: true, data: newProject };
     } catch (error) {
@@ -106,22 +105,6 @@ export async function updateProjectStatusAction(id: string, status: ProjectStatu
 }
 
 
-
-/**
- * Update project progress
- */
-export async function updateProjectProgressAction(id: string, progress: number) {
-    try {
-        const updatedProject = await updateProjectProgress(id, progress);
-        revalidatePath('/projects');
-        revalidatePath(`/projects/${id}`);
-        revalidatePath('/'); // Dashboard activity might change
-        return { success: true, data: updatedProject };
-    } catch (error) {
-        console.error('Error updating project progress:', error);
-        return { success: false, error: (error as Error).message };
-    }
-}
 
 /**
  * Delete a project

@@ -9,65 +9,84 @@ import {
     updateClientNotes,
     updateLastContactDate
 } from '@/lib/clients';
-import { createClient as createSupabaseClient } from '@/lib/auth';
 import { CreateClientInput, UpdateClientInput } from '@/lib/types/client';
 import { revalidatePath } from 'next/cache';
+import { db } from '@/server/db';
+import { clients, projects, payments } from '@/server/db/schema';
+import { eq, inArray, and } from 'drizzle-orm';
+import { getUser } from '@/lib/auth';
 
 /**
  * Fetch client statistics (revenue, outstanding, etc)
  */
 export async function fetchClientStats() {
-    const supabase = await createSupabaseClient();
+    try {
+        const user = await getUser();
+        if (!user) throw new Error('User not authenticated');
 
-    // Total Clients
-    const { count: totalClients } = await supabase
-        .from('clients')
-        .select('*', { count: 'exact', head: true });
+        // Total Clients
+        const userClients = await db.query.clients.findMany({
+            where: eq(clients.userId, user.id),
+        });
+        const totalClients = userClients.length;
 
-    // Active Projects
-    const { count: activeProjects } = await supabase
-        .from('projects')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['in_progress', 'planning', 'review']);
+        // Active Projects
+        const userProjects = await db.query.projects.findMany({
+            where: eq(projects.userId, user.id),
+        });
+        const activeProjects = userProjects.filter(p => p.status === 'in_progress' || p.status === 'planning' || p.status === 'review').length;
 
-    // Revenue
-    const { data: payments } = await supabase
-        .from('payments')
-        .select('amount, status');
+        // Revenue
+        const userPayments = await db.query.payments.findMany({
+            where: eq(payments.userId, user.id),
+        });
 
-    const totalRevenue = payments?.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0) || 0;
-    const pendingRevenue = payments?.filter(p => p.status !== 'paid').reduce((sum, p) => sum + p.amount, 0) || 0;
+        // Convert string to number for arithmetic
+        const totalRevenue = userPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
+        const pendingRevenue = userPayments.filter(p => p.status !== 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
 
-    return {
-        success: true,
-        data: {
-            totalClients: totalClients || 0,
-            activeProjects: activeProjects || 0,
-            totalRevenue,
-            pendingRevenue
-        }
-    };
+        return {
+            success: true,
+            data: {
+                totalClients,
+                activeProjects,
+                totalRevenue,
+                pendingRevenue
+            }
+        };
+    } catch (error) {
+        console.error('Error fetching client stats:', error);
+        return { success: false, error: (error as Error).message };
+    }
 }
 
 /**
  * Fetch payments for a specific client
  */
 export async function fetchClientPayments(clientId: string) {
-    const supabase = await createSupabaseClient();
+    try {
+        const user = await getUser();
+        if (!user) throw new Error('User not authenticated');
 
-    // Join payments through projects
-    const { data, error } = await supabase
-        .from('payments')
-        .select('*, projects!inner(client_id)')
-        .eq('projects.client_id', clientId);
+        // Join payments through projects
+        const clientProjects = await db.select({ id: projects.id }).from(projects).where(eq(projects.clientId, clientId));
+        const projectIds = clientProjects.map(p => p.id);
 
-    if (error) {
+        if (projectIds.length === 0) {
+            return { success: true, data: [] };
+        }
+
+        const data = await db.query.payments.findMany({
+            where: inArray(payments.projectId, projectIds),
+        });
+
+        return { success: true, data };
+    } catch (error) {
         console.error('Error fetching client payments:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: (error as Error).message };
     }
-
-    return { success: true, data: data || [] };
 }
+
 /**
  * Fetch all clients
  */
@@ -105,47 +124,16 @@ export async function fetchClient(id: string) {
  */
 export async function createClientAction(data: CreateClientInput) {
     try {
-        const supabase = await createSupabaseClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            return { success: false, error: 'Not authenticated' };
-        }
-
-        // Check subscription limits
-        const { data: profile } = await supabase
-            .from('users')
-            .select('subscription_plan')
-            .eq('id', user.id)
-            .single();
-
-        const plan = profile?.subscription_plan || 'free';
-
-        if (plan === 'free') {
-            const { count } = await supabase
-                .from('clients')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', user.id); // Ensure we count only user's clients
-
-            const clientLimit = 3;
-            if ((count || 0) >= clientLimit) {
-                return {
-                    success: false,
-                    error: 'Free plan limit reached (3 clients). Please upgrade to Pro for unlimited clients.'
-                };
-            }
-        }
-
         const newClient = await createClient(data);
         revalidatePath('/clients');
         return { success: true, data: newClient };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating client:', error);
         // Better error message for unique constraint violations
-        if ((error as any).code === '23505') {
+        if (error.code === '23505') {
             return { success: false, error: 'A client with this email already exists' };
         }
-        return { success: false, error: (error as Error).message };
+        return { success: false, error: error.message };
     }
 }
 
@@ -195,41 +183,29 @@ export async function updateClientNotesAction(id: string, notes: string) {
 /**
  * Import multiple clients
  */
-export async function importClientsAction(clients: CreateClientInput[]) {
+export async function importClientsAction(clientsList: CreateClientInput[]) {
     try {
-        const supabase = await createSupabaseClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            throw new Error('User not authenticated');
-        }
+        const user = await getUser();
+        if (!user) throw new Error('User not authenticated');
 
         // Prepare data with user_id and timestamps
-        const clientsToInsert = clients.map(client => ({
+        const clientsToInsert = clientsList.map(client => ({
             ...client,
-            user_id: user.id,
-            last_contact_date: new Date().toISOString(),
+            userId: user.id,
+            lastContactDate: new Date(),
         }));
 
-        const { data, error } = await supabase
-            .from('clients')
-            .insert(clientsToInsert)
-            .select();
-
-        if (error) {
-            console.error('Error importing clients:', error);
-            // Check for potential duplicates if using unique constraint but ignoring conflicts
-            if (error.code === '23505') {
-                return { success: false, error: 'Some emails already exist. Please ensure emails are unique.' };
-            }
-            throw error;
-        }
+        const data = await db.insert(clients).values(clientsToInsert).returning();
 
         revalidatePath('/clients');
         return { success: true, count: data?.length || 0 };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error importing clients:', error);
-        return { success: false, error: (error as Error).message };
+        // Check for potential duplicates if using unique constraint but ignoring conflicts
+        if (error.code === '23505') {
+            return { success: false, error: 'Some emails already exist. Please ensure emails are unique.' };
+        }
+        return { success: false, error: error.message };
     }
 }
 

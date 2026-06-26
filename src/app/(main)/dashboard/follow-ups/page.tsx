@@ -14,12 +14,12 @@ export default async function FollowUpsPage() {
         id: r.id,
         title: r.title,
         description: r.description || '',
-        dueDate: new Date(r.reminder_date).toLocaleDateString() === new Date().toLocaleDateString() ? "Today" : new Date(r.reminder_date).toLocaleDateString(),
-        type: r.reminder_type as any,
-        clientName: r.client_name || 'Unknown Client',
-        projectName: r.project_name || 'General',
+        dueDate: new Date(r.reminderDate).toLocaleDateString() === new Date().toLocaleDateString() ? "Today" : new Date(r.reminderDate).toLocaleDateString(),
+        type: r.reminderType as any,
+        clientName: r.clientName || 'Unknown Client',
+        projectName: r.projectName || 'General',
         overdue: r.overdue,
-        projectId: r.project_id || undefined
+        projectId: r.projectId || undefined
     }))
 
     return (

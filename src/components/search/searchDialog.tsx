@@ -5,7 +5,8 @@ import { Search, Loader2, FileText, User, Briefcase } from "lucide-react"
 import { useRouter } from "next/navigation" // Using next/navigation for App Router
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog" // Assuming standard shadcn Dialog
 import { Input } from "@/components/ui/input"
-import { searchGlobal, SearchResult } from "@/server/actions/search"
+import { searchGlobal } from "@/server/actions/search"
+import type { SearchResult } from "@/lib/search"
 import { cn } from "@/lib/utils"
 
 interface SearchDialogProps {

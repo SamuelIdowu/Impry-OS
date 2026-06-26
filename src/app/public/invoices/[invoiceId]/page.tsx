@@ -14,8 +14,8 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
     try {
         const invoice = await getPublicInvoice(params.invoiceId)
         return {
-            title: `Invoice ${invoice.invoice_number}`,
-            description: `View invoice ${invoice.invoice_number}`,
+            title: `Invoice ${invoice.invoiceNumber}`,
+            description: `View invoice ${invoice.invoiceNumber}`,
         }
     } catch (e) {
         return {

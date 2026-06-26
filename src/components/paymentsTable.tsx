@@ -102,10 +102,10 @@ function PaymentRow({ payment, onMarkPaid, onMarkPartial, onGenerateInvoice, onD
         <tr className="group hover:bg-zinc-50/50 transition-colors">
             <td className="px-6 py-5 align-top">
                 <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-bold text-zinc-900">{payment.milestone_name}</span>
-                    {payment.invoice_number ? (
+                    <span className="text-sm font-bold text-zinc-900">{payment.milestoneName}</span>
+                    {payment.invoiceNumber ? (
                         <span className="text-xs text-zinc-400 flex items-center gap-1">
-                            Invoice #{payment.invoice_number}
+                            Invoice #{payment.invoiceNumber}
                         </span>
                     ) : (
                         <span className="text-xs text-zinc-400 italic">Not invoiced yet</span>
@@ -114,12 +114,12 @@ function PaymentRow({ payment, onMarkPaid, onMarkPartial, onGenerateInvoice, onD
             </td>
             <td className="px-6 py-5 align-top">
                 <span className="text-sm font-bold text-zinc-900">
-                    {formatCurrency(payment.amount, payment.currency)}
+                    {formatCurrency(Number(payment.amount), payment.currency)}
                 </span>
             </td>
             <td className="px-6 py-5 align-top">
                 <span className="text-sm text-zinc-500">
-                    {payment.due_date ? format(new Date(payment.due_date), 'MMM dd, yyyy') : '—'}
+                    {payment.dueDate ? format(new Date(payment.dueDate), 'MMM dd, yyyy') : '—'}
                 </span>
             </td>
             <td className="px-6 py-5 align-top">

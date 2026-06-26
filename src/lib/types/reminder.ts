@@ -3,39 +3,39 @@ export type ReminderStatus = 'pending' | 'completed' | 'snoozed';
 
 export interface Reminder {
     id: string;
-    user_id: string;
-    project_id?: string;
-    client_id?: string;
-    payment_id?: string;
+    userId: string;
+    projectId?: string;
+    clientId?: string;
+    paymentId?: string;
     title: string;
     description?: string;
-    reminder_date: string; // ISO string
-    reminder_type: ReminderType;
+    reminderDate: string; // ISO string
+    reminderType: ReminderType;
     status: ReminderStatus;
-    snoozed_until?: string;
-    completed_at?: string;
-    is_sent: boolean;
-    sent_at?: string;
-    created_at: string;
-    updated_at: string;
+    snoozedUntil?: string;
+    completedAt?: string;
+    isSent: boolean;
+    sentAt?: string;
+    createdAt: string;
+    updatedAt: string;
 
     // Joined fields (optional)
-    projects?: { name: string };
-    clients?: { name: string; email?: string };
+    project?: { name: string };
+    client?: { name: string; email?: string };
 }
 
 export type CreateReminderInput = {
-    project_id?: string;
-    client_id?: string;
-    payment_id?: string;
+    projectId?: string;
+    clientId?: string;
+    paymentId?: string;
     title: string;
     description?: string;
-    reminder_date: string;
-    reminder_type: ReminderType;
+    reminderDate: string;
+    reminderType: ReminderType;
 };
 
 export type UpdateReminderInput = Partial<CreateReminderInput> & {
     status?: ReminderStatus;
-    snoozed_until?: string | null;
-    completed_at?: string | null;
+    snoozedUntil?: string | null;
+    completedAt?: string | null;
 };

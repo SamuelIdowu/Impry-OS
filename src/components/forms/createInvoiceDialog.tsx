@@ -49,8 +49,8 @@ export function CreateInvoiceDialog({ payment, open, onOpenChange, onSuccess }: 
             setInvoiceNumber(`INV-${dateStr}-${random}`);
 
             // Set dates
-            if (payment.due_date) {
-                setDueDate(payment.due_date);
+            if (payment.dueDate) {
+                setDueDate(payment.dueDate);
             } else {
                 // Default to +14 days
                 const date = new Date();
@@ -59,15 +59,15 @@ export function CreateInvoiceDialog({ payment, open, onOpenChange, onSuccess }: 
             }
 
             // Initialize line items from payment if none exist
-            if (payment.line_items && payment.line_items.length > 0) {
-                setItems(payment.line_items);
+            if (payment.lineItems && payment.lineItems.length > 0) {
+                setItems(payment.lineItems);
             } else {
                 setItems([
                     {
-                        description: payment.milestone_name || 'Payment Milestone',
+                        description: payment.milestoneName || 'Payment Milestone',
                         quantity: 1,
-                        rate: payment.amount,
-                        amount: payment.amount,
+                        rate: Number(payment.amount),
+                        amount: Number(payment.amount),
                     },
                 ]);
             }
@@ -115,11 +115,11 @@ export function CreateInvoiceDialog({ payment, open, onOpenChange, onSuccess }: 
 
         try {
             await generateInvoice({
-                payment_id: payment.id,
-                invoice_number: invoiceNumber,
-                issue_date: issueDate,
-                due_date: dueDate,
-                line_items: items,
+                paymentId: payment.id,
+                invoiceNumber: invoiceNumber,
+                issueDate: issueDate,
+                dueDate: dueDate,
+                lineItems: items,
                 notes: notes,
             });
 
@@ -142,7 +142,7 @@ export function CreateInvoiceDialog({ payment, open, onOpenChange, onSuccess }: 
                     <DialogHeader>
                         <DialogTitle>Generate Invoice</DialogTitle>
                         <DialogDescription>
-                            Create an invoice for payment milestone: {payment.milestone_name}
+                            Create an invoice for payment milestone: {payment.milestoneName}
                         </DialogDescription>
                     </DialogHeader>
 

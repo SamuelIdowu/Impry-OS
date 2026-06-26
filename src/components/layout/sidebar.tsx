@@ -23,7 +23,8 @@ import {
     Zap
 } from "lucide-react"
 
-import { User } from "@supabase/supabase-js"
+// @ts-ignore
+import type { User } from "better-auth"
 import { getTeamMembersAction, addTeamMemberAction, deleteTeamMemberAction } from "@/server/actions/team"
 import { getProfileAction } from "@/server/actions/user"
 
@@ -31,7 +32,7 @@ interface TeamMember {
     id: string;
     name: string;
     role: string | null;
-    avatar_url: string | null;
+    avatarUrl: string | null;
     email: string | null;
 }
 
@@ -63,7 +64,7 @@ export function Sidebar({ className, user }: SidebarProps) {
                 setMembers(membersRes.members)
             }
             if (profileRes.success && profileRes.profile) {
-                setSubscriptionPlan(profileRes.profile.subscription_plan)
+                setSubscriptionPlan((profileRes.profile as any).subscription_plan || 'free')
             }
             setIsLoadingMembers(false)
         }
@@ -274,10 +275,10 @@ export function Sidebar({ className, user }: SidebarProps) {
                                 <div key={member.id} className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-zinc-50 group">
                                     <div className={cn(
                                         "size-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0",
-                                        member.avatar_url ? "bg-transparent" : "bg-zinc-100 text-zinc-500"
+                                        member.avatarUrl ? "bg-transparent" : "bg-zinc-100 text-zinc-500"
                                     )}>
-                                        {member.avatar_url ? (
-                                            <img src={member.avatar_url} alt={member.name} className="size-8 rounded-full object-cover" />
+                                        {member.avatarUrl ? (
+                                            <img src={member.avatarUrl} alt={member.name} className="size-8 rounded-full object-cover" />
                                         ) : (
                                             getInitials(member.name)
                                         )}

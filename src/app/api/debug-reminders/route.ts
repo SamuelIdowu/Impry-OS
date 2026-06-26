@@ -1,26 +1,27 @@
 
 import { NextResponse } from 'next/server';
 import { getDashboardReminders } from '@/lib/dashboard';
-import { createClient } from '@/lib/auth';
+import { getUser } from '@/lib/auth';
+import { db } from '@/server/db';
+import { sql } from 'drizzle-orm';
+
 
 export async function GET() {
     try {
-        const supabase = await createClient();
         // Check authentication first
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const user = await getUser();
 
-        if (authError || !user) {
+        if (!user) {
             return NextResponse.json({
                 error: 'Auth Error',
-                details: authError,
                 user: user
             }, { status: 401 });
         }
 
         // Check if table exists by simple query
-        const { error: tableCheckError } = await supabase.from('reminders').select('count', { count: 'exact', head: true });
-
-        if (tableCheckError) {
+        try {
+            await db.execute(sql`select count(*) from reminders`);
+        } catch (tableCheckError: any) {
             return NextResponse.json({
                 error: 'Table Check Error',
                 details: tableCheckError,

@@ -1,20 +1,25 @@
 import React from "react"
-import { createClient as createSupabaseClient } from '@/lib/auth'
+
 import { SettingsForm } from "@/components/settings/SettingsForm"
+import { getUser } from "@/lib/auth"
+import { db } from "@/server/db"
+import { users } from "@/server/db/schema"
+import { eq } from "drizzle-orm"
 
 export default async function SettingsPage() {
-    const supabase = await createSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getUser();
 
     if (!user) {
         return <div>Please log in to view settings.</div>
     }
 
-    const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+    const profileArray = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1)
+
+    const profile = profileArray[0]
 
     return <SettingsForm user={user} profile={profile} />
 }

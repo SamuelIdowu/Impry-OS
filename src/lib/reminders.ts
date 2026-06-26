@@ -1,4 +1,7 @@
-import { createClient } from './auth';
+import { db } from '@/server/db';
+import { reminders } from '@/server/db/schema';
+import { eq, and, asc } from 'drizzle-orm';
+import { getUser } from './auth';
 import type {
     Reminder,
     CreateReminderInput,
@@ -15,178 +18,106 @@ export async function getReminders(filters?: {
     type?: string;
     limit?: number;
 }): Promise<Reminder[]> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    let conditions: any[] = [eq(reminders.userId, user.id)];
 
-    let query = supabase
-        .from('reminders')
-        .select(`
-            *,
-            projects (name),
-            clients (name, email)
-        `)
-        .eq('user_id', user.id);
-
-    if (filters?.projectId) {
-        query = query.eq('project_id', filters.projectId);
-    }
-
+    if (filters?.projectId) conditions.push(eq(reminders.projectId, filters.projectId));
     if (filters?.status) {
-        query = query.eq('status', filters.status);
+        if (filters.status === 'completed') {
+            conditions.push(eq(reminders.isSent, true));
+        } else if (filters.status === 'pending') {
+            conditions.push(eq(reminders.isSent, false));
+        }
     }
+    if (filters?.type) conditions.push(eq(reminders.reminderType, filters.type));
 
-    if (filters?.type) {
-        query = query.eq('reminder_type', filters.type);
-    }
+    const result = await db.query.reminders.findMany({
+        where: and(...conditions),
+        orderBy: [asc(reminders.reminderDate)],
+        limit: filters?.limit,
+        with: {
+            project: { columns: { name: true } },
+            client: { columns: { name: true, email: true } }
+        }
+    });
 
-    query = query.order('reminder_date', { ascending: true });
-
-    if (filters?.limit) {
-        query = query.limit(filters.limit);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        throw error;
-    }
-
-    return (data as any[]) || [];
+    return result as unknown as Reminder[];
 }
 
 /**
  * Get pending and due reminders (including snoozed ones that are due)
- * Logic: status = 'pending' OR (status = 'snoozed' AND snoozed_until <= NOW)
- * Actually, usually we reset status to 'pending' when snooze expires via cron, 
- * but for UI query we can just check conditions.
- * Sprint 8 Spec: Snoozed = Temporarily hidden.
- * So if snoozed_until > now, hide it.
  */
 export async function getDueReminders(): Promise<Reminder[]> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.reminders.findMany({
+        where: and(eq(reminders.userId, user.id), eq(reminders.isSent, false)),
+        orderBy: [asc(reminders.reminderDate)],
+        with: {
+            project: { columns: { name: true } },
+            client: { columns: { name: true, email: true } }
+        }
+    });
 
-    // Since Supabase filter on complex OR conditions can be tricky with JS SDK without pure Postgrest syntax,
-    // we'll fetch pending and snoozed, and filter in client or use raw query if complex.
-    // However, let's try to be efficient.
-    // 'status' is either 'pending' or 'snoozed'.
-    // If 'pending', show it (check due date?? No, inbox shows upcoming too probably? Spec says "Due/Overdue").
-    // "Dashboard Follow-Up Inbox query: status='pending' AND (due_date <= NOW + 1 day OR overdue)"
-
-    // We'll fetch all active (not completed) and filter/sort in app or simple query
-    const { data, error } = await supabase
-        .from('reminders')
-        .select(`
-            *,
-            projects (name),
-            clients (name, email)
-        `)
-        .eq('user_id', user.id)
-        .eq('is_sent', false)
-        .order('reminder_date', { ascending: true });
-
-    if (error) {
-        throw error;
-    }
-
-    const now = new Date();
-
-    // Filter in memory for snoozed_until logic if needed, 
-    // or just return all and let UI decide what "Due" means.
-    // But spec says "Show in Follow-Up Inbox".
-    // We will return all incomplete reminders and let UI/Action filter.
-    return (data || []) as Reminder[];
+    return result as unknown as Reminder[];
 }
 
 /**
  * Create a new reminder
  */
 export async function createReminder(input: CreateReminderInput): Promise<Reminder> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const [newReminder] = await db.insert(reminders).values({
+        userId: user.id,
+        projectId: input.projectId,
+        clientId: input.clientId,
+        paymentId: input.paymentId,
+        title: input.title,
+        description: input.description,
+        reminderDate: new Date(input.reminderDate),
+        reminderType: input.reminderType || 'custom',
+        isSent: false,
+    }).returning();
 
-    const { data, error } = await supabase
-        .from('reminders')
-        .insert({
-            user_id: user.id,
-            project_id: input.project_id,
-            client_id: input.client_id,
-            payment_id: input.payment_id,
-            title: input.title,
-            description: input.description,
-            reminder_date: input.reminder_date,
-            reminder_type: input.reminder_type,
-            is_sent: false,
-        })
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    return data as Reminder;
+    return newReminder as unknown as Reminder;
 }
 
 /**
  * Update a reminder
  */
 export async function updateReminder(id: string, input: UpdateReminderInput): Promise<Reminder> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const { status, ...updateData } = input as any;
 
-    // Remove status from input as it doesn't exist in DB
-    const { status, ...updateData } = input;
+    const setFields: any = { updatedAt: new Date() };
+    if (updateData.title !== undefined) setFields.title = updateData.title;
+    if (updateData.description !== undefined) setFields.description = updateData.description;
+    if (updateData.reminderDate !== undefined) setFields.reminderDate = new Date(updateData.reminderDate);
+    if (updateData.reminderType !== undefined) setFields.reminderType = updateData.reminderType;
+    if (updateData.isSent !== undefined) setFields.isSent = updateData.isSent;
+    if (updateData.completedAt !== undefined) setFields.completedAt = updateData.completedAt ? new Date(updateData.completedAt) : null;
+    if (updateData.snoozedUntil !== undefined) setFields.snoozedUntil = updateData.snoozedUntil ? new Date(updateData.snoozedUntil) : null;
 
-    const { data, error } = await supabase
-        .from('reminders')
-        .update(updateData)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+    const [updatedReminder] = await db.update(reminders).set(setFields)
+    .where(and(eq(reminders.id, id), eq(reminders.userId, user.id)))
+    .returning();
 
-    if (error) {
-        throw error;
-    }
-
-    return data as Reminder;
+    return updatedReminder as unknown as Reminder;
 }
 
 /**
  * Delete a reminder
  */
 export async function deleteReminder(id: string): Promise<void> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { error } = await supabase
-        .from('reminders')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-    if (error) {
-        throw error;
-    }
+    await db.delete(reminders).where(and(eq(reminders.id, id), eq(reminders.userId, user.id)));
 }

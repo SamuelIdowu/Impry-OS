@@ -14,6 +14,6 @@ export default async function ReportsPage() {
     return <ReportsView
         projects={projects.success && projects.data ? projects.data : []}
         invoices={invoices}
-        userCreatedAt={user?.created_at || new Date().toISOString()} // Fallback to now if no user (shouldn't happen in auth'd app)
+        userCreatedAt={user?.createdAt.toISOString() || new Date().toISOString()} // Fallback to now if no user (shouldn't happen in auth'd app)
     />
 }

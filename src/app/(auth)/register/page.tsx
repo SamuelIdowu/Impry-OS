@@ -3,24 +3,85 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
-import { signInWithGoogle } from "@/server/actions/auth/actions";
-
+import { FormInput } from "@/components/auth/FormInput";
+import { AuthDivider } from "@/components/auth/AuthDivider";
+import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
     const [error, setError] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [passwordError, setPasswordError] = useState("");
+    const router = useRouter();
 
-    async function handleGoogleSignIn() {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
         setIsLoading(true);
         setError("");
+        setPasswordError("");
 
-        const result = await signInWithGoogle();
-
-        if (!result.success && result.error) {
-            setError(result.error);
+        // Validate passwords match
+        if (password !== confirmPassword) {
+            setPasswordError("Passwords do not match");
             setIsLoading(false);
+            return;
+        }
+
+        const formData = new FormData(e.currentTarget);
+
+        const name = formData.get("name") as string;
+        const email = formData.get("email") as string;
+        
+        try {
+            await authClient.signUp.email({
+                email,
+                password,
+                name,
+            }, {
+                onSuccess: () => {
+                    router.push("/dashboard");
+                },
+                onError: (ctx) => {
+                    setError(ctx.error.message || "Registration failed");
+                    setIsLoading(false);
+                }
+            });
+        } catch (err) {
+            console.error("Registration error:", err);
+            setError("An unexpected error occurred");
+            setIsLoading(false);
+        }
+    }
+
+    async function handleGoogleSignIn() {
+        setIsGoogleLoading(true);
+        setError("");
+
+        try {
+            await authClient.signIn.social({
+                provider: "google",
+            }, {
+                onSuccess: () => {
+                    router.push("/dashboard");
+                },
+                onError: (ctx) => {
+                    setError(ctx.error.message || "Google sign-in failed");
+                    setIsGoogleLoading(false);
+                }
+            });
+        } catch (err) {
+            console.error("Google OAuth error:", err);
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "An unexpected error occurred"
+            );
+            setIsGoogleLoading(false);
         }
     }
 
@@ -49,36 +110,210 @@ export default function RegisterPage() {
                         </div>
                     )}
 
+                    {/* Email/Password Form */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <FormInput
+                            label="Full Name"
+                            name="name"
+                            type="text"
+                            placeholder="John Doe"
+                            required
+                            autoComplete="name"
+                            disabled={isLoading}
+                            icon={
+                                <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                    />
+                                </svg>
+                            }
+                        />
+
+                        <FormInput
+                            label="Email"
+                            name="email"
+                            type="email"
+                            placeholder="you@example.com"
+                            required
+                            autoComplete="email"
+                            disabled={isLoading}
+                            icon={
+                                <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                                    />
+                                </svg>
+                            }
+                        />
+
+                        <div className="space-y-2">
+                            <FormInput
+                                label="Password"
+                                name="password"
+                                type="password"
+                                placeholder="••••••••"
+                                required
+                                autoComplete="new-password"
+                                disabled={isLoading}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                icon={
+                                    <svg
+                                        className="w-5 h-5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                        />
+                                    </svg>
+                                }
+                            />
+                            <PasswordStrengthIndicator password={password} />
+                        </div>
+
+                        <FormInput
+                            label="Confirm Password"
+                            name="confirmPassword"
+                            type="password"
+                            placeholder="••••••••"
+                            required
+                            autoComplete="new-password"
+                            disabled={isLoading}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            error={passwordError}
+                            icon={
+                                <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                </svg>
+                            }
+                        />
+
+                        <div className="flex items-start gap-2">
+                            <input
+                                type="checkbox"
+                                name="agreeToTerms"
+                                id="agreeToTerms"
+                                required
+                                className="w-4 h-4 mt-0.5 rounded border-border text-primary focus:ring-primary"
+                            />
+                            <label
+                                htmlFor="agreeToTerms"
+                                className="text-sm text-muted-foreground"
+                            >
+                                I agree to the{" "}
+                                <Link
+                                    href="/terms"
+                                    className="text-primary hover:underline"
+                                >
+                                    Terms of Service
+                                </Link>{" "}
+                                and{" "}
+                                <Link
+                                    href="/privacy"
+                                    className="text-primary hover:underline"
+                                >
+                                    Privacy Policy
+                                </Link>
+                            </label>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full h-12 rounded-xl text-sm font-semibold"
+                        >
+                            {isLoading ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                                    Creating account...
+                                </div>
+                            ) : (
+                                "Create account"
+                            )}
+                        </Button>
+                    </form>
+
+                    {/* Divider */}
+                    <AuthDivider />
+
                     {/* Google OAuth Button */}
                     <div>
                         <Button
                             type="button"
                             onClick={handleGoogleSignIn}
-                            disabled={isLoading}
+                            disabled={isGoogleLoading || isLoading}
                             variant="outline"
                             className="w-full h-11 rounded-lg gap-3 text-sm font-medium"
                         >
-                            <svg className="h-5 w-5" viewBox="0 0 24 24">
-                                <path d="M12.0003 20.45c4.6653 0 8.5779-3.9126 8.5779-8.5779 0-.4224-.0414-.8364-.108-1.2417H12.0003v3.3138h5.2725c-.2346 1.4913-1.503 2.7219-3.1365 3.0906l-.1359.009-.2046.1362-2.583 1.9965-.0882.0285c1.4724 1.3533 3.6558 2.1525 6.138 2.1525z" fill="#4285F4" />
-                                <path d="M5.0046 14.5122c-.4962-1.4673-.4962-3.0456 0-4.5129l-.0045-.1569-2.7306-2.115-.0903.0423C.9606 9.8514.9606 14.6568 2.1792 16.635l2.8254-2.1228z" fill="#34A853" />
-                                <path d="M12.0003 4.905c2.3787 0 4.5072.8466 6.1836 2.2464l2.4549-2.4549C18.6675 2.7663 15.4839 1.5498 12.0003 1.5498c-3.7662 0-7.1478 2.1492-8.832 5.3784l2.859 2.148c1.0716-3.2355 4.1085-5.5608 7.6437-5.5608z" fill="#EA4335" />
-                                <path d="M12.0003 22.4502c-3.4116 0-6.3681-2.1702-7.5333-5.2443l-2.8254 2.1228C4.3059 23.0163 7.9269 25.5498 12.0003 25.5498c3.2109 0 6.138-1.1895 8.3583-3.1761l-2.709-2.1132c-1.5312 1.341-3.5226 2.1897-5.6493 2.1897z" fill="#34A853" />
-                            </svg>
+                        <svg
+                            className="w-5 h-5"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                fill="#4285F4"
+                            />
+                            <path
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.04-3.71 1.04-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                fill="#34A853"
+                            />
+                            <path
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                fill="#FBBC05"
+                            />
+                            <path
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                fill="#EA4335"
+                            />
+                        </svg>
                             <span>Google</span>
                         </Button>
                     </div>
-                </div>
 
-                {/* Login Link */}
-                <p className="mt-8 text-center text-sm text-muted-foreground">
-                    Already have an account?
-                    <Link
-                        href="/login"
-                        className="font-semibold text-foreground hover:underline transition-all ml-1"
-                    >
-                        Log in
-                    </Link>
-                </p>
+                    {/* Login Link */}
+                    <p className="text-center text-sm text-muted-foreground">
+                        Already have an account?
+                        <Link
+                            href="/login"
+                            className="font-semibold text-foreground hover:underline transition-all ml-1"
+                        >
+                            Log in
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

@@ -60,7 +60,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
 
     const filteredInvoices = invoices.filter(inv => {
         const clientName = inv.client?.name || ''
-        const invoiceNum = inv.invoice_number || ''
+        const invoiceNum = inv.invoiceNumber || ''
 
         // Search text matching
         const matchesSearch =
@@ -74,15 +74,15 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
         if (activeTab === "Overdue") matchesStatus = inv.status === 'overdue'
 
         // Client matching
-        const matchesClient = selectedClientId === "all" || inv.client_id === selectedClientId
+        const matchesClient = selectedClientId === "all" || inv.clientId === selectedClientId
 
-        // Date Range matching (using due_date)
+        // Date Range matching (using dueDate)
         let matchesDate = true
         if (dateRange.start) {
-            matchesDate = matchesDate && new Date(inv.due_date!) >= new Date(dateRange.start)
+            matchesDate = matchesDate && new Date(inv.dueDate!) >= new Date(dateRange.start)
         }
         if (dateRange.end) {
-            matchesDate = matchesDate && new Date(inv.due_date!) <= new Date(dateRange.end)
+            matchesDate = matchesDate && new Date(inv.dueDate!) <= new Date(dateRange.end)
         }
 
         return matchesSearch && matchesStatus && matchesClient && matchesDate
@@ -122,13 +122,13 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
         // Dynamic import to avoid SSR issues if any, though standard import usually fine
         import('papaparse').then(({ unparse }) => {
             const dataToExport = filteredInvoices.map(inv => ({
-                "Invoice ID": inv.invoice_number,
+                "Invoice ID": inv.invoiceNumber,
                 "Client": inv.client?.name || "Unknown",
                 "Project": (inv as any).project?.name || "N/A",
                 "Amount": inv.amount,
                 "Status": inv.status,
-                "Due Date": inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '',
-                "Created At": new Date(inv.created_at).toLocaleDateString()
+                "Due Date": inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '',
+                "Created At": new Date(inv.createdAt).toLocaleDateString()
             }))
 
             const csv = unparse(dataToExport)
@@ -174,7 +174,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     {[
                         {
                             title: "Outstanding",
-                            value: `$${invoices.filter(i => i.status !== 'paid').reduce((acc, curr) => acc + (curr.amount - curr.amount_paid), 0).toLocaleString()}`,
+                            value: `$${invoices.filter(i => i.status !== 'paid').reduce((acc, curr) => acc + (Number(curr.amount) - Number(curr.amountPaid)), 0).toLocaleString()}`,
                             icon: Clock,
                             trend: `${statusCounts.overdue} overdue`,
                             trendLabel: "invoices",
@@ -184,8 +184,8 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                         {
                             title: "Total Paid",
                             value: `$${invoices.filter(i => i.status === 'paid' || i.status === 'partial').reduce((acc, curr) => {
-                                // Fallback for legacy data: if paid but amount_paid is 0, use full amount
-                                const paidAmount = (curr.amount_paid === 0 && curr.status === 'paid') ? curr.amount : curr.amount_paid;
+                                // Fallback for legacy data: if paid but amountPaid is 0, use full amount
+                                const paidAmount = (Number(curr.amountPaid) === 0 && curr.status === 'paid') ? Number(curr.amount) : Number(curr.amountPaid);
                                 return acc + paidAmount;
                             }, 0).toLocaleString()}`,
                             icon: CheckCircle2,
@@ -196,7 +196,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                         },
                         {
                             title: "Pending Amount",
-                            value: `$${invoices.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}`,
+                            value: `$${invoices.filter(i => i.status === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0).toLocaleString()}`,
                             icon: FileText,
                             trend: `${statusCounts.pending} pending`,
                             trendLabel: "pending",
@@ -332,11 +332,11 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                             {filteredInvoices.map((inv) => (
                                 <tr
                                     key={inv.id}
-                                    onClick={() => router.push(`/invoices/${inv.invoice_number}`)}
+                                    onClick={() => router.push(`/invoices/${inv.invoiceNumber}`)}
                                     className="hover:bg-zinc-50/50 transition-colors group cursor-pointer"
                                 >
                                     <td className="py-4 px-6 font-medium text-sm text-zinc-900">
-                                        {inv.invoice_number}
+                                        {inv.invoiceNumber}
                                     </td>
                                     <td className="py-4 px-6">
                                         <div className="flex items-center gap-2">
@@ -346,7 +346,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                     </td>
                                     <td className="py-4 px-6 text-sm text-zinc-500">{(inv as any).project?.name || '-'}</td>
                                     <td className="py-4 px-6 font-bold text-sm text-zinc-900">${inv.amount.toLocaleString()}</td>
-                                    <td className="py-4 px-6 text-sm text-zinc-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '-'}</td>
+                                    <td className="py-4 px-6 text-sm text-zinc-500">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                                     <td className="py-4 px-6">
                                         <StatusBadge status={inv.status} />
                                     </td>
@@ -361,7 +361,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => router.push(`/invoices/${inv.invoice_number}`)}>
+                                                <DropdownMenuItem onClick={() => router.push(`/invoices/${inv.invoiceNumber}`)}>
                                                     View Details
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />

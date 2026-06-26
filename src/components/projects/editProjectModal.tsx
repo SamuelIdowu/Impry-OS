@@ -54,7 +54,7 @@ export function EditProjectModal({
     const [description, setDescription] = useState(project.description || '');
     const [status, setStatus] = useState<DatabaseProjectStatus>(project.status);
     const [progress, setProgress] = useState(project.progress || 0);
-    const [startDate, setStartDate] = useState(project.start_date?.split('T')[0] || '');
+    const [startDate, setStartDate] = useState(project.startDate?.split('T')[0] || '');
     const [deadline, setDeadline] = useState(project.deadline?.split('T')[0] || '');
     const [budget, setBudget] = useState(project.budget?.toString() || '');
     const [currency, setCurrency] = useState(project.currency || 'USD');
@@ -71,7 +71,7 @@ export function EditProjectModal({
                 description: description || undefined,
                 status,
                 progress,
-                start_date: startDate ? new Date(startDate).toISOString() : undefined,
+                startDate: startDate ? new Date(startDate).toISOString() : undefined,
                 deadline: deadline ? new Date(deadline).toISOString() : undefined,
                 budget: budget ? parseFloat(budget) : undefined,
                 currency,
@@ -171,9 +171,9 @@ export function EditProjectModal({
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="start_date" className="text-xs font-semibold text-zinc-600">Start Date</Label>
+                            <Label htmlFor="startDate" className="text-xs font-semibold text-zinc-600">Start Date</Label>
                             <Input
-                                id="start_date"
+                                id="startDate"
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}

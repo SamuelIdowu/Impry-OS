@@ -42,12 +42,12 @@ function mapDbProjectToUiProject(dbProject: ProjectWithClient): UIProject {
     return {
         id: dbProject.id,
         name: dbProject.name,
-        clientId: dbProject.client_id || '',
+        clientId: dbProject.clientId || '',
         clientName: dbProject.client?.name || 'Unknown',
         status: dbProject.status as any, // Cast status
         progress: 0, // Not in DB yet
         dueDate: dbProject.deadline ? new Date(dbProject.deadline).toLocaleDateString() : 'No date',
-        startDate: dbProject.start_date ? new Date(dbProject.start_date).toLocaleDateString() : 'No date',
+        startDate: dbProject.startDate ? new Date(dbProject.startDate).toLocaleDateString() : 'No date',
         totalValue: dbProject.budget || 0,
         paidAmount: 0,
         description: dbProject.description || undefined,

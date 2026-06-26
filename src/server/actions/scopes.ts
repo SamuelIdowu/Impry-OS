@@ -50,7 +50,7 @@ export async function fetchLatestScopeVersion(projectId: string) {
 export async function createScopeVersionAction(input: CreateScopeVersionInput) {
     try {
         // Get the current latest version to determine if this is first version or an update
-        const currentVersion = await getLatestScopeVersion(input.project_id);
+        const currentVersion = await getLatestScopeVersion(input.projectId);
 
         // Create the new version
         const newVersion = await createScopeVersion(input);
@@ -58,27 +58,27 @@ export async function createScopeVersionAction(input: CreateScopeVersionInput) {
         // Log to timeline
         if (currentVersion) {
             await logScopeUpdated(
-                input.project_id,
-                currentVersion.version_number,
-                newVersion.version_number,
-                newVersion.share_token
+                input.projectId,
+                currentVersion.versionNumber,
+                newVersion.versionNumber,
+                newVersion.shareToken || ''
             );
         } else {
             await logScopeCreated(
-                input.project_id,
-                newVersion.version_number,
-                newVersion.share_token
+                input.projectId,
+                newVersion.versionNumber,
+                newVersion.shareToken || ''
             );
         }
 
         // Revalidate the project page
-        revalidatePath(`/projects/${input.project_id}`);
+        revalidatePath(`/projects/${input.projectId}`);
 
         return {
             success: true,
             data: {
                 version: newVersion,
-                shareUrl: getScopeShareUrl(newVersion.share_token),
+                shareUrl: getScopeShareUrl(newVersion.shareToken || ''),
             },
         };
     } catch (error) {
