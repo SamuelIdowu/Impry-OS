@@ -10,3 +10,4 @@ export async function searchGlobal(query: string): Promise<SearchResult[]> {
         return [];
     }
 }
+

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export function ClientProjectsList({ projects, clientId, onAddProject }: ClientProjectsListProps) {
+    const params = useParams();
+    const workspaceId = (params?.workspaceId as string) || 'default';
 
     return (
         <Card>
@@ -61,7 +64,7 @@ export function ClientProjectsList({ projects, clientId, onAddProject }: ClientP
                         {projects.map((project) => (
                             <Link
                                 key={project.id}
-                                href={`/projects/${project.id}`}
+                                href={`/${workspaceId}/projects/${project.id}`}
                                 className="block"
                             >
                                 <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent hover:border-primary/50 transition-colors">

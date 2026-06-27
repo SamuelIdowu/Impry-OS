@@ -18,3 +18,4 @@ export async function fetchCalendarEventsAction(date?: string): Promise<{ succes
         return { success: false, error: 'Failed to fetch calendar data' }
     }
 }
+

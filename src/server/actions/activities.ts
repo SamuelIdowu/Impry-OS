@@ -20,7 +20,7 @@ export async function createManualNote(input: z.infer<typeof createNoteSchema>) 
             description: content,
         });
 
-        revalidatePath(`/projects/${projectId}`);
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Failed to create manual note:', error);
@@ -30,3 +30,4 @@ export async function createManualNote(input: z.infer<typeof createNoteSchema>) 
         };
     }
 }
+

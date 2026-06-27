@@ -2,7 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ChevronRight,
     Filter,
@@ -63,6 +63,8 @@ const DonutChart = ({ percentage }: { percentage: number }) => {
 
 export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
     const [activeTab, setActiveTab] = React.useState('overview')
 
     // Calculated fields
@@ -112,7 +114,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
             {/* Top Navigation / Breadcrumbs */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm text-zinc-500">
-                    <Link href="/projects" className="hover:text-zinc-900 transition-colors">Projects</Link>
+                    <Link href={`/${workspaceId}/projects`} className="hover:text-zinc-900 transition-colors">Projects</Link>
                     <ChevronRight className="h-4 w-4" />
                     <span className="text-zinc-900 font-medium">{project.name}</span>
                 </div>

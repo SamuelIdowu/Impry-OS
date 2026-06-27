@@ -1,5 +1,5 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 'use server';
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 
 import { db } from '@/server/db';
 import { payments, projects, clients, users } from '@/server/db/schema';
@@ -509,3 +509,4 @@ export async function getPublicInvoice(id: string): Promise<Payment> {
 
     return enrichedData as unknown as Payment;
 }
+

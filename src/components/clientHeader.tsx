@@ -2,6 +2,7 @@
 
 import { Building2, Mail, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,9 @@ interface ClientHeaderProps {
 }
 
 export function ClientHeader({ client, onEdit, onDelete }: ClientHeaderProps) {
+    const params = useParams();
+    const workspaceId = params.workspaceId as string || 'default';
+
     const initials = client.name
         .split(' ')
         .map(n => n[0])
@@ -24,7 +28,7 @@ export function ClientHeader({ client, onEdit, onDelete }: ClientHeaderProps) {
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-3">
-                <Link href="/clients">
+                <Link href={`/${workspaceId}/clients`}>
                     <Button variant="ghost" size="sm">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back to Clients

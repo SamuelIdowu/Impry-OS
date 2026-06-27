@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,6 +23,8 @@ interface UserMenuProps {
 
 export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMenuProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params?.workspaceId as string || 'default'
 
     const handleLogout = async () => {
         await authClient.signOut()
@@ -84,7 +86,7 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+                <DropdownMenuItem onClick={() => router.push("/workspaces")}>
                     <svg
                         className="mr-2 size-4"
                         fill="none"
@@ -113,7 +115,7 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     Subscription
                 </DropdownMenuItem>
                 */}
-                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                <DropdownMenuItem onClick={() => router.push(`/${workspaceId}/settings`)}>
                     <svg
                         className="mr-2 size-4"
                         fill="none"

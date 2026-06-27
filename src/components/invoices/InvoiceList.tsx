@@ -20,7 +20,7 @@ import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils"
 // import { Invoice } from "@/lib/types" // We will use Payment type now or Invoice type mapped
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment" // Use updated types
 import { createStandaloneInvoice, deletePayment, updatePaymentStatus } from "@/server/actions/payments"
 import {
@@ -40,6 +40,8 @@ interface InvoiceListProps {
 
 export function InvoiceList({ invoices: initialInvoices, clients, projects }: InvoiceListProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
     const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState("All Invoices")
     // const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false) // Unused
@@ -159,7 +161,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     description="Track payments and manage revenue streams."
                 >
                     <Link
-                        href="/invoices/new"
+                        href={`/${workspaceId}/invoices/new`}
                         className="flex items-center justify-center rounded-lg h-10 px-6 bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group"
                     >
                         <Plus className="mr-2 h-5 w-5" />
@@ -370,7 +372,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                             {filteredInvoices.map((inv) => (
                                 <tr
                                     key={inv.id}
-                                    onClick={() => router.push(`/invoices/${inv.invoiceNumber}`)}
+                                    onClick={() => router.push(`/${workspaceId}/invoices/${inv.invoiceNumber}`)}
                                     className="hover:bg-zinc-50/50 transition-colors group cursor-pointer"
                                 >
                                     <td className="py-4 px-6 font-medium text-sm text-zinc-900">
@@ -399,7 +401,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => router.push(`/invoices/${inv.invoiceNumber}`)}>
+                                                <DropdownMenuItem onClick={() => router.push(`/${workspaceId}/invoices/${inv.invoiceNumber}`)}>
                                                     View Details
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />

@@ -29,7 +29,7 @@ export async function addTeamMemberAction(data: {
             avatarUrl: data.avatar_url || null
         });
 
-        revalidatePath('/');
+        revalidatePath('/', 'layout');
         return { success: true, member: newMember };
     } catch (error) {
         console.error('Error in addTeamMemberAction:', error);
@@ -54,7 +54,7 @@ export async function updateTeamMemberAction(
             ...(data.avatar_url && { avatarUrl: data.avatar_url })
         });
 
-        revalidatePath('/');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error in updateTeamMemberAction:', error);
@@ -65,10 +65,11 @@ export async function updateTeamMemberAction(
 export async function deleteTeamMemberAction(memberId: string) {
     try {
         await deleteTeamMember(memberId);
-        revalidatePath('/');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error in deleteTeamMemberAction:', error);
         return { success: false, error: 'Failed to delete team member' };
     }
 }
+

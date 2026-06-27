@@ -29,7 +29,7 @@ export default function VerifyEmailPage() {
             // We just need to show success and redirect
             setStatus("success");
             setTimeout(() => {
-                router.push("/dashboard");
+                router.push("/workspaces");
             }, 3000);
         } else if (email) {
             // User was redirected here after registration
@@ -132,7 +132,7 @@ export default function VerifyEmailPage() {
                                     Your email has been verified!
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    Redirecting you to your dashboard...
+                                    Redirecting you to your workspaces...
                                 </p>
                             </div>
                         </div>

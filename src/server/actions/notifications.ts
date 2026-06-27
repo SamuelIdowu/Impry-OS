@@ -11,3 +11,4 @@ export async function fetchNotifications(): Promise<{ success: boolean; data?: N
         return { success: false, error: "Failed to fetch notifications" };
     }
 }
+

@@ -21,6 +21,13 @@ export async function getNotifications(): Promise<NotificationItem[]> {
     const user = await getUser();
     if (!user) throw new Error("Unauthorized");
 
+    let workspaceId = 'default';
+    try {
+        workspaceId = await getCurrentWorkspaceId();
+    } catch (e) {
+        // Fallback to default if not in a workspace context
+    }
+
     // 1. Fetch Overdue/Due Reminders
     const reminders = await getDueReminders();
 
@@ -33,7 +40,7 @@ export async function getNotifications(): Promise<NotificationItem[]> {
             message: `${r.project?.name ? r.project.name + ': ' : ''}${r.description || 'No details'}`,
             time: r.reminderDate ? new Date(r.reminderDate).toLocaleDateString() : new Date().toLocaleDateString(),
             read: false, // Reminders are implicitly unread until completed
-            link: r.projectId ? `/projects/${r.projectId}` : '/dashboard'
+            link: r.projectId ? `/${workspaceId}/projects/${r.projectId}` : `/${workspaceId}/dashboard`
         };
     });
 
@@ -65,7 +72,7 @@ export async function getNotifications(): Promise<NotificationItem[]> {
             message: `${e.project?.name || 'Unknown'}: ${e.description || ''}`,
             time: e.eventDate ? new Date(e.eventDate).toLocaleDateString() : new Date().toLocaleDateString(),
             read: true, // Events are history, mostly for info
-            link: e.projectId ? `/projects/${e.projectId}` : '#'
+            link: e.projectId ? `/${workspaceId}/projects/${e.projectId}` : '#'
         }));
 
     // Combine and sort

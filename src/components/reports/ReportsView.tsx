@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import {
     Calendar,
     Download,
@@ -55,6 +56,9 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
     const [searchQuery, setSearchQuery] = React.useState("")
     const [statusFilter, setStatusFilter] = React.useState<string>("All")
     const [dateRange, setDateRange] = React.useState<DateRange>("30days")
+    
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
 
     // Helper to get start date based on range
     const getStartDate = (range: DateRange) => {
@@ -394,7 +398,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                                 <StatusBadge status={project.status} />
                                             </td>
                                             <td className="py-4 px-6 text-right">
-                                                <Link href={`/projects/${project.id}`} className="inline-flex text-zinc-500 hover:text-zinc-900 p-1 rounded hover:bg-zinc-100 transition-colors">
+                                                <Link href={`/${workspaceId}/projects/${project.id}`} className="inline-flex text-zinc-500 hover:text-zinc-900 p-1 rounded hover:bg-zinc-100 transition-colors">
                                                     <ArrowRight className="h-[18px] w-[18px]" />
                                                 </Link>
                                             </td>
@@ -411,7 +415,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                         </table>
                     </div>
                     <div className="p-4 border-t border-zinc-200 flex justify-center">
-                        <Link href="/projects" className="text-sm text-zinc-500 hover:text-zinc-900 font-medium transition-colors flex items-center gap-1">
+                        <Link href={`/${workspaceId}/projects`} className="text-sm text-zinc-500 hover:text-zinc-900 font-medium transition-colors flex items-center gap-1">
                             View All Projects
                             <ChevronRight className="h-[16px] w-[16px]" />
                         </Link>

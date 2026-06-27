@@ -12,7 +12,7 @@ type PageProps = {
 
 export default async function InvoiceDetailsPage(props: PageProps) {
     const params = await props.params;
-    const { invoiceId } = params;
+    const { invoiceId, workspaceId } = params as { invoiceId: string, workspaceId: string };
 
     // Fetch invoice
     let invoice = null
@@ -35,7 +35,7 @@ export default async function InvoiceDetailsPage(props: PageProps) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
                 <h2 className="text-xl font-semibold">Invoice not found</h2>
-                <Link href="/invoices" className="text-zinc-600 hover:text-zinc-900 underline">
+                <Link href={`/${workspaceId}/invoices`} className="text-zinc-600 hover:text-zinc-900 underline">
                     Return to Invoices
                 </Link>
             </div>

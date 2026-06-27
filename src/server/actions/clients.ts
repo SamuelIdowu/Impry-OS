@@ -1,5 +1,5 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 'use server';
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 
 import {
     getClients,
@@ -126,7 +126,7 @@ export async function fetchClient(id: string) {
 export async function createClientAction(data: CreateClientInput) {
     try {
         const newClient = await createClient(data);
-        revalidatePath('/clients');
+        revalidatePath('/', 'layout');
         return { success: true, data: newClient };
     } catch (error: any) {
         console.error('Error creating client:', error);
@@ -144,8 +144,8 @@ export async function createClientAction(data: CreateClientInput) {
 export async function updateClientAction(id: string, data: UpdateClientInput) {
     try {
         const updatedClient = await updateClient(id, data);
-        revalidatePath('/clients');
-        revalidatePath(`/clients/${id}`);
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout');
         return { success: true, data: updatedClient };
     } catch (error) {
         console.error('Error updating client:', error);
@@ -159,7 +159,7 @@ export async function updateClientAction(id: string, data: UpdateClientInput) {
 export async function deleteClientAction(id: string) {
     try {
         await deleteClient(id);
-        revalidatePath('/clients');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error deleting client:', error);
@@ -173,7 +173,7 @@ export async function deleteClientAction(id: string) {
 export async function updateClientNotesAction(id: string, notes: string) {
     try {
         await updateClientNotes(id, notes);
-        revalidatePath(`/clients/${id}`);
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error updating client notes:', error);
@@ -201,7 +201,7 @@ export async function importClientsAction(clientsList: CreateClientInput[]) {
 
         const data = await db.insert(clients).values(clientsToInsert).returning();
 
-        revalidatePath('/clients');
+        revalidatePath('/', 'layout');
         return { success: true, count: data?.length || 0 };
     } catch (error: any) {
         console.error('Error importing clients:', error);
@@ -219,11 +219,12 @@ export async function importClientsAction(clientsList: CreateClientInput[]) {
 export async function updateClientStatusAction(id: string, status: 'active' | 'inactive' | 'archived' | 'lead') {
     try {
         await updateClient(id, { status });
-        revalidatePath('/clients');
-        revalidatePath(`/clients/${id}`);
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error updating client status:', error);
         return { success: false, error: (error as Error).message };
     }
 }
+

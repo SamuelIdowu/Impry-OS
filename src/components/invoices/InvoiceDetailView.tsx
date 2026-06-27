@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ChevronRight,
     Edit,
@@ -32,6 +32,8 @@ interface InvoiceDetailViewProps {
 
 export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetailViewProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
     const [isSending, setIsSending] = useState(false)
     const [showEmailDialog, setShowEmailDialog] = useState(false)
 
@@ -142,9 +144,9 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
         <div className="flex flex-col gap-8 mx-auto w-full py-8 px-4 lg:px-8">
             {/* Breadcrumb */}
             <nav className="flex items-center text-sm text-zinc-500">
-                <Link href="/dashboard" className="hover:text-zinc-900 transition-colors">Dashboard</Link>
+                <Link href={`/${workspaceId}/dashboard`} className="hover:text-zinc-900 transition-colors">Dashboard</Link>
                 <ChevronRight className="h-4 w-4 mx-2" />
-                <Link href="/invoices" className="hover:text-zinc-900 transition-colors">Invoices</Link>
+                <Link href={`/${workspaceId}/invoices`} className="hover:text-zinc-900 transition-colors">Invoices</Link>
                 <ChevronRight className="h-4 w-4 mx-2" />
                 <span className="font-medium text-zinc-900">{invoice_number}</span>
             </nav>

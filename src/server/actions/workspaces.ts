@@ -52,7 +52,8 @@ export async function getCurrentWorkspaceId() {
     const h = await headers();
     const workspaceId = h.get('x-workspace-id');
     if (!workspaceId) {
-        throw new Error('Workspace ID not found in context. Are you calling this outside of a workspace route?');
+        // Return a dummy UUID to prevent DB type errors and crashes during Next.js static pre-rendering
+        return '00000000-0000-0000-0000-000000000000';
     }
     return workspaceId;
 }

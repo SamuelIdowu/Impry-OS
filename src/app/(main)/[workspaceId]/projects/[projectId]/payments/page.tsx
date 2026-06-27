@@ -7,13 +7,13 @@ import { ProjectPaymentsView } from "@/components/projects/ProjectPaymentsView"
 
 // Use standard PageProps type for Next.js App Router
 type PageProps = {
-    params: Promise<{ projectId: string }>
+    params: Promise<{ workspaceId: string, projectId: string }>
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function ProjectPaymentsPage(props: PageProps) {
     const params = await props.params;
-    const { projectId } = params;
+    const { workspaceId, projectId } = params;
 
     // Fetch project and payments
     const [projectResult, payments] = await Promise.all([
@@ -25,7 +25,7 @@ export default async function ProjectPaymentsPage(props: PageProps) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
                 <h2 className="text-xl font-semibold text-zinc-900">Project not found</h2>
-                <Link href="/projects" className="mt-4 text-sm font-medium text-zinc-900 underline hover:text-zinc-700">
+                <Link href={`/${workspaceId}/projects`} className="mt-4 text-sm font-medium text-zinc-900 underline hover:text-zinc-700">
                     Back to Projects
                 </Link>
             </div>

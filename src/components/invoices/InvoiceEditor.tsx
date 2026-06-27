@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ChevronLeft,
     Eye,
@@ -40,6 +40,8 @@ interface InvoiceEditorProps {
 
 export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params?.workspaceId as string || 'default'
     const [showPreview, setShowPreview] = useState(true)
     const [isLoading, setIsLoading] = useState(false)
     const [isSending, setIsSending] = useState(false)
@@ -158,7 +160,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             // Also update branding if changed
             await updateBrandingAction({ brand_color: brandColor, logo_url: logoUrl })
 
-            router.push('/invoices')
+            router.push(`/${workspaceId}/invoices`)
             router.refresh()
         } catch (error) {
             console.error(error)

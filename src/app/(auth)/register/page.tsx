@@ -44,7 +44,7 @@ export default function RegisterPage() {
                 name,
             }, {
                 onSuccess: () => {
-                    router.push("/dashboard");
+                    router.push("/workspaces");
                 },
                 onError: (ctx) => {
                     setError(ctx.error.message || "Registration failed");
@@ -67,7 +67,7 @@ export default function RegisterPage() {
                 provider: "google",
             }, {
                 onSuccess: () => {
-                    router.push("/dashboard");
+                    router.push("/workspaces");
                 },
                 onError: (ctx) => {
                     setError(ctx.error.message || "Google sign-in failed");

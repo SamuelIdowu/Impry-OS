@@ -21,3 +21,4 @@ export async function sendEmailAction(email: string, subject: string, htmlBody: 
         return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
     }
 }
+

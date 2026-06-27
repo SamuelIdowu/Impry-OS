@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ArrowLeft,
     MoreHorizontal,
@@ -59,7 +59,10 @@ interface ClientDetailViewProps {
 // ... helpers ...
 
 export function ClientDetailView({ client, projects, payments }: ClientDetailViewProps) {
-    // ... hooks ...
+    const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
+
     const [noteInput, setNoteInput] = useState("")
     const [isSavingNote, setIsSavingNote] = useState(false)
     const [isEditClientOpen, setIsEditClientOpen] = useState(false)
@@ -166,7 +169,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
         <div className="flex flex-col w-full mx-auto py-8 px-4 lg:px-8 gap-8">
             {/* Breadcrumb & Navigation */}
             <div className="flex items-center gap-2 text-sm text-zinc-500 mb-[-1rem]">
-                <Link href="/clients" className="hover:text-zinc-900 transition-colors">Clients</Link>
+                <Link href={`/${workspaceId}/clients`} className="hover:text-zinc-900 transition-colors">Clients</Link>
                 <span>/</span>
                 <span className="text-zinc-900 font-medium">{client.name}</span>
             </div>

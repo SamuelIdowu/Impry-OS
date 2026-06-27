@@ -5,7 +5,7 @@ import { FollowUpInbox } from "@/components/dashboard/followUpInbox"
 import { fetchDashboardReminders } from "@/server/actions/dashboard"
 import { Reminder } from "@/lib/types"
 
-export default async function FollowUpsPage() {
+export default async function FollowUpsPage({ params }: { params: { workspaceId: string } }) {
     const remindersRes = await fetchDashboardReminders()
 
     // Map Reminders
@@ -28,7 +28,7 @@ export default async function FollowUpsPage() {
                 {/* Breadcrumb / Header */}
                 <div className="flex flex-col gap-4">
                     <Link
-                        href="/dashboard"
+                        href={`/${params.workspaceId}/dashboard`}
                         className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 transition-colors w-fit"
                     >
                         <ArrowLeft className="h-4 w-4" />

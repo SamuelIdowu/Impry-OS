@@ -44,10 +44,10 @@ export async function createReminderAction(input: CreateReminderInput) {
                     dueDate: input.reminderDate
                 }
             });
-            revalidatePath(`/projects/${input.projectId}`);
+            revalidatePath('/', 'layout');
         }
 
-        revalidatePath('/dashboard');
+        revalidatePath('/', 'layout');
 
         return { success: true, data: reminder };
     } catch (error) {
@@ -75,10 +75,10 @@ export async function completeReminderAction(id: string, projectId?: string) {
                 event_date: new Date().toISOString(),
                 metadata: { reminder_id: id }
             });
-            revalidatePath(`/projects/${projectId}`);
+            revalidatePath('/', 'layout');
         }
 
-        revalidatePath('/dashboard');
+        revalidatePath('/', 'layout');
 
         return { success: true, data: reminder };
     } catch (error) {
@@ -116,10 +116,10 @@ export async function snoozeReminderAction(
                     new_date: newDate
                 }
             });
-            revalidatePath(`/projects/${projectId}`);
+            revalidatePath('/', 'layout');
         }
 
-        revalidatePath('/dashboard');
+        revalidatePath('/', 'layout');
 
         return { success: true, data: reminder };
     } catch (error) {
@@ -136,9 +136,9 @@ export async function deleteReminderAction(id: string, projectId?: string) {
         await deleteReminder(id);
 
         if (projectId) {
-            revalidatePath(`/projects/${projectId}`);
+            revalidatePath('/', 'layout');
         }
-        revalidatePath('/dashboard');
+        revalidatePath('/', 'layout');
 
         return { success: true };
     } catch (error) {
@@ -146,3 +146,4 @@ export async function deleteReminderAction(id: string, projectId?: string) {
         return { success: false, error: 'Failed to delete reminder' };
     }
 }
+

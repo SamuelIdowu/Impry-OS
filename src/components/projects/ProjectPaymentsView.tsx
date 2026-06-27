@@ -2,7 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ChevronRight,
     Plus,
@@ -29,6 +29,8 @@ interface ProjectPaymentsViewProps {
 
 export function ProjectPaymentsView({ project, payments }: ProjectPaymentsViewProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
 
     // Calculate financials
     // Use data from props, fallback to 0
@@ -48,11 +50,11 @@ export function ProjectPaymentsView({ project, payments }: ProjectPaymentsViewPr
                 <div className="w-full max-w-[1200px] flex flex-col gap-8">
                     {/* Breadcrumbs */}
                     <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
-                        <Link href="/dashboard" className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Dashboard</Link>
+                        <Link href={`/${workspaceId}/dashboard`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Dashboard</Link>
                         <ChevronRight className="h-3.5 w-3.5 opacity-50" />
-                        <Link href="/projects" className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Projects</Link>
+                        <Link href={`/${workspaceId}/projects`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Projects</Link>
                         <ChevronRight className="h-3.5 w-3.5 opacity-50" />
-                        <Link href={`/projects/${project.id}`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">{project.name}</Link>
+                        <Link href={`/${workspaceId}/projects/${project.id}`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">{project.name}</Link>
                         <ChevronRight className="h-3.5 w-3.5 opacity-50" />
                         <span className="text-zinc-900">Payments</span>
                     </div>
@@ -93,11 +95,11 @@ export function ProjectPaymentsView({ project, payments }: ProjectPaymentsViewPr
             <div className="w-full max-w-[1200px] flex flex-col gap-8">
                 {/* Breadcrumbs */}
                 <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
-                    <Link href="/dashboard" className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Dashboard</Link>
+                    <Link href={`/${workspaceId}/dashboard`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Dashboard</Link>
                     <ChevronRight className="h-3.5 w-3.5 opacity-50" />
-                    <Link href="/projects" className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Projects</Link>
+                    <Link href={`/${workspaceId}/projects`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">Projects</Link>
                     <ChevronRight className="h-3.5 w-3.5 opacity-50" />
-                    <Link href={`/projects/${project.id}`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">{project.name}</Link>
+                    <Link href={`/${workspaceId}/projects/${project.id}`} className="hover:text-zinc-900 transition-colors hover:underline underline-offset-2">{project.name}</Link>
                     <ChevronRight className="h-3.5 w-3.5 opacity-50" />
                     <span className="text-zinc-900">Payments</span>
                 </div>

@@ -72,7 +72,7 @@ export async function createScopeVersionAction(input: CreateScopeVersionInput) {
         }
 
         // Revalidate the project page
-        revalidatePath(`/projects/${input.projectId}`);
+        revalidatePath('/', 'layout');
 
         return {
             success: true,
@@ -105,3 +105,4 @@ export async function fetchScopeByShareToken(token: string) {
         };
     }
 }
+

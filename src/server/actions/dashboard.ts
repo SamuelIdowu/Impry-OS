@@ -64,7 +64,7 @@ export async function fetchDashboardMetrics() {
 export async function markReminderDoneAction(reminderId: string) {
     try {
         await markReminderDone(reminderId);
-        revalidatePath('/dashboard');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error marking reminder as done:', error);
@@ -81,7 +81,7 @@ export async function markReminderDoneAction(reminderId: string) {
 export async function snoozeReminderAction(reminderId: string, days: number = 1) {
     try {
         await snoozeReminder(reminderId, days);
-        revalidatePath('/dashboard');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error snoozing reminder:', error);
@@ -98,7 +98,7 @@ export async function snoozeReminderAction(reminderId: string, days: number = 1)
 export async function deleteReminderAction(reminderId: string) {
     try {
         await deleteReminder(reminderId);
-        revalidatePath('/dashboard');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error deleting reminder:', error);
@@ -108,3 +108,4 @@ export async function deleteReminderAction(reminderId: string) {
         };
     }
 }
+

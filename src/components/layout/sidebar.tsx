@@ -153,14 +153,14 @@ export function Sidebar({ className, user }: SidebarProps) {
                                 onClick={() => setDashboardExpanded(!dashboardExpanded)}
                                 className={cn(
                                     "w-full group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
-                                    pathname.startsWith("/dashboard")
+                                    pathname.includes("/dashboard")
                                         ? "bg-zinc-100 text-zinc-900"
                                         : "text-zinc-500"
                                 )}
                             >
                                 <div className="flex items-center">
                                     <LayoutGrid className={cn("mr-2 h-4 w-4",
-                                        pathname.startsWith("/dashboard")
+                                        pathname.includes("/dashboard")
                                             ? "text-zinc-900"
                                             : "text-zinc-400 group-hover:text-zinc-900"
                                     )} />

@@ -1,5 +1,7 @@
+"use client"
 import React from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { ArrowRight, Calendar, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 // Shared Components
@@ -12,6 +14,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
+    const params = useParams()
+    const workspaceId = (params?.workspaceId as string) || 'default'
     return (
         <div className="group flex flex-col bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all h-full">
             {/* Header */}
@@ -64,7 +68,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                         <span>Due {project.dueDate}</span>
                     </div>
                     <Link
-                        href={`/projects/${project.id}`}
+                        href={`/${workspaceId}/projects/${project.id}`}
                         className="inline-flex items-center gap-1 text-xs font-medium text-zinc-900 bg-white border border-zinc-200 shadow-sm px-3 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors"
                     >
                         Manage

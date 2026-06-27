@@ -28,6 +28,7 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdownMenu';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { EmailDraftModal } from '@/components/reminders/emailDraftModal';
 
@@ -36,6 +37,8 @@ interface ReminderCardProps {
 }
 
 export function ReminderCard({ reminder }: ReminderCardProps) {
+    const params = useParams();
+    const workspaceId = (params?.workspaceId as string) || 'default';
     const [isPending, startTransition] = useTransition();
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [hasSent, setHasSent] = useState(false);
@@ -229,7 +232,7 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                     </DropdownMenu>
 
                     {reminder.projectId && (
-                        <Link href={`/projects/${reminder.projectId}`}>
+                        <Link href={`/${workspaceId}/projects/${reminder.projectId}`}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" title="Open Project">
                                 <ArrowUpRight className="h-4 w-4" />
                             </Button>
