@@ -1,5 +1,6 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 import { db } from '@/server/db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { getUser } from '@/lib/auth';
 import { projects, payments, reminders, timelineEvents } from '@/server/db/schema';
 
@@ -23,7 +24,7 @@ export async function fetchCalendarEvents(date?: string): Promise<CalendarEvent[
 
     // 1. Fetch Projects (Deadlines and Start Dates)
     const userProjects = await db.query.projects.findMany({
-        where: eq(projects.userId, user.id),
+        where: and(eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         columns: {
             id: true,
             name: true,
@@ -36,7 +37,7 @@ export async function fetchCalendarEvents(date?: string): Promise<CalendarEvent[
 
     // 2. Fetch Payments (Due Dates)
     const userPayments = await db.query.payments.findMany({
-        where: eq(payments.userId, user.id),
+        where: and(eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
         columns: {
             id: true,
             description: true,
@@ -50,7 +51,7 @@ export async function fetchCalendarEvents(date?: string): Promise<CalendarEvent[
 
     // 3. Fetch Reminders
     const userReminders = await db.query.reminders.findMany({
-        where: eq(reminders.userId, user.id),
+        where: and(eq(reminders.workspaceId, await getCurrentWorkspaceId()), eq(reminders.userId, user.id)),
         columns: {
             id: true,
             title: true,

@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 import { db } from '@/server/db';
 import { clients, projects, users, payments } from '@/server/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
@@ -9,7 +10,7 @@ export async function getClients(): Promise<ClientWithProjects[]> {
     if (!user) throw new Error('User not authenticated');
 
     const result = await db.query.clients.findMany({
-        where: eq(clients.userId, user.id),
+        where: and(eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
         orderBy: [desc(clients.createdAt)],
         with: {
             projects: {
@@ -35,7 +36,7 @@ export async function getClientById(id: string): Promise<ClientWithProjects | nu
     if (!user) throw new Error('User not authenticated');
 
     const client = await db.query.clients.findFirst({
-        where: and(eq(clients.id, id), eq(clients.userId, user.id)),
+        where: and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
         with: {
             projects: {
                 columns: { id: true, name: true, status: true }
@@ -71,6 +72,8 @@ export async function createClient(input: CreateClientInput): Promise<Client> {
     const [newClient] = await db.insert(clients).values({
         ...input,
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
         lastContactDate: new Date(),
     }).returning();
 
@@ -85,7 +88,7 @@ export async function updateClient(id: string, input: UpdateClientInput): Promis
         ...input,
         updatedAt: new Date(),
     })
-    .where(and(eq(clients.id, id), eq(clients.userId, user.id)))
+    .where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)))
     .returning();
 
     return updatedClient as unknown as Client;
@@ -95,7 +98,7 @@ export async function deleteClient(id: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
 
-    await db.delete(clients).where(and(eq(clients.id, id), eq(clients.userId, user.id)));
+    await db.delete(clients).where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)));
 }
 
 export async function updateLastContactDate(id: string): Promise<void> {
@@ -104,7 +107,7 @@ export async function updateLastContactDate(id: string): Promise<void> {
 
     await db.update(clients)
         .set({ lastContactDate: new Date() })
-        .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
+        .where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)));
 }
 
 export async function updateClientNotes(id: string, notes: string): Promise<void> {
@@ -117,5 +120,5 @@ export async function updateClientNotes(id: string, notes: string): Promise<void
             lastContactDate: new Date(),
             updatedAt: new Date(),
         })
-        .where(and(eq(clients.id, id), eq(clients.userId, user.id)));
+        .where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)));
 }

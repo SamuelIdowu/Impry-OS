@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 import { db } from '@/server/db';
 import { timelineEvents } from '@/server/db/schema';
 import { eq, inArray, and, desc } from 'drizzle-orm';
@@ -44,6 +45,8 @@ export async function logTimelineEvent(input: CreateTimelineEventInput) {
             description: input.description,
             metadata: input.metadata,
             userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
             eventDate: input.event_date ? new Date(input.event_date) : new Date(),
         });
     } catch (error) {

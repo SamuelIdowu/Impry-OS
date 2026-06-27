@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { UserMenu } from "./userMenu"
 import { Logo } from "@/components/ui/logo"
@@ -42,6 +42,8 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Sidebar({ className, user }: SidebarProps) {
     const pathname = usePathname()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
 
     // Team members state
     const [members, setMembers] = React.useState<TeamMember[]>([])
@@ -100,39 +102,39 @@ export function Sidebar({ className, user }: SidebarProps) {
     }
 
     const dashboardSubItems = [
-        { title: "Overview", href: "/dashboard", exact: true },
-        { title: "Follow-Ups", href: "/dashboard/follow-ups", icon: Bell }
+        { title: "Overview", href: `/${workspaceId}/dashboard`, exact: true },
+        { title: "Follow-Ups", href: `/${workspaceId}/dashboard/follow-ups`, icon: Bell }
     ]
 
     const navItems = [
         {
             title: "Clients",
-            href: "/clients",
+            href: `/${workspaceId}/clients`,
             icon: Users
         },
         {
             title: "Projects",
-            href: "/projects",
+            href: `/${workspaceId}/projects`,
             icon: Folder
         },
         {
             title: "Calendar",
-            href: "/calendar",
+            href: `/${workspaceId}/calendar`,
             icon: Calendar
         },
         {
             title: "Invoices",
-            href: "/invoices",
+            href: `/${workspaceId}/invoices`,
             icon: CheckSquare
         },
         {
             title: "Reports",
-            href: "/reports",
+            href: `/${workspaceId}/reports`,
             icon: Activity
         },
         {
             title: "Settings",
-            href: "/settings",
+            href: `/${workspaceId}/settings`,
             icon: Settings
         },
     ]

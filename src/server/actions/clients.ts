@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 'use server';
 
 import {
@@ -26,19 +27,19 @@ export async function fetchClientStats() {
 
         // Total Clients
         const userClients = await db.query.clients.findMany({
-            where: eq(clients.userId, user.id),
+            where: and(eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
         });
         const totalClients = userClients.length;
 
         // Active Projects
         const userProjects = await db.query.projects.findMany({
-            where: eq(projects.userId, user.id),
+            where: and(eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         });
         const activeProjects = userProjects.filter(p => p.status === 'in_progress' || p.status === 'planning' || p.status === 'review').length;
 
         // Revenue
         const userPayments = await db.query.payments.findMany({
-            where: eq(payments.userId, user.id),
+            where: and(eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
         });
 
         // Convert string to number for arithmetic
@@ -189,9 +190,12 @@ export async function importClientsAction(clientsList: CreateClientInput[]) {
         if (!user) throw new Error('User not authenticated');
 
         // Prepare data with user_id and timestamps
+        const workspaceId = await getCurrentWorkspaceId();
         const clientsToInsert = clientsList.map(client => ({
             ...client,
             userId: user.id,
+            workspaceId,
+
             lastContactDate: new Date(),
         }));
 

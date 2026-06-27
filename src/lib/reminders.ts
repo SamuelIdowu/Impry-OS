@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 import { db } from '@/server/db';
 import { reminders } from '@/server/db/schema';
 import { eq, and, asc } from 'drizzle-orm';
@@ -74,6 +75,8 @@ export async function createReminder(input: CreateReminderInput): Promise<Remind
 
     const [newReminder] = await db.insert(reminders).values({
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
         projectId: input.projectId,
         clientId: input.clientId,
         paymentId: input.paymentId,
@@ -106,7 +109,7 @@ export async function updateReminder(id: string, input: UpdateReminderInput): Pr
     if (updateData.snoozedUntil !== undefined) setFields.snoozedUntil = updateData.snoozedUntil ? new Date(updateData.snoozedUntil) : null;
 
     const [updatedReminder] = await db.update(reminders).set(setFields)
-    .where(and(eq(reminders.id, id), eq(reminders.userId, user.id)))
+    .where(and(eq(reminders.id, id), eq(reminders.workspaceId, await getCurrentWorkspaceId()), eq(reminders.userId, user.id)))
     .returning();
 
     return updatedReminder as unknown as Reminder;
@@ -119,5 +122,5 @@ export async function deleteReminder(id: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
 
-    await db.delete(reminders).where(and(eq(reminders.id, id), eq(reminders.userId, user.id)));
+    await db.delete(reminders).where(and(eq(reminders.id, id), eq(reminders.workspaceId, await getCurrentWorkspaceId()), eq(reminders.userId, user.id)));
 }

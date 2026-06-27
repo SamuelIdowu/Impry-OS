@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 import { db } from '@/server/db';
 import { projects, clients, scopes, payments, reminders } from '@/server/db/schema';
 import { eq, desc, and, gte } from 'drizzle-orm';
@@ -21,7 +22,7 @@ export async function getProjects(): Promise<ProjectWithClient[]> {
     if (!user) throw new Error('User not authenticated');
 
     const result = await db.query.projects.findMany({
-        where: eq(projects.userId, user.id),
+        where: and(eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         orderBy: [desc(projects.createdAt)],
         with: {
             client: {
@@ -41,7 +42,7 @@ export async function getProjectsByClient(clientId: string): Promise<Project[]> 
     if (!user) throw new Error('User not authenticated');
 
     const result = await db.query.projects.findMany({
-        where: and(eq(projects.clientId, clientId), eq(projects.userId, user.id)),
+        where: and(eq(projects.clientId, clientId), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         orderBy: [desc(projects.createdAt)],
     });
 
@@ -56,7 +57,7 @@ export async function getProjectById(id: string): Promise<ProjectWithDetails | n
     if (!user) throw new Error('User not authenticated');
 
     const result = await db.query.projects.findFirst({
-        where: and(eq(projects.id, id), eq(projects.userId, user.id)),
+        where: and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         with: {
             client: {
                 columns: { id: true, name: true, email: true, company: true }
@@ -79,7 +80,7 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
     if (!user) throw new Error('User not authenticated');
 
     const client = await db.query.clients.findFirst({
-        where: and(eq(clients.id, input.clientId), eq(clients.userId, user.id)),
+        where: and(eq(clients.id, input.clientId), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
         columns: { id: true }
     });
 
@@ -98,6 +99,8 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
         currency: input.currency || 'USD',
         notes: input.notes,
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
     }).returning();
 
     return newProject as unknown as Project;
@@ -121,7 +124,7 @@ export async function updateProject(id: string, input: UpdateProjectInput): Prom
         notes: input.notes,
         updatedAt: new Date(),
     })
-    .where(and(eq(projects.id, id), eq(projects.userId, user.id)))
+    .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
     .returning();
 
     return updatedProject as unknown as Project;
@@ -138,7 +141,7 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
     const dbStatus = mapAppToDatabaseStatus(status);
 
     const currentProject = await db.query.projects.findFirst({
-        where: and(eq(projects.id, id), eq(projects.userId, user.id)),
+        where: and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         columns: { name: true, status: true }
     });
 
@@ -146,7 +149,7 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
         status: dbStatus,
         updatedAt: new Date(),
     })
-    .where(and(eq(projects.id, id), eq(projects.userId, user.id)))
+    .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
     .returning();
 
     if (currentProject && currentProject.status !== dbStatus) {
@@ -174,7 +177,7 @@ export async function deleteProject(id: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
 
-    await db.delete(projects).where(and(eq(projects.id, id), eq(projects.userId, user.id)));
+    await db.delete(projects).where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)));
 }
 
 /**
@@ -185,7 +188,7 @@ export async function getProjectPaymentSummary(projectId: string) {
     if (!user) throw new Error('User not authenticated');
 
     const projectPayments = await db.query.payments.findMany({
-        where: and(eq(payments.projectId, projectId), eq(payments.userId, user.id)),
+        where: and(eq(payments.projectId, projectId), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
         columns: { amount: true, status: true, currency: true }
     });
 

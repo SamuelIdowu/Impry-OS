@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 'use server';
 
 import { db } from '@/server/db';
@@ -29,6 +30,8 @@ async function logPaymentTimeline(
     const { timelineEvents } = await import('@/server/db/schema');
     await db.insert(timelineEvents).values({
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
         projectId: projectId,
         eventType: eventType,
         title: title,
@@ -44,7 +47,7 @@ export async function getProjectPayments(projectId: string): Promise<Payment[]> 
     if (!user) throw new Error('User not authenticated');
 
     const result = await db.query.payments.findMany({
-        where: and(eq(payments.projectId, projectId), eq(payments.userId, user.id)),
+        where: and(eq(payments.projectId, projectId), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
         orderBy: (payments, { asc }) => [asc(payments.dueDate)]
     });
 
@@ -96,7 +99,7 @@ export async function getInvoice(id: string): Promise<Payment> {
     if (!user) throw new Error('User not authenticated');
 
     const result = await db.query.payments.findFirst({
-        where: and(eq(payments.id, id), eq(payments.userId, user.id)),
+        where: and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
         with: {
             project: {
                 columns: { id: true, name: true }
@@ -163,6 +166,8 @@ export async function createPayment(input: CreatePaymentInput): Promise<Payment>
         milestoneName: input.milestoneName,
         notes: description || restInput.notes,
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
         clientId: project.clientId,
         amountPaid: '0',
         amount: input.amount.toString(),
@@ -201,7 +206,7 @@ export async function updatePayment(id: string, input: UpdatePaymentInput): Prom
         discountRate: input.discountRate?.toString(),
         updatedAt: new Date(),
     })
-        .where(and(eq(payments.id, id), eq(payments.userId, user.id)))
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
         .returning();
 
     if (!updatedPayment) throw new Error('Payment not found');
@@ -226,7 +231,7 @@ export async function updatePaymentStatus(
     if (!user) throw new Error('User not authenticated');
 
     const currentPayment = await db.query.payments.findFirst({
-        where: and(eq(payments.id, id), eq(payments.userId, user.id))
+        where: and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id))
     });
 
     if (!currentPayment) {
@@ -255,7 +260,7 @@ export async function updatePaymentStatus(
     }
 
     const [updatedPayment] = await db.update(payments).set(updateData)
-        .where(and(eq(payments.id, id), eq(payments.userId, user.id)))
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
         .returning();
 
     if (updatedPayment.projectId) {
@@ -286,11 +291,11 @@ export async function deletePayment(id: string): Promise<void> {
     if (!user) throw new Error('User not authenticated');
 
     const payment = await db.query.payments.findFirst({
-        where: and(eq(payments.id, id), eq(payments.userId, user.id)),
+        where: and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
         columns: { projectId: true, milestoneName: true }
     });
 
-    await db.delete(payments).where(and(eq(payments.id, id), eq(payments.userId, user.id)));
+    await db.delete(payments).where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)));
 
     if (payment?.projectId) {
         await logPaymentTimeline(
@@ -406,6 +411,8 @@ export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInpu
 
     const [newInvoice] = await db.insert(payments).values({
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
         clientId: input.clientId,
         projectId: input.projectId || null, // handle "none" or empty string
         amount: input.amount.toString(),
@@ -451,7 +458,7 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
         discountRate: input.discountRate?.toString() || "0",
         updatedAt: new Date(),
     })
-        .where(and(eq(payments.id, id), eq(payments.userId, user.id)))
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
         .returning();
 
     if (!updatedInvoice) throw new Error('Invoice not found');

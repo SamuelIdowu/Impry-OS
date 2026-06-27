@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 import { db } from '@/server/db';
 import { teamMembers } from '@/server/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
@@ -11,24 +12,26 @@ export async function getTeamMembers() {
     if (!user) throw new Error('Unauthorized');
 
     return await db.query.teamMembers.findMany({
-        where: eq(teamMembers.userId, user.id),
+        where: and(eq(teamMembers.workspaceId, await getCurrentWorkspaceId()), eq(teamMembers.userId, user.id)),
         orderBy: [desc(teamMembers.createdAt)]
     });
 }
 
-export async function createTeamMember(data: Omit<NewTeamMember, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) {
+export async function createTeamMember(data: Omit<NewTeamMember, 'id' | 'userId' | 'workspaceId' | 'createdAt' | 'updatedAt'>) {
     const user = await getUser();
     if (!user) throw new Error('Unauthorized');
 
     const [member] = await db.insert(teamMembers).values({
         ...data,
-        userId: user.id
+        userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
     }).returning();
 
     return member;
 }
 
-export async function updateTeamMember(id: string, data: Partial<Omit<NewTeamMember, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>) {
+export async function updateTeamMember(id: string, data: Partial<Omit<NewTeamMember, 'id' | 'userId' | 'workspaceId' | 'createdAt' | 'updatedAt'>>) {
     const user = await getUser();
     if (!user) throw new Error('Unauthorized');
 
@@ -37,7 +40,7 @@ export async function updateTeamMember(id: string, data: Partial<Omit<NewTeamMem
             ...data,
             updatedAt: new Date()
         })
-        .where(and(eq(teamMembers.id, id), eq(teamMembers.userId, user.id)))
+        .where(and(eq(teamMembers.id, id), eq(teamMembers.workspaceId, await getCurrentWorkspaceId()), eq(teamMembers.userId, user.id)))
         .returning();
 
     return member;
@@ -47,5 +50,5 @@ export async function deleteTeamMember(id: string) {
     const user = await getUser();
     if (!user) throw new Error('Unauthorized');
 
-    await db.delete(teamMembers).where(and(eq(teamMembers.id, id), eq(teamMembers.userId, user.id)));
+    await db.delete(teamMembers).where(and(eq(teamMembers.id, id), eq(teamMembers.workspaceId, await getCurrentWorkspaceId()), eq(teamMembers.userId, user.id)));
 }

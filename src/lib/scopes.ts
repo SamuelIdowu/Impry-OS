@@ -1,3 +1,4 @@
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 import { db } from '@/server/db';
 import { eq, and, desc } from 'drizzle-orm';
 import { scopeVersions, projects, timelineEvents } from '@/server/db/schema';
@@ -112,6 +113,8 @@ export async function createScopeVersion(input: CreateScopeVersionInput): Promis
         .values({
             projectId: input.projectId,
             userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
             versionNumber: nextVersion,
             deliverables: input.deliverables || null,
             outOfScope: input.outOfScope || null,
@@ -165,6 +168,8 @@ export async function logScopeCreated(
 
     await db.insert(timelineEvents).values({
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
         projectId: projectId,
         eventType: 'scope_update',
         title: `Scope v${versionNumber} created`,
@@ -194,6 +199,8 @@ export async function logScopeUpdated(
 
     await db.insert(timelineEvents).values({
         userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
         projectId: projectId,
         eventType: 'scope_update',
         title: `Scope updated v${oldVersion} → v${newVersion}`,
