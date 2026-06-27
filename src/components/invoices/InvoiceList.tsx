@@ -189,9 +189,47 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 return acc + paidAmount;
                             }, 0).toLocaleString()}`,
                             icon: CheckCircle2,
-                            trend: "+15%", // Placeholder logic can be improved later
+                            trend: (() => {
+                                const currentMonth = new Date().getMonth();
+                                const currentYear = new Date().getFullYear();
+                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
+                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
+                                
+                                const currentMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === currentMonth && new Date(i.paidDate || i.createdAt).getFullYear() === currentYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+                                    
+                                const prevMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === prevMonth && new Date(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+
+                                if (prevMonthPaid === 0) return currentMonthPaid > 0 ? "+100%" : "0%";
+                                const percentage = Math.round(((currentMonthPaid - prevMonthPaid) / prevMonthPaid) * 100);
+                                return percentage > 0 ? `+${percentage}%` : `${percentage}%`;
+                            })(),
                             trendLabel: "vs last month",
-                            trendDirection: "up" as const,
+                            trendDirection: (() => {
+                                const currentMonth = new Date().getMonth();
+                                const currentYear = new Date().getFullYear();
+                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
+                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
+                                
+                                const currentMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === currentMonth && new Date(i.paidDate || i.createdAt).getFullYear() === currentYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+                                    
+                                const prevMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === prevMonth && new Date(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+
+                                return currentMonthPaid >= prevMonthPaid ? "up" as const : "down" as const;
+                            })(),
                             iconColor: "bg-green-50 text-green-600"
                         },
                         {

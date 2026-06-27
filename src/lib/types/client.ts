@@ -34,4 +34,5 @@ export interface ClientWithProjects extends Client {
         status: string;
     }[];
     active_projects_count: number;
+    totalRevenue?: number;
 }

@@ -10,8 +10,10 @@ import {
     fetchAtRiskProjects
 } from "@/server/actions/dashboard"
 import { Reminder, Risk } from "@/lib/types"
+import { getUser } from "@/lib/auth"
 
 export default async function DashboardPage() {
+    const user = await getUser();
     // Fetch all dashboard data in parallel
     const [metricsRes, remindersRes, risksRes] = await Promise.all([
         fetchDashboardMetrics(),
@@ -30,8 +32,8 @@ export default async function DashboardPage() {
     };
 
     // Derived state for metrics
-    const revenueGoal = 50000;
-    const revenueGoalPercent = (metrics.totalRevenue / revenueGoal) * 100;
+    const revenueGoal = rawMetrics?.revenueGoal || 50000;
+    const revenueGoalPercent = rawMetrics?.revenueGoalPercent || (metrics.totalRevenue / revenueGoal) * 100;
 
     // Map Reminders
     const rawReminders = remindersRes.success && remindersRes.data ? remindersRes.data : [];
@@ -71,7 +73,7 @@ export default async function DashboardPage() {
                 {/* Custom Page Header */}
                 <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Good morning, Alex</h1>
+                        <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Good morning, {user?.name?.split(' ')[0] || 'User'}</h1>
                         <p className="text-zinc-500 text-base">
                             You have <span className="font-bold text-zinc-900">{reminders.length} items</span> requiring attention today.
                             {metrics.totalRevenueChange >= 0 ? ' Revenue looks stable.' : ' Revenue is slightly down.'}

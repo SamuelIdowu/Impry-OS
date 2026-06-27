@@ -183,6 +183,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const clientsRelations = relations(clients, ({ one, many }) => ({
   user: one(users, { fields: [clients.userId], references: [users.id] }),
   projects: many(projects),
+  payments: many(payments),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({

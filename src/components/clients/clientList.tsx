@@ -48,7 +48,7 @@ function mapDbClientToUiClient(dbClient: ClientWithProjects): UIClient {
     // if (dbClient.active_projects_count === 0) status = 'Inactive';
 
     // Revenue mock calculation (since we don't have it in DB client yet)
-    const totalRevenue = 0;
+    const totalRevenue = dbClient.totalRevenue || 0;
 
     return {
         id: dbClient.id,

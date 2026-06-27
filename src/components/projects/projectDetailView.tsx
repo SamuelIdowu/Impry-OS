@@ -86,13 +86,10 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
         name: project.client.name,
         companyName: project.client.company || '',
         email: project.client.email,
-        // Mock missing fields
-        projectCount: 0,
+        status: 'Active' as any,
         totalRevenue: 0,
-        status: 'Active' as const,
-        lastActive: '',
-        joinedDate: '',
-        avatar: project.client.name.substring(0, 2).toUpperCase()
+        projectCount: 0,
+        lastActive: new Date().toISOString()
     } : undefined;
 
     // Mapped Project for ScopeTab (needs UI Project type)

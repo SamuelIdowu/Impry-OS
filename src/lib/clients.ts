@@ -1,5 +1,5 @@
 import { db } from '@/server/db';
-import { clients, projects, users } from '@/server/db/schema';
+import { clients, projects, users, payments } from '@/server/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
 import { getUser } from './auth';
 import type { Client, CreateClientInput, UpdateClientInput, ClientWithProjects } from './types/client';
@@ -14,6 +14,9 @@ export async function getClients(): Promise<ClientWithProjects[]> {
         with: {
             projects: {
                 columns: { id: true, name: true, status: true }
+            },
+            payments: {
+                columns: { amount: true, status: true }
             }
         }
     });
@@ -23,6 +26,7 @@ export async function getClients(): Promise<ClientWithProjects[]> {
         active_projects_count: client.projects?.filter(
             (p: any) => p.status === 'in_progress' || p.status === 'review' || p.status === 'planning'
         ).length || 0,
+        totalRevenue: client.payments?.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
     })) as unknown as ClientWithProjects[];
 }
 
@@ -35,6 +39,9 @@ export async function getClientById(id: string): Promise<ClientWithProjects | nu
         with: {
             projects: {
                 columns: { id: true, name: true, status: true }
+            },
+            payments: {
+                columns: { amount: true, status: true }
             }
         }
     });
@@ -46,6 +53,7 @@ export async function getClientById(id: string): Promise<ClientWithProjects | nu
         active_projects_count: client.projects?.filter(
             (p: any) => p.status === 'in_progress' || p.status === 'review' || p.status === 'planning'
         ).length || 0,
+        totalRevenue: client.payments?.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
     } as unknown as ClientWithProjects;
 }
 

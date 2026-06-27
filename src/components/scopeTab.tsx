@@ -266,7 +266,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                             <div className="space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="size-10 rounded-full bg-zinc-100 flex items-center justify-center font-semibold text-zinc-600">
-                                        {client.avatar || client.name.charAt(0)}
+                                        {client.name.charAt(0)}
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-zinc-900">{client.name}</span>
