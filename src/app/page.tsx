@@ -29,20 +29,22 @@ export const metadata = generatePageMetadata({
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 w-full border-b border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-        <div className="container flex h-16 max-w-[1400px] items-center px-6 lg:px-10 mx-auto">
-          <Logo className="mr-6" textClassName="text-xl font-bold text-zinc-900" />
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-600">
-            <a href="#features" className="hover:text-zinc-900 transition-colors">Features</a>
-            <a href="#pricing" className="hover:text-zinc-900 transition-colors">Pricing</a>
-            <a href="#" className="hover:text-zinc-900 transition-colors">About</a>
-          </nav>
-          <div className="ml-auto flex items-center gap-3">
+      <header className="sticky top-6 z-50 mx-auto w-[95%] max-w-5xl rounded-full border border-white/40 bg-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
+        <div className="flex h-16 items-center justify-between px-6 lg:px-8">
+          <div className="flex items-center gap-10">
+            <Logo className="mr-2" textClassName="text-xl font-bold text-zinc-900" />
+            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-600">
+              <a href="#features" className="hover:text-zinc-900 transition-colors">Features</a>
+              <a href="#pricing" className="hover:text-zinc-900 transition-colors">Pricing</a>
+              <a href="#" className="hover:text-zinc-900 transition-colors">About</a>
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-3">
               <a href="/login" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 px-4 py-2">
                 Sign In
               </a>
-              <a href="/register" className="text-sm font-semibold bg-zinc-900 text-white hover:bg-zinc-800 px-5 py-2.5 rounded-lg transition-colors">
+              <a href="/register" className="text-sm font-semibold bg-zinc-900 text-white hover:bg-zinc-800 px-5 py-2.5 rounded-full transition-all hover:scale-105 shadow-sm">
                 Get Started
               </a>
             </div>
