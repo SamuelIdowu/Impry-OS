@@ -50,10 +50,46 @@ import { headers } from 'next/headers';
 
 export async function getCurrentWorkspaceId() {
     const h = await headers();
-    const workspaceId = h.get('x-workspace-id');
+    let workspaceId = h.get('x-workspace-id');
+    
+    // Fallback for Server Actions where middleware headers might be dropped
+    if (!workspaceId) {
+        const referer = h.get('referer');
+        if (referer) {
+            const match = referer.match(/\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/|$)/);
+            if (match) {
+                workspaceId = match[1];
+            }
+        }
+    }
     if (!workspaceId) {
         // Return a dummy UUID to prevent DB type errors and crashes during Next.js static pre-rendering
         return '00000000-0000-0000-0000-000000000000';
     }
     return workspaceId;
+}
+
+export async function createWorkspace(name: string) {
+  const user = await getUser()
+  
+  if (!user) {
+    throw new Error("Unauthorized")
+  }
+
+  const [newWorkspace] = await db
+    .insert(workspaces)
+    .values({ name })
+    .returning({ id: workspaces.id })
+
+  if (!newWorkspace) {
+    throw new Error("Failed to create workspace")
+  }
+
+  await db.insert(workspaceMembers).values({
+    workspaceId: newWorkspace.id,
+    userId: user.id,
+    role: "owner"
+  })
+
+  return newWorkspace
 }
