@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     Search,
     Filter,
@@ -42,12 +42,12 @@ function mapDbProjectToUiProject(dbProject: ProjectWithClient): UIProject {
     return {
         id: dbProject.id,
         name: dbProject.name,
-        clientId: dbProject.client_id || '',
+        clientId: dbProject.clientId || '',
         clientName: dbProject.client?.name || 'Unknown',
         status: dbProject.status as any, // Cast status
         progress: 0, // Not in DB yet
         dueDate: dbProject.deadline ? new Date(dbProject.deadline).toLocaleDateString() : 'No date',
-        startDate: dbProject.start_date ? new Date(dbProject.start_date).toLocaleDateString() : 'No date',
+        startDate: dbProject.startDate ? new Date(dbProject.startDate).toLocaleDateString() : 'No date',
         totalValue: dbProject.budget || 0,
         paidAmount: 0,
         description: dbProject.description || undefined,
@@ -57,6 +57,8 @@ function mapDbProjectToUiProject(dbProject: ProjectWithClient): UIProject {
 
 export function ProjectList({ initialProjects, clients }: ProjectListProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = (params?.workspaceId as string) || 'default'
     const [view, setView] = useState<"list" | "grid">("list")
     const [searchTerm, setSearchTerm] = useState("")
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
@@ -224,7 +226,7 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                                 {filteredProjects.map((project) => (
                                     <tr
                                         key={project.id}
-                                        onClick={() => router.push(`/projects/${project.id}`)}
+                                        onClick={() => router.push(`/${workspaceId}/projects/${project.id}`)}
                                         className="hover:bg-zinc-50/50 transition-colors group cursor-pointer"
                                     >
                                         <td className="py-4 px-6">
@@ -259,7 +261,7 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                                         </td>
                                         <td className="py-4 px-6 text-right">
                                             <Link
-                                                href={`/projects/${project.id}`}
+                                                href={`/${workspaceId}/projects/${project.id}`}
                                                 onClick={(e) => e.stopPropagation()}
                                                 className="inline-flex text-zinc-500 hover:text-zinc-900 p-1 rounded hover:bg-zinc-100 transition-colors"
                                             >

@@ -1,4 +1,8 @@
-import { createClient } from './auth';
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { db } from '@/server/db';
+import { projects, clients, scopes, payments, reminders } from '@/server/db/schema';
+import { eq, desc, and, gte } from 'drizzle-orm';
+import { getUser } from './auth';
 import type {
     Project,
     ProjectWithClient,
@@ -9,205 +13,147 @@ import type {
     mapDatabaseToAppStatus,
     mapAppToDatabaseStatus,
 } from './types/project';
-import { revalidatePath } from 'next/cache';
 
 /**
  * Get all projects for the authenticated user
  */
 export async function getProjects(): Promise<ProjectWithClient[]> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.projects.findMany({
+        where: and(eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        orderBy: [desc(projects.createdAt)],
+        with: {
+            client: {
+                columns: { id: true, name: true, email: true, company: true }
+            }
+        }
+    });
 
-    const { data, error } = await supabase
-        .from('projects')
-        .select(`
-            *,
-            client:clients(id, name, email, company)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        throw error;
-    }
-
-    return data || [];
+    return result as unknown as ProjectWithClient[];
 }
 
 /**
  * Get projects by client ID
  */
 export async function getProjectsByClient(clientId: string): Promise<Project[]> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.projects.findMany({
+        where: and(eq(projects.clientId, clientId), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        orderBy: [desc(projects.createdAt)],
+    });
 
-    const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('client_id', clientId)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        throw error;
-    }
-
-    return data || [];
+    return result as unknown as Project[];
 }
 
 /**
  * Get a single project by ID with all related data
  */
 export async function getProjectById(id: string): Promise<ProjectWithDetails | null> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { data, error } = await supabase
-        .from('projects')
-        .select(`
-            *,
-            client:clients(id, name, email, company),
-            scopes:scopes(*),
-            payments:payments(*),
-            reminders:reminders(*)
-        `)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
-
-    if (error) {
-        if (error.code === 'PGRST116') {
-            return null;
+    const result = await db.query.projects.findFirst({
+        where: and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        with: {
+            client: {
+                columns: { id: true, name: true, email: true, company: true }
+            },
+            scopes: true,
+            payments: true,
         }
-        throw error;
-    }
+    });
 
-    return data;
+    if (!result) return null;
+
+    return result as unknown as ProjectWithDetails;
 }
 
 /**
  * Create a new project
  */
 export async function createProject(input: CreateProjectInput): Promise<Project> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const client = await db.query.clients.findFirst({
+        where: and(eq(clients.id, input.clientId), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
+        columns: { id: true }
+    });
 
-    // Validate that client exists and belongs to user
-    const { data: client, error: clientError } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('id', input.client_id)
-        .eq('user_id', user.id)
-        .single();
-
-    if (clientError || !client) {
+    if (!client) {
         throw new Error('Client not found or does not belong to user');
     }
 
-    const { data, error } = await supabase
-        .from('projects')
-        .insert({
-            ...input,
-            user_id: user.id,
-            status: input.status || 'planning', // Default to 'planning' (maps to 'lead')
-            progress: input.progress ?? 0,
-        })
-        .select()
-        .single();
+    const [newProject] = await db.insert(projects).values({
+        name: input.name,
+        clientId: input.clientId,
+        description: input.description,
+        status: input.status || 'planning',
+        startDate: input.startDate,
+        deadline: input.deadline,
+        budget: input.budget?.toString(),
+        currency: input.currency || 'USD',
+        notes: input.notes,
+        userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
 
-    if (error) {
-        throw error;
-    }
+    }).returning();
 
-    return data;
+    return newProject as unknown as Project;
 }
 
 /**
  * Update an existing project
  */
 export async function updateProject(id: string, input: UpdateProjectInput): Promise<Project> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const [updatedProject] = await db.update(projects).set({
+        name: input.name,
+        description: input.description,
+        status: input.status,
+        startDate: input.startDate,
+        deadline: input.deadline,
+        budget: input.budget?.toString(),
+        currency: input.currency,
+        notes: input.notes,
+        updatedAt: new Date(),
+    })
+    .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
+    .returning();
 
-    const { data, error } = await supabase
-        .from('projects')
-        .update({
-            ...input,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
+    return updatedProject as unknown as Project;
 }
 
 /**
  * Update project status
  */
 export async function updateProjectStatus(id: string, status: ProjectStatus): Promise<Project> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    // Import the mapping function
     const { mapAppToDatabaseStatus } = await import('./types/project');
     const dbStatus = mapAppToDatabaseStatus(status);
 
-    const { data: currentProject } = await supabase
-        .from('projects')
-        .select('name, status')
-        .eq('id', id)
-        .single();
+    const currentProject = await db.query.projects.findFirst({
+        where: and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        columns: { name: true, status: true }
+    });
 
-    // Import dynamically to avoid circular dependencies if any
-    const { logTimelineEvent } = await import('./timeline');
+    const [updatedProject] = await db.update(projects).set({
+        status: dbStatus,
+        updatedAt: new Date(),
+    })
+    .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
+    .returning();
 
-    const { data, error } = await supabase
-        .from('projects')
-        .update({
-            status: dbStatus,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    // Log the status change
     if (currentProject && currentProject.status !== dbStatus) {
+        const { logTimelineEvent } = await import('./timeline');
         await logTimelineEvent({
             project_id: id,
             event_type: 'status_change',
@@ -221,122 +167,42 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
         });
     }
 
-    return data;
+    return updatedProject as unknown as Project;
 }
-
-/**
- * Update project progress
- */
-export async function updateProjectProgress(id: string, progress: number): Promise<Project> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    // Get current project progress for timeline logging
-    const { data: currentProject, error: currentProjectError } = await supabase
-        .from('projects')
-        .select('name, progress')
-        .eq('id', id)
-        .single();
-
-    if (currentProjectError && currentProjectError.code !== 'PGRST116') {
-        throw currentProjectError;
-    }
-
-    const { data, error } = await supabase
-        .from('projects')
-        .update({
-            progress: progress,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    // Log the progress change
-    if (currentProject && currentProject.progress !== progress) {
-        // Import dynamically to avoid circular dependencies if any
-        const { logTimelineEvent } = await import('./timeline');
-        await logTimelineEvent({
-            project_id: id,
-            event_type: 'status_change',
-            title: 'Project Progress Updated',
-            description: `Progress changed from ${currentProject.progress}% to ${progress}%`,
-            metadata: {
-                old_progress: currentProject.progress,
-                new_progress: progress,
-            }
-        });
-    }
-
-    return data;
-}
-
-
 
 /**
  * Delete a project
  */
 export async function deleteProject(id: string): Promise<void> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-    if (error) {
-        throw error;
-    }
+    await db.delete(projects).where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)));
 }
 
 /**
  * Get payment summary for a project
  */
 export async function getProjectPaymentSummary(projectId: string) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const projectPayments = await db.query.payments.findMany({
+        where: and(eq(payments.projectId, projectId), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
+        columns: { amount: true, status: true, currency: true }
+    });
 
-    const { data, error } = await supabase
-        .from('payments')
-        .select('amount, status, currency')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id);
-
-    if (error) {
-        throw error;
-    }
-
-    const payments = data || [];
-    const totalExpected = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    const totalPaid = payments
+    const totalExpected = projectPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalPaid = projectPayments
         .filter(p => p.status === 'paid')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
     return {
         totalExpected,
         totalPaid,
         remaining: totalExpected - totalPaid,
-        currency: payments[0]?.currency || 'USD',
-        paymentsCount: payments.length,
+        currency: projectPayments[0]?.currency || 'USD',
+        paymentsCount: projectPayments.length,
     };
 }
 
@@ -344,30 +210,18 @@ export async function getProjectPaymentSummary(projectId: string) {
  * Get next reminder for a project
  */
 export async function getProjectNextReminder(projectId: string) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const nextReminder = await db.query.reminders.findFirst({
+        where: and(
+            eq(reminders.projectId, projectId),
+            eq(reminders.userId, user.id),
+            eq(reminders.isSent, false),
+            gte(reminders.reminderDate, new Date())
+        ),
+        orderBy: (reminders, { asc }) => [asc(reminders.reminderDate)]
+    });
 
-    const { data, error } = await supabase
-        .from('reminders')
-        .select('*')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id)
-        .eq('is_sent', false)
-        .gte('reminder_date', new Date().toISOString())
-        .order('reminder_date', { ascending: true })
-        .limit(1)
-        .single();
-
-    if (error) {
-        if (error.code === 'PGRST116') {
-            return null;
-        }
-        throw error;
-    }
-
-    return data;
+    return nextReminder;
 }

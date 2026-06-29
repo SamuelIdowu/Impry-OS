@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ChevronLeft,
     Eye,
@@ -40,43 +40,45 @@ interface InvoiceEditorProps {
 
 export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params?.workspaceId as string || 'default'
     const [showPreview, setShowPreview] = useState(true)
     const [isLoading, setIsLoading] = useState(false)
     const [isSending, setIsSending] = useState(false)
     const [showEmailDialog, setShowEmailDialog] = useState(false)
 
     // Form State
-    const [clientId, setClientId] = useState(initialData?.client_id || "")
-    const [projectId, setProjectId] = useState(initialData?.project_id || "")
-    const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoice_number || "")
-    const [issueDate, setIssueDate] = useState(initialData?.issue_date || new Date().toISOString().split('T')[0])
-    const [dueDate, setDueDate] = useState(initialData?.due_date || "")
+    const [clientId, setClientId] = useState(initialData?.clientId || "")
+    const [projectId, setProjectId] = useState(initialData?.projectId || "")
+    const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber || "")
+    const [issueDate, setIssueDate] = useState(initialData?.issueDate || new Date().toISOString().split('T')[0])
+    const [dueDate, setDueDate] = useState(initialData?.dueDate || "")
     const [notes, setNotes] = useState(initialData?.notes || "")
 
     // New Feature State
     const [currency, setCurrency] = useState(initialData?.currency || "USD")
-    const [taxRate, setTaxRate] = useState<number>(initialData?.tax_rate || 0)
-    const [discountRate, setDiscountRate] = useState<number>(initialData?.discount_rate || 0)
+    const [taxRate, setTaxRate] = useState<number>(initialData?.taxRate || 0)
+    const [discountRate, setDiscountRate] = useState<number>(initialData?.discountRate || 0)
 
     // Branding State
     const [brandColor, setBrandColor] = useState("#18181b")
     const [logoUrl, setLogoUrl] = useState("")
     const [isBrandingLoading, setIsBrandingLoading] = useState(true)
 
-    const [items, setItems] = useState<any[]>(initialData?.line_items || [
+    const [items, setItems] = useState<any[]>(initialData?.lineItems || [
         { description: "Services Rendered", quantity: 1, rate: 0, amount: 0, details: "" }
     ])
 
     // Initialize Invoice Number on mount if not provided
     useEffect(() => {
-        if (!initialData?.invoice_number) {
+        if (!initialData?.invoiceNumber) {
             const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
             const year = new Date().getFullYear()
             setInvoiceNumber(`INV-${year}-${random}`)
         }
 
         // Default due date +14 days if not provided
-        if (!initialData?.due_date) {
+        if (!initialData?.dueDate) {
             const date = new Date()
             date.setDate(date.getDate() + 14)
             setDueDate(date.toISOString().split('T')[0])
@@ -86,8 +88,8 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         const loadBranding = async () => {
             const res = await getProfileAction()
             if (res.success && res.profile) {
-                if (res.profile.brand_color) setBrandColor(res.profile.brand_color)
-                if (res.profile.logo_url) setLogoUrl(res.profile.logo_url)
+                if (res.profile.brandColor) setBrandColor(res.profile.brandColor)
+                if (res.profile.logoUrl) setLogoUrl(res.profile.logoUrl)
             }
             setIsBrandingLoading(false)
         }
@@ -135,18 +137,18 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         setIsLoading(true)
         try {
             const invoiceData = {
-                client_id: clientId,
-                project_id: projectId === "none" || !projectId ? undefined : projectId,
-                invoice_number: invoiceNumber,
-                issue_date: issueDate,
-                due_date: dueDate,
+                clientId: clientId,
+                projectId: projectId === "none" || !projectId ? undefined : projectId,
+                invoiceNumber: invoiceNumber,
+                issueDate: issueDate,
+                dueDate: dueDate,
                 amount: calculateTotal(),
                 currency: currency,
                 status: status, // This will be 'pending' as 'draft' is not yet supported in DB
-                line_items: items,
+                lineItems: items,
                 notes: notes,
-                tax_rate: taxRate,
-                discount_rate: discountRate
+                taxRate: taxRate,
+                discountRate: discountRate
             }
 
             if (initialData?.id) {
@@ -158,7 +160,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             // Also update branding if changed
             await updateBrandingAction({ brand_color: brandColor, logo_url: logoUrl })
 
-            router.push('/invoices')
+            router.push(`/${workspaceId}/invoices`)
             router.refresh()
         } catch (error) {
             console.error(error)
@@ -261,17 +263,17 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
 
     // Construct preview object
     const previewInvoice = {
-        invoice_number: invoiceNumber,
-        issue_date: issueDate,
-        due_date: dueDate,
+        invoiceNumber: invoiceNumber,
+        issueDate: issueDate,
+        dueDate: dueDate,
         amount: calculateTotal(),
         status: 'pending',
-        line_items: items,
-        client_id: clientId,
-        project_id: projectId,
+        lineItems: items,
+        clientId: clientId,
+        projectId: projectId,
         currency,
-        tax_rate: taxRate,
-        discount_rate: discountRate,
+        taxRate: taxRate,
+        discountRate: discountRate,
         // Enriched data for preview
         clientName: clients.find(c => c.id === clientId)?.name,
         projectName: projects.find(p => p.id === projectId)?.name,

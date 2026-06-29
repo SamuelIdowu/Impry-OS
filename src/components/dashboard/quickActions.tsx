@@ -1,15 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 
 export function QuickActions() {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
 
     return (
         <section className="grid grid-cols-2 gap-4">
             <button
-                onClick={() => router.push("/clients")}
+                onClick={() => router.push(`/${workspaceId}/clients`)}
                 className="col-span-1 group flex flex-col items-start gap-3 p-5 rounded-2xl bg-black text-white shadow-lg hover:bg-zinc-800 transition-all"
             >
                 <div className="p-2 bg-white/20 rounded-lg group-hover:scale-110 transition-transform backdrop-blur-sm">
@@ -29,7 +31,7 @@ export function QuickActions() {
             </button>
 
             <button
-                onClick={() => router.push("/projects")}
+                onClick={() => router.push(`/${workspaceId}/projects`)}
                 className="col-span-1 group flex flex-col items-start gap-3 p-5 rounded-2xl bg-white border border-zinc-200 hover:border-black/20 hover:shadow-md transition-all text-zinc-900 shadow-sm"
             >
                 <div className="p-2 bg-zinc-100 rounded-lg group-hover:bg-black group-hover:text-white transition-colors">

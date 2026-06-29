@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { User } from "@supabase/supabase-js"
+import type { User } from "better-auth"
 import { Sidebar } from "./sidebar"
 import { AppHeader } from "./appHeader"
 

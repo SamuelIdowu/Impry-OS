@@ -1,7 +1,10 @@
 'use server';
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 
-import { createClient } from '@/lib/auth';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { db } from '@/server/db';
+import { payments, projects, clients, users } from '@/server/db/schema';
+import { eq, and, ne, lt, isNotNull, desc, asc } from 'drizzle-orm';
+import { getUser } from '@/lib/auth';
 
 import type {
     Payment,
@@ -10,71 +13,77 @@ import type {
     UpdatePaymentStatusInput,
     PaymentSummary,
     CreateStandaloneInvoiceInput,
-    calculatePaymentStatus,
 } from '@/lib/types/payment';
+
+/**
+ * Helper function to log payment events to timeline
+ */
+async function logPaymentTimeline(
+    projectId: string,
+    eventType: string,
+    title: string,
+    metadata: Record<string, any>
+): Promise<void> {
+    const user = await getUser();
+    if (!user) return;
+
+    const { timelineEvents } = await import('@/server/db/schema');
+    await db.insert(timelineEvents).values({
+        userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
+
+        projectId: projectId,
+        eventType: eventType,
+        title: title,
+        metadata: metadata,
+    });
+}
 
 /**
  * Get all payments for a project
  */
 export async function getProjectPayments(projectId: string): Promise<Payment[]> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.payments.findMany({
+        where: and(eq(payments.projectId, projectId), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
+        orderBy: (payments, { asc }) => [asc(payments.dueDate)]
+    });
 
-    const { data, error } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id)
-        .order('due_date', { ascending: true, nullsFirst: false });
-
-    if (error) {
-        throw error;
-    }
-
-    return data || [];
+    return result as unknown as Payment[];
 }
 
 /**
  * Get payment summary for a project
  */
 export async function getProjectPaymentSummary(projectId: string): Promise<PaymentSummary> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const projectPayments = await db.query.payments.findMany({
+        where: and(
+            eq(payments.projectId, projectId),
+            eq(payments.userId, user.id),
+            ne(payments.status, 'cancelled')
+        ),
+        columns: { amount: true, amountPaid: true, status: true, currency: true }
+    });
 
-    const { data, error } = await supabase
-        .from('payments')
-        .select('amount, amount_paid, status, currency')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id)
-        .neq('status', 'cancelled');
+    const totalExpected = projectPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalPaid = projectPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
 
-    if (error) {
-        throw error;
-    }
-
-    const payments = data || [];
-    const totalExpected = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    const totalPaid = payments.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
-
-    const pendingCount = payments.filter(p => p.status === 'pending').length;
-    const paidCount = payments.filter(p => p.status === 'paid').length;
-    const partialCount = payments.filter(p => p.status === 'partial').length;
-    const overdueCount = payments.filter(p => p.status === 'overdue').length;
+    const pendingCount = projectPayments.filter(p => p.status === 'pending').length;
+    const paidCount = projectPayments.filter(p => p.status === 'paid').length;
+    const partialCount = projectPayments.filter(p => p.status === 'partial').length;
+    const overdueCount = projectPayments.filter(p => p.status === 'overdue').length;
 
     return {
         totalExpected,
         totalPaid,
         remaining: totalExpected - totalPaid,
-        currency: payments[0]?.currency || 'USD',
-        paymentsCount: payments.length,
+        currency: projectPayments[0]?.currency || 'USD',
+        paymentsCount: projectPayments.length,
         pendingCount,
         paidCount,
         partialCount,
@@ -86,184 +95,129 @@ export async function getProjectPaymentSummary(projectId: string): Promise<Payme
  * Get a single invoice (payment) by ID
  */
 export async function getInvoice(id: string): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.payments.findFirst({
+        where: and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
+        with: {
+            project: {
+                columns: { id: true, name: true }
+            },
+            client: {
+                columns: { id: true, name: true, email: true, company: true, address: true, phone: true }
+            }
+        }
+    });
 
-    const { data, error } = await supabase
-        .from('payments')
-        .select(`
-            *,
-            projects:project_id (
-                id,
-                name
-            ),
-            clients:client_id (
-                id,
-                name,
-                email,
-                company,
-                address,
-                phone
-            )
-        `)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+    if (!result) throw new Error('Invoice not found');
+    if (!result.invoiceNumber) throw new Error('This payment does not have an invoice generated.');
 
-    if (error) {
-        throw error;
-    }
-
-    if (!data.invoice_number) {
-        throw new Error('This payment does not have an invoice generated.');
-    }
-
-    // Transform to match PaymentWithClient structure if needed, or return as is with joined data
-    // For now we return it as Payment but the joined data is available in 'projects' and 'clients'
-    // We might need to extend the type or use a different return type.
-    // Let's modify the return type or cast it.
-
-    // Actually, let's just use PaymentWithClient and specific casting
-    return data as unknown as Payment;
+    return result as unknown as Payment;
 }
 
 /**
  * Get a single invoice (payment) by Invoice Number
  */
 export async function getInvoiceByNumber(invoiceNumber: string): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.payments.findFirst({
+        where: and(eq(payments.invoiceNumber, invoiceNumber), eq(payments.userId, user.id)),
+        with: {
+            project: {
+                columns: { id: true, name: true, clientId: true },
+                with: {
+                    client: {
+                        columns: { id: true, name: true, email: true, company: true, address: true, phone: true }
+                    }
+                }
+            }
+        }
+    });
 
-    const { data, error } = await supabase
-        .from('payments')
-        .select(`
-            *,
-            projects:project_id (
-                id,
-                name,
-                client_id,
-                clients:client_id (
-                    id,
-                    name,
-                    email,
-                    company,
-                    address,
-                    phone
-                )
-            )
-        `)
-        .eq('invoice_number', invoiceNumber)
-        .eq('user_id', user.id)
-        .single();
+    if (!result) throw new Error('Invoice not found');
 
-    if (error) {
-        throw error;
-    }
-
-    return data as unknown as Payment;
+    return result as unknown as Payment;
 }
 
 /**
  * Create a new payment milestone
  */
 export async function createPayment(input: CreatePaymentInput): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const project = await db.query.projects.findFirst({
+        where: and(eq(projects.id, input.projectId), eq(projects.userId, user.id)),
+        columns: { id: true, clientId: true }
+    });
 
-    // Validate that project exists and belongs to user
-    const { data: project, error: projectError } = await supabase
-        .from('projects')
-        .select('id, client_id')
-        .eq('id', input.project_id)
-        .eq('user_id', user.id)
-        .single();
-
-    if (projectError || !project) {
+    if (!project) {
         throw new Error('Project not found or does not belong to user');
     }
 
-    // Destructure to exclude 'description' which doesn't exist in the database
-    // Use 'notes' field instead for any description content
     const { description, ...restInput } = input;
 
-    const { data, error } = await supabase
-        .from('payments')
-        .insert({
-            ...restInput,
-            notes: description || restInput.notes,
-            user_id: user.id,
-            client_id: project.client_id,
-            amount_paid: 0,
-            status: 'pending',
-            currency: input.currency || 'USD',
-        })
-        .select()
-        .single();
+    const [newPayment] = await db.insert(payments).values({
+        ...restInput,
+        projectId: input.projectId,
+        milestoneName: input.milestoneName,
+        notes: description || restInput.notes,
+        userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
 
-    if (error) {
-        throw error;
-    }
+        clientId: project.clientId,
+        amountPaid: '0',
+        amount: input.amount.toString(),
+        status: 'pending',
+        currency: input.currency || 'USD',
+        dueDate: input.dueDate,
+        taxRate: input.taxRate?.toString(),
+        discountRate: input.discountRate?.toString()
+    }).returning();
 
-    // Log to timeline
-    await logPaymentTimeline(input.project_id, 'payment', `Payment milestone added: ${input.milestone_name}`, {
-        payment_id: data.id,
+    await logPaymentTimeline(input.projectId, 'payment', `Payment milestone added: ${input.milestoneName}`, {
+        payment_id: newPayment.id,
         amount: input.amount,
         currency: input.currency || 'USD',
     });
 
-    return data;
+    return newPayment as unknown as Payment;
 }
 
 /**
  * Update payment details
  */
 export async function updatePayment(id: string, input: UpdatePaymentInput): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
-
-    // Destructure to exclude 'description' which doesn't exist in the database
     const { description, ...restInput } = input;
 
-    const { data, error } = await supabase
-        .from('payments')
-        .update({
-            ...restInput,
-            notes: description || restInput.notes,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+    const [updatedPayment] = await db.update(payments).set({
+        ...restInput,
+        milestoneName: input.milestoneName || undefined,
+        notes: description || restInput.notes,
+        amount: input.amount ? input.amount.toString() : undefined,
+        dueDate: input.dueDate,
+        taxRate: input.taxRate?.toString(),
+        discountRate: input.discountRate?.toString(),
+        updatedAt: new Date(),
+    })
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
+        .returning();
 
-    if (error) {
-        throw error;
-    }
+    if (!updatedPayment) throw new Error('Payment not found');
 
-    // Log to timeline
-    if (data.project_id) {
-        await logPaymentTimeline(data.project_id, 'payment', `Payment milestone updated: ${data.milestone_name}`, {
-            payment_id: data.id,
+    if (updatedPayment.projectId) {
+        await logPaymentTimeline(updatedPayment.projectId, 'payment', `Payment milestone updated: ${updatedPayment.milestoneName}`, {
+            payment_id: updatedPayment.id,
         });
     }
 
-    return data;
+    return updatedPayment as unknown as Payment;
 }
 
 /**
@@ -273,173 +227,111 @@ export async function updatePaymentStatus(
     id: string,
     statusInput: UpdatePaymentStatusInput
 ): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const currentPayment = await db.query.payments.findFirst({
+        where: and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id))
+    });
 
-    // Get current payment
-    const { data: currentPayment, error: fetchError } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
-
-    if (fetchError || !currentPayment) {
+    if (!currentPayment) {
         throw new Error('Payment not found');
     }
 
     const updateData: any = {
         status: statusInput.status,
-        updated_at: new Date().toISOString(),
+        updatedAt: new Date(),
     };
 
-    if (statusInput.amount_paid !== undefined) {
-        updateData.amount_paid = statusInput.amount_paid;
+    if (statusInput.amountPaid !== undefined) {
+        updateData.amountPaid = statusInput.amountPaid.toString();
     } else if (statusInput.status === 'paid' && currentPayment.amount) {
-        // Automatically set amount_paid to full amount if marking as paid
-        updateData.amount_paid = currentPayment.amount;
+        updateData.amountPaid = currentPayment.amount.toString();
     }
 
-    if (statusInput.paid_date) {
-        updateData.paid_date = statusInput.paid_date;
-    } else if (statusInput.status === 'paid' && !currentPayment.paid_date) {
-        // Default to today if marking as paid and no date exists
-        updateData.paid_date = new Date().toISOString(); // or .split('T')[0] if date-only type
+    if (statusInput.paidDate) {
+        updateData.paidDate = statusInput.paidDate; // string date
+    } else if (statusInput.status === 'paid' && !currentPayment.paidDate) {
+        updateData.paidDate = new Date().toISOString().split('T')[0];
     }
 
-    if (statusInput.payment_method) {
-        updateData.payment_method = statusInput.payment_method;
+    if (statusInput.paymentMethod) {
+        updateData.paymentMethod = statusInput.paymentMethod;
     }
 
-    const { data, error } = await supabase
-        .from('payments')
-        .update(updateData)
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+    const [updatedPayment] = await db.update(payments).set(updateData)
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
+        .returning();
 
-    if (error) {
-        throw error;
-    }
-
-    // Log to timeline
-    if (data.project_id) {
+    if (updatedPayment.projectId) {
         let message = '';
         if (statusInput.status === 'paid') {
-            message = `Payment marked as paid: ${data.milestone_name} ($${data.amount})`;
+            message = `Payment marked as paid: ${updatedPayment.milestoneName} ($${updatedPayment.amount})`;
         } else if (statusInput.status === 'partial') {
-            message = `Partial payment received: ${data.milestone_name} ($${statusInput.amount_paid} of $${data.amount})`;
+            message = `Partial payment received: ${updatedPayment.milestoneName} ($${statusInput.amountPaid} of $${updatedPayment.amount})`;
         }
 
         if (message) {
-            await logPaymentTimeline(data.project_id, 'payment', message, {
-                payment_id: data.id,
+            await logPaymentTimeline(updatedPayment.projectId, 'payment', message, {
+                payment_id: updatedPayment.id,
                 status: statusInput.status,
-                amount_paid: statusInput.amount_paid,
+                amountPaid: statusInput.amountPaid,
             });
         }
     }
 
-    return data;
+    return updatedPayment as unknown as Payment;
 }
 
 /**
  * Delete a payment
  */
 export async function deletePayment(id: string): Promise<void> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const payment = await db.query.payments.findFirst({
+        where: and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
+        columns: { projectId: true, milestoneName: true }
+    });
 
-    // Get payment before deleting for timeline
-    const { data: payment } = await supabase
-        .from('payments')
-        .select('project_id, milestone_name')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .single();
+    await db.delete(payments).where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)));
 
-    const { error } = await supabase
-        .from('payments')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-    if (error) {
-        throw error;
-    }
-
-    // Log to timeline
-    if (payment?.project_id) {
+    if (payment?.projectId) {
         await logPaymentTimeline(
-            payment.project_id,
+            payment.projectId,
             'payment',
-            `Payment milestone deleted: ${payment.milestone_name}`,
+            `Payment milestone deleted: ${payment.milestoneName}`,
             { payment_id: id }
         );
     }
 }
 
 /**
- * Helper function to log payment events to timeline
- */
-async function logPaymentTimeline(
-    projectId: string,
-    eventType: string,
-    title: string,
-    metadata: Record<string, any>
-): Promise<void> {
-    const supabase = await createClient(); // Added supabase instantiation
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return;
-
-    await supabase.from('timeline_events').insert({
-        user_id: user.id,
-        project_id: projectId,
-        event_type: eventType,
-        title: title,
-        metadata: metadata,
-    });
-}
-
-/**
  * Check for overdue payments and update their status
  */
 export async function checkOverduePayments(projectId: string): Promise<void> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const today = new Date().toISOString().split('T')[0];
+    const overduePayments = await db.query.payments.findMany({
+        where: and(
+            eq(payments.projectId, projectId),
+            eq(payments.userId, user.id),
+            eq(payments.status, 'pending'),
+            lt(payments.dueDate, today.toISOString().split('T')[0])
+        ),
+        columns: { id: true }
+    });
 
-    // Find payments that are overdue
-    const { data: overduePayments } = await supabase
-        .from('payments')
-        .select('id')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id)
-        .eq('status', 'pending')
-        .lt('due_date', today);
-
-    if (overduePayments && overduePayments.length > 0) {
-        // Update to overdue status
+    if (overduePayments.length > 0) {
         const ids = overduePayments.map(p => p.id);
-        await supabase
-            .from('payments')
-            .update({ status: 'overdue' })
-            .in('id', ids);
+        await Promise.all(ids.map(id =>
+            db.update(payments).set({ status: 'overdue' }).where(eq(payments.id, id))
+        ));
     }
 }
 
@@ -447,88 +339,66 @@ export async function checkOverduePayments(projectId: string): Promise<void> {
  * Generate an invoice for a payment
  */
 export async function generateInvoice(input: import('@/lib/types/payment').CreateInvoiceInput): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const payment = await db.query.payments.findFirst({
+        where: and(eq(payments.id, input.paymentId), eq(payments.userId, user.id)),
+        columns: { id: true, projectId: true, amount: true }
+    });
 
-    // Get payment to check ownership and project
-    const { data: payment, error: fetchError } = await supabase
-        .from('payments')
-        .select('id, project_id, amount')
-        .eq('id', input.payment_id)
-        .eq('user_id', user.id)
-        .single();
-
-    if (fetchError || !payment) {
+    if (!payment) {
         throw new Error('Payment not found');
     }
 
-    const { data, error } = await supabase
-        .from('payments')
-        .update({
-            invoice_number: input.invoice_number,
-            line_items: input.line_items as any,
-            notes: input.notes,
-            due_date: input.due_date,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', input.payment_id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+    const [updatedPayment] = await db.update(payments).set({
+        invoiceNumber: input.invoiceNumber,
+        lineItems: input.lineItems,
+        notes: input.notes,
+        dueDate: input.dueDate,
+        updatedAt: new Date(),
+    })
+        .where(and(eq(payments.id, input.paymentId), eq(payments.userId, user.id)))
+        .returning();
 
-    if (error) {
-        throw error;
-    }
-
-    // Log to timeline
-    if (payment.project_id) {
+    if (payment.projectId) {
         await logPaymentTimeline(
-            payment.project_id,
+            payment.projectId,
             'payment',
-            `Invoice generated: ${input.invoice_number}`,
+            `Invoice generated: ${input.invoiceNumber}`,
             {
                 payment_id: payment.id,
-                invoice_number: input.invoice_number,
+                invoiceNumber: input.invoiceNumber,
                 amount: payment.amount,
                 type: 'invoice_generated'
             }
         );
     }
 
-    return data;
+    return updatedPayment as unknown as Payment;
 }
 
 /**
- * Get all invoices (payments with invoice_number)
+ * Get all invoices (payments with invoiceNumber)
  */
 export async function getInvoices(): Promise<Payment[]> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const result = await db.query.payments.findMany({
+        where: and(isNotNull(payments.invoiceNumber), eq(payments.userId, user.id)),
+        orderBy: [desc(payments.createdAt)],
+        with: {
+            client: {
+                columns: { id: true, name: true, email: true, company: true }
+            },
+            project: {
+                columns: { id: true, name: true }
+            }
+        }
+    });
 
-    const { data, error } = await supabase
-        .from('payments')
-        .select(`
-            *,
-            client:clients(id, name, email, company),
-            project:projects(id, name)
-        `)
-        .not('invoice_number', 'is', null)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        throw error;
-    }
-
-    return data || [];
+    return result as unknown as Payment[];
 }
 
 /**
@@ -536,154 +406,107 @@ export async function getInvoices(): Promise<Payment[]> {
  * Used when creating an invoice directly (not from an existing payment milestone)
  */
 export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInput): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const [newInvoice] = await db.insert(payments).values({
+        userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
 
-    const { data, error } = await supabase
-        .from('payments')
-        .insert({
-            user_id: user.id,
-            client_id: input.client_id,
-            project_id: input.project_id || null, // handle "none" or empty string
-            amount: input.amount,
-            amount_paid: 0,
-            currency: input.currency || 'USD',
-            status: 'pending', // Default to pending for new invoices
-            invoice_number: input.invoice_number,
-            due_date: input.due_date,
-            line_items: input.line_items,
-            notes: input.notes,
-            tax_rate: input.tax_rate || 0,
-            discount_rate: input.discount_rate || 0
-        })
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
+        clientId: input.clientId,
+        projectId: input.projectId || null, // handle "none" or empty string
+        amount: input.amount.toString(),
+        amountPaid: "0",
+        currency: input.currency || 'USD',
+        status: 'pending', // Default to pending for new invoices
+        invoiceNumber: input.invoiceNumber,
+        dueDate: input.dueDate,
+        lineItems: input.lineItems,
+        notes: input.notes,
+        taxRate: input.taxRate?.toString() || "0",
+        discountRate: input.discountRate?.toString() || "0"
+    }).returning();
 
     // Log to timeline if project exists
-    if (input.project_id) {
-        await logPaymentTimeline(input.project_id, 'payment', `Invoice created: ${input.invoice_number}`, {
-            payment_id: data.id,
+    if (input.projectId) {
+        await logPaymentTimeline(input.projectId, 'payment', `Invoice created: ${input.invoiceNumber}`, {
+            payment_id: newInvoice.id,
             amount: input.amount,
         });
     }
 
-    return data;
+    return newInvoice as unknown as Payment;
 }
 
 /**
  * Update a standalone invoice (updates a payment record)
  */
 export async function updateStandaloneInvoice(id: string, input: CreateStandaloneInvoiceInput): Promise<Payment> {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
+    if (!user) throw new Error('User not authenticated');
 
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+    const [updatedInvoice] = await db.update(payments).set({
+        clientId: input.clientId,
+        projectId: input.projectId || null, // handle "none" or empty string
+        amount: input.amount.toString(),
+        currency: input.currency || 'USD',
+        invoiceNumber: input.invoiceNumber,
+        dueDate: input.dueDate,
+        lineItems: input.lineItems,
+        notes: input.notes,
+        taxRate: input.taxRate?.toString() || "0",
+        discountRate: input.discountRate?.toString() || "0",
+        updatedAt: new Date(),
+    })
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
+        .returning();
 
-    const { data, error } = await supabase
-        .from('payments')
-        .update({
-            client_id: input.client_id,
-            project_id: input.project_id || null, // handle "none" or empty string
-            amount: input.amount,
-            currency: input.currency || 'USD',
-            invoice_number: input.invoice_number,
-            due_date: input.due_date,
-            line_items: input.line_items as any,
-            notes: input.notes,
-            tax_rate: input.tax_rate || 0,
-            discount_rate: input.discount_rate || 0,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .select()
-        .single();
+    if (!updatedInvoice) throw new Error('Invoice not found');
 
-    if (error) {
-        throw error;
-    }
-
-    // Log to timeline if project exists
-    if (data.project_id) {
-        await logPaymentTimeline(data.project_id, 'payment', `Invoice updated: ${input.invoice_number}`, {
+    if (updatedInvoice.projectId) {
+        await logPaymentTimeline(updatedInvoice.projectId, 'payment', `Invoice updated: ${input.invoiceNumber}`, {
             payment_id: id,
             amount: input.amount,
         });
     }
 
-    return data;
+    return updatedInvoice as unknown as Payment;
 }
 
 /**
  * Get a single public invoice by ID (bypasses RLS)
  */
 export async function getPublicInvoice(id: string): Promise<Payment> {
-    // Check for Service Role Key availability
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const result = await db.query.payments.findFirst({
+        where: eq(payments.id, id),
+        with: {
+            project: {
+                columns: { id: true, name: true }
+            },
+            client: {
+                columns: { id: true, name: true, email: true, company: true, address: true, phone: true }
+            },
+            user: {
+                columns: { brandColor: true, logoUrl: true, name: true, companyName: true }
+            }
+        }
+    });
 
-    if (!serviceRoleKey) {
-        console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
-        throw new Error('Server configuration error: Unable to fetch public invoice.');
-    }
-
-    // Use service role client to bypass RLS
-    const supabase = createSupabaseClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        serviceRoleKey
-    );
-
-    const { data, error } = await supabase
-        .from('payments')
-        .select(`
-            *,
-            projects:project_id (
-                id,
-                name
-            ),
-            clients:client_id (
-                id,
-                name,
-                email,
-                company,
-                address,
-                phone
-            ),
-            user:users (
-                brand_color,
-                logo_url,
-                full_name,
-                company_name
-            )
-        `)
-        .eq('id', id)
-        .single();
-
-    if (error) {
-        console.error("Error fetching public invoice:", error);
+    if (!result) {
         throw new Error('Invoice not found');
     }
 
-    if (!data.invoice_number) {
+    if (!result.invoiceNumber) {
         throw new Error('This payment does not have an invoice generated.');
     }
 
-    // Attach user branding info to the result so the public page can render it
     const enrichedData = {
-        ...data,
-        brandColor: data.user?.brand_color,
-        logoUrl: data.user?.logo_url,
-        companyName: data.user?.company_name || data.user?.full_name
+        ...result,
+        brandColor: result.user?.brandColor,
+        logoUrl: result.user?.logoUrl,
+        companyName: result.user?.companyName || result.user?.name
     };
 
     return enrichedData as unknown as Payment;
 }
+

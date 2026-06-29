@@ -73,10 +73,10 @@ export default async function PublicScopePage({ params }: PublicScopePageProps) 
                     <div className="flex flex-col gap-3 pb-6 border-b">
                         <div className="flex items-center gap-3">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-foreground border">
-                                v{scope.version_number}
+                                v{scope.versionNumber}
                             </span>
                             <span className="text-muted-foreground text-xs">
-                                • Created {new Date(scope.created_at).toLocaleDateString()}
+                                • Created {new Date(scope.createdAt).toLocaleDateString()}
                             </span>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
@@ -114,7 +114,7 @@ export default async function PublicScopePage({ params }: PublicScopePageProps) 
                                     <h2 className="text-lg font-bold">Out of Scope</h2>
                                 </div>
                                 <div className="text-base leading-relaxed whitespace-pre-wrap font-mono bg-muted/30 border border-border rounded-xl p-5">
-                                    {scope.out_of_scope || 'No out-of-scope items specified'}
+                                    {scope.outOfScope || 'No out-of-scope items specified'}
                                 </div>
                             </div>
                         </Card>

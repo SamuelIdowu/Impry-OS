@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { UserMenu } from "./userMenu"
 import { Logo } from "@/components/ui/logo"
@@ -23,7 +23,8 @@ import {
     Zap
 } from "lucide-react"
 
-import { User } from "@supabase/supabase-js"
+// @ts-ignore
+import type { User } from "better-auth"
 import { getTeamMembersAction, addTeamMemberAction, deleteTeamMemberAction } from "@/server/actions/team"
 import { getProfileAction } from "@/server/actions/user"
 
@@ -31,7 +32,7 @@ interface TeamMember {
     id: string;
     name: string;
     role: string | null;
-    avatar_url: string | null;
+    avatarUrl: string | null;
     email: string | null;
 }
 
@@ -41,6 +42,8 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Sidebar({ className, user }: SidebarProps) {
     const pathname = usePathname()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
 
     // Team members state
     const [members, setMembers] = React.useState<TeamMember[]>([])
@@ -63,7 +66,7 @@ export function Sidebar({ className, user }: SidebarProps) {
                 setMembers(membersRes.members)
             }
             if (profileRes.success && profileRes.profile) {
-                setSubscriptionPlan(profileRes.profile.subscription_plan)
+                setSubscriptionPlan((profileRes.profile as any).subscription_plan || 'free')
             }
             setIsLoadingMembers(false)
         }
@@ -99,39 +102,39 @@ export function Sidebar({ className, user }: SidebarProps) {
     }
 
     const dashboardSubItems = [
-        { title: "Overview", href: "/dashboard", exact: true },
-        { title: "Follow-Ups", href: "/dashboard/follow-ups", icon: Bell }
+        { title: "Overview", href: `/${workspaceId}/dashboard`, exact: true },
+        { title: "Follow-Ups", href: `/${workspaceId}/dashboard/follow-ups`, icon: Bell }
     ]
 
     const navItems = [
         {
             title: "Clients",
-            href: "/clients",
+            href: `/${workspaceId}/clients`,
             icon: Users
         },
         {
             title: "Projects",
-            href: "/projects",
+            href: `/${workspaceId}/projects`,
             icon: Folder
         },
         {
             title: "Calendar",
-            href: "/calendar",
+            href: `/${workspaceId}/calendar`,
             icon: Calendar
         },
         {
             title: "Invoices",
-            href: "/invoices",
+            href: `/${workspaceId}/invoices`,
             icon: CheckSquare
         },
         {
             title: "Reports",
-            href: "/reports",
+            href: `/${workspaceId}/reports`,
             icon: Activity
         },
         {
             title: "Settings",
-            href: "/settings",
+            href: `/${workspaceId}/settings`,
             icon: Settings
         },
     ]
@@ -150,14 +153,14 @@ export function Sidebar({ className, user }: SidebarProps) {
                                 onClick={() => setDashboardExpanded(!dashboardExpanded)}
                                 className={cn(
                                     "w-full group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
-                                    pathname.startsWith("/dashboard")
+                                    pathname.includes("/dashboard")
                                         ? "bg-zinc-100 text-zinc-900"
                                         : "text-zinc-500"
                                 )}
                             >
                                 <div className="flex items-center">
                                     <LayoutGrid className={cn("mr-2 h-4 w-4",
-                                        pathname.startsWith("/dashboard")
+                                        pathname.includes("/dashboard")
                                             ? "text-zinc-900"
                                             : "text-zinc-400 group-hover:text-zinc-900"
                                     )} />
@@ -274,10 +277,10 @@ export function Sidebar({ className, user }: SidebarProps) {
                                 <div key={member.id} className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-zinc-50 group">
                                     <div className={cn(
                                         "size-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0",
-                                        member.avatar_url ? "bg-transparent" : "bg-zinc-100 text-zinc-500"
+                                        member.avatarUrl ? "bg-transparent" : "bg-zinc-100 text-zinc-500"
                                     )}>
-                                        {member.avatar_url ? (
-                                            <img src={member.avatar_url} alt={member.name} className="size-8 rounded-full object-cover" />
+                                        {member.avatarUrl ? (
+                                            <img src={member.avatarUrl} alt={member.name} className="size-8 rounded-full object-cover" />
                                         ) : (
                                             getInitials(member.name)
                                         )}

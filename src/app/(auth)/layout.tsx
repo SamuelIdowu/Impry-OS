@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Authentication - FreelanceOS",
+    title: "Authentication - Impry OS",
     description: "Sign in or create an account",
 };
 

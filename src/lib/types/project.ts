@@ -14,19 +14,20 @@ export type DatabaseProjectStatus =
 
 export interface Project {
     id: string;
-    user_id: string;
-    client_id: string | null;
+    userId: string;
+    clientId: string | null;
     name: string;
     description?: string | null;
     status: DatabaseProjectStatus;
-    progress: number;
-    start_date?: string | null;
+    startDate?: string | null;
     deadline?: string | null;
     budget?: number | null;
     currency?: string | null;
     notes?: string | null;
-    created_at: string;
-    updated_at: string;
+    progress?: number;
+    total_value?: number;
+    createdAt: string | Date;
+    updatedAt: string | Date;
 }
 
 export interface ProjectWithClient extends Project {
@@ -44,6 +45,7 @@ export interface ProjectWithDetails extends ProjectWithClient {
         title: string;
         status: string;
         description?: string | null;
+        createdAt: string | Date;
         created_at: string;
     }>;
     payments?: Array<{
@@ -51,8 +53,12 @@ export interface ProjectWithDetails extends ProjectWithClient {
         amount: number;
         currency: string;
         status: string;
-        due_date?: string | null;
-        paid_date?: string | null;
+        description?: string | null;
+        dueDate?: string | null;
+        paidDate?: string | null;
+        amountPaid?: string | number;
+        userId?: string;
+        updatedAt?: string | Date;
     }>;
     reminders?: Array<{
         id: string;
@@ -66,11 +72,10 @@ export interface ProjectWithDetails extends ProjectWithClient {
 
 export interface CreateProjectInput {
     name: string;
-    client_id: string;
+    clientId: string;
     description?: string;
     status?: DatabaseProjectStatus;
-    progress?: number;
-    start_date?: string;
+    startDate?: string;
     deadline?: string;
     budget?: number;
     currency?: string;
@@ -81,12 +86,13 @@ export interface UpdateProjectInput {
     name?: string;
     description?: string;
     status?: DatabaseProjectStatus;
-    progress?: number;
-    start_date?: string;
+    startDate?: string;
     deadline?: string;
     budget?: number;
     currency?: string;
     notes?: string;
+    progress?: number;
+    total_value?: number;
 }
 
 // Helper functions to map between database and application statuses

@@ -1,4 +1,8 @@
-import { createClient } from './auth';
+import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { db } from '@/server/db';
+import { timelineEvents } from '@/server/db/schema';
+import { eq, inArray, and, desc } from 'drizzle-orm';
+import { getUser } from './auth';
 
 export type TimelineEventType =
     | 'note'
@@ -26,22 +30,26 @@ export interface CreateTimelineEventInput {
  * Log a new timeline event
  */
 export async function logTimelineEvent(input: CreateTimelineEventInput) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
 
     if (!user) {
         throw new Error('User not authenticated');
     }
 
-    const { error } = await supabase
-        .from('timeline_events')
-        .insert({
-            ...input,
-            user_id: user.id,
-            event_date: input.event_date || new Date().toISOString(),
-        });
+    try {
+        await db.insert(timelineEvents).values({
+            projectId: input.project_id,
+            clientId: input.client_id,
+            eventType: input.event_type,
+            title: input.title,
+            description: input.description,
+            metadata: input.metadata,
+            userId: user.id,
+        workspaceId: await getCurrentWorkspaceId(),
 
-    if (error) {
+            eventDate: input.event_date ? new Date(input.event_date) : new Date(),
+        });
+    } catch (error) {
         console.error('Failed to log timeline event:', error);
         // We generally don't want to throw here to avoid blocking the main action
         // if logging fails, but in a production app we might handle this differently
@@ -52,29 +60,25 @@ export async function logTimelineEvent(input: CreateTimelineEventInput) {
  * Get timeline activities for a project
  */
 export async function getProjectActivities(projectId: string, filters?: { type?: TimelineEventType[] }) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUser();
 
     if (!user) {
         throw new Error('User not authenticated');
     }
 
-    let query = supabase
-        .from('timeline_events')
-        .select('*')
-        .eq('project_id', projectId)
-        .eq('user_id', user.id)
-        .order('event_date', { ascending: false });
+    let conditions = [
+        eq(timelineEvents.projectId, projectId),
+        eq(timelineEvents.userId, user.id)
+    ];
 
     if (filters?.type && filters.type.length > 0) {
-        query = query.in('event_type', filters.type);
+        conditions.push(inArray(timelineEvents.eventType, filters.type));
     }
 
-    const { data, error } = await query;
-
-    if (error) {
-        throw error;
-    }
+    const data = await db.query.timelineEvents.findMany({
+        where: and(...conditions),
+        orderBy: [desc(timelineEvents.eventDate)]
+    });
 
     return data || [];
 }

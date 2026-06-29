@@ -2,7 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ChevronRight,
     Filter,
@@ -63,6 +63,8 @@ const DonutChart = ({ percentage }: { percentage: number }) => {
 
 export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
     const [activeTab, setActiveTab] = React.useState('overview')
 
     // Calculated fields
@@ -73,7 +75,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     const progress = project.progress || 0;
 
     // Helper for dates
-    const startDate = project.start_date ? new Date(project.start_date) : new Date();
+    const startDate = project.startDate ? new Date(project.startDate) : new Date();
     const dueDate = project.deadline ? new Date(project.deadline) : new Date();
     const totalDuration = dueDate.getTime() - startDate.getTime();
     const elapsed = Date.now() - startDate.getTime();
@@ -86,20 +88,17 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
         name: project.client.name,
         companyName: project.client.company || '',
         email: project.client.email,
-        // Mock missing fields
-        projectCount: 0,
+        status: 'Active' as any,
         totalRevenue: 0,
-        status: 'Active' as const,
-        lastActive: '',
-        joinedDate: '',
-        avatar: project.client.name.substring(0, 2).toUpperCase()
+        projectCount: 0,
+        lastActive: new Date().toISOString()
     } : undefined;
 
     // Mapped Project for ScopeTab (needs UI Project type)
     const projectForScope = {
         id: project.id,
         name: project.name,
-        clientId: project.client_id || '',
+        clientId: project.clientId || '',
         clientName: project.client?.name || '',
         status: project.status as any,
         progress: progress,
@@ -115,7 +114,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
             {/* Top Navigation / Breadcrumbs */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-2 text-sm text-zinc-500">
-                    <Link href="/projects" className="hover:text-zinc-900 transition-colors">Projects</Link>
+                    <Link href={`/${workspaceId}/projects`} className="hover:text-zinc-900 transition-colors">Projects</Link>
                     <ChevronRight className="h-4 w-4" />
                     <span className="text-zinc-900 font-medium">{project.name}</span>
                 </div>

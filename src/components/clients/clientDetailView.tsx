@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     ArrowLeft,
     MoreHorizontal,
@@ -53,22 +53,25 @@ import { EmptyClientProjects } from "@/components/emptyClientProjects"
 interface ClientDetailViewProps {
     client: ClientWithProjects;
     projects: Project[];
-    payments: Payment[];
+    payments: any[];
 }
 
 // ... helpers ...
 
 export function ClientDetailView({ client, projects, payments }: ClientDetailViewProps) {
-    // ... hooks ...
+    const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
+
     const [noteInput, setNoteInput] = useState("")
     const [isSavingNote, setIsSavingNote] = useState(false)
     const [isEditClientOpen, setIsEditClientOpen] = useState(false)
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
 
     // Derived stats
-    const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0)
+    const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount || 0), 0)
     const outstandingInvoices = payments.filter(p => p.status !== 'paid')
-    const outstandingAmount = outstandingInvoices.reduce((sum, p) => sum + p.amount, 0)
+    const outstandingAmount = outstandingInvoices.reduce((sum, p) => sum + Number(p.amount || 0), 0)
 
     const uiProjects: UIProject[] = projects.map(p => {
         const appStatus = mapDatabaseToAppStatus(p.status);
@@ -89,7 +92,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
             status: uiStatus,
             progress: 0, // Default for now
             dueDate: p.deadline || new Date().toISOString(), // Fallback
-            startDate: p.start_date || new Date().toISOString(),
+            startDate: p.startDate || new Date().toISOString(),
             totalValue: p.budget || 0,
             paidAmount: 0, // Needs calculation from payments if linked
             description: p.description || undefined,
@@ -120,10 +123,10 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
         try {
             const res = await createProjectAction({
                 name: data.name,
-                client_id: client.id,
+                clientId: client.id,
                 description: data.description,
                 status: 'planning', // Default status
-                start_date: new Date().toISOString(),
+                startDate: new Date().toISOString(),
                 deadline: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
                 budget: Number(data.budget) || 0
             });
@@ -166,7 +169,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
         <div className="flex flex-col w-full mx-auto py-8 px-4 lg:px-8 gap-8">
             {/* Breadcrumb & Navigation */}
             <div className="flex items-center gap-2 text-sm text-zinc-500 mb-[-1rem]">
-                <Link href="/clients" className="hover:text-zinc-900 transition-colors">Clients</Link>
+                <Link href={`/${workspaceId}/clients`} className="hover:text-zinc-900 transition-colors">Clients</Link>
                 <span>/</span>
                 <span className="text-zinc-900 font-medium">{client.name}</span>
             </div>

@@ -61,12 +61,12 @@ export function ReminderCreationModal({
             const title = type === 'payment' ? 'Payment Reminder' : 'Follow-up';
 
             const result = await createReminderAction({
-                project_id: projectId,
-                client_id: clientId,
-                payment_id: paymentId,
+                projectId: projectId,
+                clientId: clientId,
+                paymentId: paymentId,
                 title,
-                reminder_type: type,
-                reminder_date: new Date(date).toISOString(),
+                reminderType: type,
+                reminderDate: new Date(date).toISOString(),
                 description: note,
             });
 

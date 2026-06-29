@@ -10,7 +10,7 @@ import { Sidebar } from "./sidebar"
 import { SearchDialog } from "@/components/search/searchDialog"
 import { cn } from "@/lib/utils"
 
-import { User } from "@supabase/supabase-js"
+import type { User } from "better-auth"
 
 export function AppHeader({ user }: { user: User }) {
     const [notificationOpen, setNotificationOpen] = React.useState(false)

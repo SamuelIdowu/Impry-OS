@@ -59,7 +59,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
             if (latestResult.success && latestResult.data) {
                 setCurrentVersion(latestResult.data);
                 setDeliverables(latestResult.data.deliverables || '');
-                setOutOfScope(latestResult.data.out_of_scope || '');
+                setOutOfScope(latestResult.data.outOfScope || '');
                 setAssumptions(latestResult.data.assumptions || '');
             }
 
@@ -77,9 +77,9 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
         try {
             setSaving(true);
             const result = await createScopeVersionAction({
-                project_id: project.id,
+                projectId: project.id,
                 deliverables: deliverables || undefined,
-                out_of_scope: outOfScope || undefined,
+                outOfScope: outOfScope || undefined,
                 assumptions: assumptions || undefined,
             });
 
@@ -100,7 +100,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
 
     const hasChanges = currentVersion
         ? (deliverables !== (currentVersion.deliverables || '') ||
-            outOfScope !== (currentVersion.out_of_scope || '') ||
+            outOfScope !== (currentVersion.outOfScope || '') ||
             assumptions !== (currentVersion.assumptions || ''))
         : (deliverables || outOfScope || assumptions);
 
@@ -266,7 +266,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                             <div className="space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="size-10 rounded-full bg-zinc-100 flex items-center justify-center font-semibold text-zinc-600">
-                                        {client.avatar || client.name.charAt(0)}
+                                        {client.name.charAt(0)}
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-zinc-900">{client.name}</span>
@@ -301,8 +301,8 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                                     <div key={version.id} className="relative pl-6">
                                         <div className="absolute left-0 top-1.5 size-3 rounded-full bg-zinc-900 ring-4 ring-white" />
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-zinc-900">Version {version.version_number}</span>
-                                            <span className="text-xs text-zinc-500 mt-1">{new Date(version.created_at).toLocaleDateString()} at {new Date(version.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="text-sm font-medium text-zinc-900">Version {version.versionNumber}</span>
+                                            <span className="text-xs text-zinc-500 mt-1">{new Date(version.createdAt).toLocaleDateString()} at {new Date(version.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                     </div>
                                 ))
@@ -320,7 +320,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                 onClose={() => setShareDialogOpen(false)
                 }
                 shareUrl={shareUrl}
-                versionNumber={currentVersion?.version_number || 0}
+                versionNumber={currentVersion?.versionNumber || 0}
             />
         </div >
     );

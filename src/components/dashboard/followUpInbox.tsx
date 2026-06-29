@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import {
     Bell,
@@ -37,6 +37,8 @@ interface FollowUpInboxProps {
 
 export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params?.workspaceId as string || 'default'
     const [actionLoading, setActionLoading] = React.useState<string | null>(null)
 
     const hasReminders = reminders.length > 0
@@ -79,7 +81,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
 
     const handleOpenProject = (projectId: string | undefined) => {
         if (projectId) {
-            router.push(`/projects/${projectId}`)
+            router.push(`/${workspaceId}/projects/${projectId}`)
         }
     }
 
@@ -137,7 +139,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                 </div>
                 {showViewAll && (
                     <Link
-                        href="/dashboard/follow-ups"
+                        href={`/${workspaceId}/dashboard/follow-ups`}
                         className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-100"
                     >
                         View All

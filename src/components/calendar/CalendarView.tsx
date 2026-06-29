@@ -15,7 +15,7 @@ import {
 import { CalendarHeader } from './CalendarHeader'
 import { CalendarDay } from './CalendarDay'
 import { EventDialog } from './EventDialog'
-import type { CalendarEvent } from '@/server/actions/calendar'
+import type { CalendarEvent } from '@/lib/calendar'
 
 interface CalendarViewProps {
     initialEvents: CalendarEvent[]

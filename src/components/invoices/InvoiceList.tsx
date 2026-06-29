@@ -20,7 +20,7 @@ import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils"
 // import { Invoice } from "@/lib/types" // We will use Payment type now or Invoice type mapped
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment" // Use updated types
 import { createStandaloneInvoice, deletePayment, updatePaymentStatus } from "@/server/actions/payments"
 import {
@@ -40,6 +40,8 @@ interface InvoiceListProps {
 
 export function InvoiceList({ invoices: initialInvoices, clients, projects }: InvoiceListProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
     const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState("All Invoices")
     // const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false) // Unused
@@ -60,7 +62,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
 
     const filteredInvoices = invoices.filter(inv => {
         const clientName = inv.client?.name || ''
-        const invoiceNum = inv.invoice_number || ''
+        const invoiceNum = inv.invoiceNumber || ''
 
         // Search text matching
         const matchesSearch =
@@ -74,15 +76,15 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
         if (activeTab === "Overdue") matchesStatus = inv.status === 'overdue'
 
         // Client matching
-        const matchesClient = selectedClientId === "all" || inv.client_id === selectedClientId
+        const matchesClient = selectedClientId === "all" || inv.clientId === selectedClientId
 
-        // Date Range matching (using due_date)
+        // Date Range matching (using dueDate)
         let matchesDate = true
         if (dateRange.start) {
-            matchesDate = matchesDate && new Date(inv.due_date!) >= new Date(dateRange.start)
+            matchesDate = matchesDate && new Date(inv.dueDate!) >= new Date(dateRange.start)
         }
         if (dateRange.end) {
-            matchesDate = matchesDate && new Date(inv.due_date!) <= new Date(dateRange.end)
+            matchesDate = matchesDate && new Date(inv.dueDate!) <= new Date(dateRange.end)
         }
 
         return matchesSearch && matchesStatus && matchesClient && matchesDate
@@ -122,13 +124,13 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
         // Dynamic import to avoid SSR issues if any, though standard import usually fine
         import('papaparse').then(({ unparse }) => {
             const dataToExport = filteredInvoices.map(inv => ({
-                "Invoice ID": inv.invoice_number,
+                "Invoice ID": inv.invoiceNumber,
                 "Client": inv.client?.name || "Unknown",
                 "Project": (inv as any).project?.name || "N/A",
                 "Amount": inv.amount,
                 "Status": inv.status,
-                "Due Date": inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '',
-                "Created At": new Date(inv.created_at).toLocaleDateString()
+                "Due Date": inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '',
+                "Created At": new Date(inv.createdAt).toLocaleDateString()
             }))
 
             const csv = unparse(dataToExport)
@@ -159,7 +161,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     description="Track payments and manage revenue streams."
                 >
                     <Link
-                        href="/invoices/new"
+                        href={`/${workspaceId}/invoices/new`}
                         className="flex items-center justify-center rounded-lg h-10 px-6 bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group"
                     >
                         <Plus className="mr-2 h-5 w-5" />
@@ -174,7 +176,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     {[
                         {
                             title: "Outstanding",
-                            value: `$${invoices.filter(i => i.status !== 'paid').reduce((acc, curr) => acc + (curr.amount - curr.amount_paid), 0).toLocaleString()}`,
+                            value: `$${invoices.filter(i => i.status !== 'paid').reduce((acc, curr) => acc + (Number(curr.amount) - Number(curr.amountPaid)), 0).toLocaleString()}`,
                             icon: Clock,
                             trend: `${statusCounts.overdue} overdue`,
                             trendLabel: "invoices",
@@ -184,19 +186,57 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                         {
                             title: "Total Paid",
                             value: `$${invoices.filter(i => i.status === 'paid' || i.status === 'partial').reduce((acc, curr) => {
-                                // Fallback for legacy data: if paid but amount_paid is 0, use full amount
-                                const paidAmount = (curr.amount_paid === 0 && curr.status === 'paid') ? curr.amount : curr.amount_paid;
+                                // Fallback for legacy data: if paid but amountPaid is 0, use full amount
+                                const paidAmount = (Number(curr.amountPaid) === 0 && curr.status === 'paid') ? Number(curr.amount) : Number(curr.amountPaid);
                                 return acc + paidAmount;
                             }, 0).toLocaleString()}`,
                             icon: CheckCircle2,
-                            trend: "+15%", // Placeholder logic can be improved later
+                            trend: (() => {
+                                const currentMonth = new Date().getMonth();
+                                const currentYear = new Date().getFullYear();
+                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
+                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
+                                
+                                const currentMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === currentMonth && new Date(i.paidDate || i.createdAt).getFullYear() === currentYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+                                    
+                                const prevMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === prevMonth && new Date(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+
+                                if (prevMonthPaid === 0) return currentMonthPaid > 0 ? "+100%" : "0%";
+                                const percentage = Math.round(((currentMonthPaid - prevMonthPaid) / prevMonthPaid) * 100);
+                                return percentage > 0 ? `+${percentage}%` : `${percentage}%`;
+                            })(),
                             trendLabel: "vs last month",
-                            trendDirection: "up" as const,
+                            trendDirection: (() => {
+                                const currentMonth = new Date().getMonth();
+                                const currentYear = new Date().getFullYear();
+                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
+                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
+                                
+                                const currentMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === currentMonth && new Date(i.paidDate || i.createdAt).getFullYear() === currentYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+                                    
+                                const prevMonthPaid = paidInvoices
+                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === prevMonth && new Date(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
+                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
+
+                                return currentMonthPaid >= prevMonthPaid ? "up" as const : "down" as const;
+                            })(),
                             iconColor: "bg-green-50 text-green-600"
                         },
                         {
                             title: "Pending Amount",
-                            value: `$${invoices.filter(i => i.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0).toLocaleString()}`,
+                            value: `$${invoices.filter(i => i.status === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0).toLocaleString()}`,
                             icon: FileText,
                             trend: `${statusCounts.pending} pending`,
                             trendLabel: "pending",
@@ -332,11 +372,11 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                             {filteredInvoices.map((inv) => (
                                 <tr
                                     key={inv.id}
-                                    onClick={() => router.push(`/invoices/${inv.invoice_number}`)}
+                                    onClick={() => router.push(`/${workspaceId}/invoices/${inv.invoiceNumber}`)}
                                     className="hover:bg-zinc-50/50 transition-colors group cursor-pointer"
                                 >
                                     <td className="py-4 px-6 font-medium text-sm text-zinc-900">
-                                        {inv.invoice_number}
+                                        {inv.invoiceNumber}
                                     </td>
                                     <td className="py-4 px-6">
                                         <div className="flex items-center gap-2">
@@ -346,7 +386,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                     </td>
                                     <td className="py-4 px-6 text-sm text-zinc-500">{(inv as any).project?.name || '-'}</td>
                                     <td className="py-4 px-6 font-bold text-sm text-zinc-900">${inv.amount.toLocaleString()}</td>
-                                    <td className="py-4 px-6 text-sm text-zinc-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '-'}</td>
+                                    <td className="py-4 px-6 text-sm text-zinc-500">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                                     <td className="py-4 px-6">
                                         <StatusBadge status={inv.status} />
                                     </td>
@@ -361,7 +401,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => router.push(`/invoices/${inv.invoice_number}`)}>
+                                                <DropdownMenuItem onClick={() => router.push(`/${workspaceId}/invoices/${inv.invoiceNumber}`)}>
                                                     View Details
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />

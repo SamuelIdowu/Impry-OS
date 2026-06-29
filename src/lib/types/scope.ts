@@ -2,16 +2,16 @@
 
 export interface ScopeVersion {
     id: string;
-    project_id: string;
-    user_id: string;
-    version_number: number;
+    projectId: string;
+    userId: string;
+    versionNumber: number;
     deliverables: string | null;
-    out_of_scope: string | null;
+    outOfScope: string | null;
     assumptions: string | null;
-    share_token: string;
-    created_by: string;
-    created_at: string;
-    updated_at: string;
+    shareToken: string | null;
+    createdBy: string;
+    createdAt: string | Date;
+    updatedAt: string | Date;
 }
 
 export interface ScopeVersionWithProject extends ScopeVersion {
@@ -23,20 +23,20 @@ export interface ScopeVersionWithProject extends ScopeVersion {
 }
 
 export interface CreateScopeVersionInput {
-    project_id: string;
+    projectId: string;
     deliverables?: string;
-    out_of_scope?: string;
+    outOfScope?: string;
     assumptions?: string;
 }
 
 export interface UpdateScopeVersionInput {
     deliverables?: string;
-    out_of_scope?: string;
+    outOfScope?: string;
     assumptions?: string;
 }
 
 // Helper type for scope sections
-export type ScopeSection = 'deliverables' | 'out_of_scope' | 'assumptions';
+export type ScopeSection = 'deliverables' | 'outOfScope' | 'assumptions';
 
 export interface ScopeSectionConfig {
     id: ScopeSection;

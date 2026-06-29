@@ -42,7 +42,7 @@ interface MfaFactor {
 }
 
 interface SettingsFormProps {
-    user: any; // User object from Supabase
+    user: any; // User object from Better Auth
     profile?: any; // Public profile with subscription info
 }
 

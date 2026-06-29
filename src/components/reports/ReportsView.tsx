@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import {
     Calendar,
     Download,
@@ -55,6 +56,9 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
     const [searchQuery, setSearchQuery] = React.useState("")
     const [statusFilter, setStatusFilter] = React.useState<string>("All")
     const [dateRange, setDateRange] = React.useState<DateRange>("30days")
+    
+    const params = useParams()
+    const workspaceId = params.workspaceId as string || 'default'
 
     // Helper to get start date based on range
     const getStartDate = (range: DateRange) => {
@@ -80,8 +84,8 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
 
             const matchesStatus = statusFilter === "All" || project.status === statusFilter.toLowerCase()
 
-            // Date filtering - assuming created_at is the start date
-            const projectDate = new Date(project.created_at)
+            // Date filtering - assuming createdAt is the start date
+            const projectDate = new Date(project.createdAt)
             const matchesDate = isAfter(projectDate, startDateLimit)
 
             return matchesSearch && matchesStatus && matchesDate
@@ -94,24 +98,24 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
 
         // Filter invoices for revenue calculation
         const filteredInvoices = invoices.filter(inv => {
-            if (!inv.created_at) return false // Should not happen
-            const invDate = new Date(inv.created_at)
+            if (!inv.createdAt) return false // Should not happen
+            const invDate = new Date(inv.createdAt)
             return isAfter(invDate, startDateLimit)
         })
 
         const totalRevenue = filteredInvoices.reduce((sum, inv) => {
             const paidVal = (inv.status === 'paid')
-                ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
                 : 0;
             return sum + paidVal;
         }, 0)
-        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? (inv.amount - inv.amount_paid) : 0), 0)
+        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? (Number(inv.amount) - Number(inv.amountPaid)) : 0), 0)
         // Count unique clients with outstanding
-        const outstandingClients = new Set(filteredInvoices.filter(inv => inv.status !== 'paid').map(inv => inv.client_id)).size
+        const outstandingClients = new Set(filteredInvoices.filter(inv => inv.status !== 'paid').map(inv => inv.clientId)).size
 
         // Calculate Project Success Rate
         const relevantProjects = projects.filter(project => {
-            const projectDate = new Date(project.created_at)
+            const projectDate = new Date(project.createdAt)
             return isAfter(projectDate, startDateLimit)
         })
         const completedProjects = relevantProjects.filter(p => p.status === 'completed').length
@@ -145,13 +149,13 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                 const dayRevenue = invoices
                     .filter(inv => inv.status === 'paid')
                     .filter(inv => {
-                        if (!inv.created_at) return false;
-                        const invDate = new Date(inv.created_at)
+                        if (!inv.createdAt) return false;
+                        const invDate = new Date(inv.createdAt)
                         return format(invDate, "MMM dd") === dayStr && isSameYear(invDate, date)
                     })
                     .reduce((sum, inv) => {
                         const paidVal = (inv.status === 'paid')
-                            ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
                             : 0;
                         return sum + paidVal;
                     }, 0)
@@ -161,7 +165,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
             return data
         } else if (dateRange === "creation" || dateRange === "all") {
             // Monthly breakdown from creation date or very beginning
-            const start = dateRange === "creation" ? new Date(userCreatedAt) : new Date(invoices.length > 0 ? Math.min(...invoices.map(i => new Date(i.created_at!).getTime())) : Date.now())
+            const start = dateRange === "creation" ? new Date(userCreatedAt) : new Date(invoices.length > 0 ? Math.min(...invoices.map(i => new Date(i.createdAt!).getTime())) : Date.now())
             const end = new Date()
             const data = []
 
@@ -174,13 +178,13 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                 const monthRevenue = invoices
                     .filter(inv => inv.status === 'paid')
                     .filter(inv => {
-                        if (!inv.created_at) return false;
-                        const invDate = new Date(inv.created_at)
+                        if (!inv.createdAt) return false;
+                        const invDate = new Date(inv.createdAt)
                         return format(invDate, "MMM yyyy") === monthStr
                     })
                     .reduce((sum, inv) => {
                         const paidVal = (inv.status === 'paid')
-                            ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
                             : 0;
                         return sum + paidVal;
                     }, 0)
@@ -199,13 +203,13 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                 const monthRevenue = invoices
                     .filter(inv => inv.status === 'paid')
                     .filter(inv => {
-                        if (!inv.created_at) return false;
-                        const invDate = new Date(inv.created_at)
+                        if (!inv.createdAt) return false;
+                        const invDate = new Date(inv.createdAt)
                         return format(invDate, "MMM") === month && invDate.getFullYear() === currentYear
                     })
                     .reduce((sum, inv) => {
                         const paidVal = (inv.status === 'paid')
-                            ? (inv.amount_paid === 0 ? inv.amount : inv.amount_paid)
+                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
                             : 0;
                         return sum + paidVal;
                     }, 0)
@@ -380,7 +384,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                                 </div>
                                             </td>
                                             <td className="py-4 px-6 text-sm text-zinc-500">
-                                                {project.due_date ? new Date(project.due_date).toLocaleDateString() : '-'}
+                                                {project.dueDate ? new Date(project.dueDate).toLocaleDateString() : '-'}
                                             </td>
                                             <td className="py-4 px-6">
                                                 <div className="flex items-center gap-2">
@@ -394,7 +398,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                                 <StatusBadge status={project.status} />
                                             </td>
                                             <td className="py-4 px-6 text-right">
-                                                <Link href={`/projects/${project.id}`} className="inline-flex text-zinc-500 hover:text-zinc-900 p-1 rounded hover:bg-zinc-100 transition-colors">
+                                                <Link href={`/${workspaceId}/projects/${project.id}`} className="inline-flex text-zinc-500 hover:text-zinc-900 p-1 rounded hover:bg-zinc-100 transition-colors">
                                                     <ArrowRight className="h-[18px] w-[18px]" />
                                                 </Link>
                                             </td>
@@ -411,7 +415,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                         </table>
                     </div>
                     <div className="p-4 border-t border-zinc-200 flex justify-center">
-                        <Link href="/projects" className="text-sm text-zinc-500 hover:text-zinc-900 font-medium transition-colors flex items-center gap-1">
+                        <Link href={`/${workspaceId}/projects`} className="text-sm text-zinc-500 hover:text-zinc-900 font-medium transition-colors flex items-center gap-1">
                             View All Projects
                             <ChevronRight className="h-[16px] w-[16px]" />
                         </Link>

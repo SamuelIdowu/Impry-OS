@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,9 +10,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdownMenu"
 import { Avatar } from "@/components/ui/avatar"
-import { createBrowserClient } from "@/lib/supabase-browser"
+import { authClient } from "@/lib/auth-client"
 
-import { User } from "@supabase/supabase-js"
+import type { User } from "better-auth"
 
 interface UserMenuProps {
     open?: boolean
@@ -23,10 +23,11 @@ interface UserMenuProps {
 
 export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMenuProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params?.workspaceId as string || 'default'
 
     const handleLogout = async () => {
-        const supabase = createBrowserClient()
-        await supabase.auth.signOut()
+        await authClient.signOut()
         router.push("/login")
     }
 
@@ -35,13 +36,13 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
             <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-zinc-100 transition-colors">
                     <Avatar
-                        src={user?.user_metadata?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (user?.email || "User")}
+                        src={user?.image || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (user?.email || "User")}
                         fallback={user?.email?.charAt(0).toUpperCase() || "U"}
                         size="sm"
                         className="border border-zinc-200 shadow-sm"
                     />
                     <span className="text-sm font-medium hidden sm:block truncate max-w-[100px]">
-                        {user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User"}
+                        {user?.name || user?.email?.split('@')[0] || "User"}
                     </span>
                     <svg
                         className="size-4 text-zinc-500"
@@ -61,14 +62,14 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
             <DropdownMenuContent align="end" className="w-56">
                 <div className="flex items-center gap-3 p-2">
                     <Avatar
-                        src={user?.user_metadata?.avatar_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (user?.email || "User")}
+                        src={user?.image || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (user?.email || "User")}
                         fallback={user?.email?.charAt(0).toUpperCase() || "U"}
                         size="md"
                     />
                     <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold truncate">
-                                {user?.user_metadata?.full_name || "User"}
+                                {user?.name || "User"}
                             </span>
                             {subscriptionPlan === 'pro' && (
                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
@@ -85,7 +86,7 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+                <DropdownMenuItem onClick={() => router.push("/workspaces")}>
                     <svg
                         className="mr-2 size-4"
                         fill="none"
@@ -114,7 +115,7 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     Subscription
                 </DropdownMenuItem>
                 */}
-                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                <DropdownMenuItem onClick={() => router.push(`/${workspaceId}/settings`)}>
                     <svg
                         className="mr-2 size-4"
                         fill="none"

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { DollarSign, ArrowUpRight, ArrowDownRight, FileText } from "lucide-react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 // Define props locally or accept generic object map
 // But best to stick to specific props for this specific UI component
@@ -26,6 +27,8 @@ export function DashboardMetrics({
     pendingInvoicesTotal,
     pendingInvoicesCount
 }: DashboardMetricsProps) {
+    const params = useParams()
+    const workspaceId = params?.workspaceId as string || 'default'
     const isPositiveChange = revenueChangePercent >= 0
 
     return (
@@ -83,7 +86,7 @@ export function DashboardMetrics({
                         Outstanding across {pendingInvoicesCount} {pendingInvoicesCount === 1 ? 'client' : 'clients'}
                     </p>
                     <div className="flex mt-5 gap-2">
-                        <Link href="/invoices" className="text-xs font-medium bg-white border border-zinc-200 hover:bg-zinc-50 px-4 py-2 rounded-lg text-zinc-900 transition-colors shadow-sm">
+                        <Link href={`/${workspaceId}/invoices`} className="text-xs font-medium bg-white border border-zinc-200 hover:bg-zinc-50 px-4 py-2 rounded-lg text-zinc-900 transition-colors shadow-sm">
                             View Details
                         </Link>
                     </div>

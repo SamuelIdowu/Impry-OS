@@ -28,6 +28,7 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdownMenu';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { EmailDraftModal } from '@/components/reminders/emailDraftModal';
 
@@ -36,6 +37,8 @@ interface ReminderCardProps {
 }
 
 export function ReminderCard({ reminder }: ReminderCardProps) {
+    const params = useParams();
+    const workspaceId = (params?.workspaceId as string) || 'default';
     const [isPending, startTransition] = useTransition();
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [hasSent, setHasSent] = useState(false);
@@ -44,19 +47,19 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
 
     const handleComplete = () => {
         startTransition(async () => {
-            await completeReminderAction(reminder.id, reminder.project_id);
+            await completeReminderAction(reminder.id, reminder.projectId);
         });
     };
 
     const handleSnooze = (days: number) => {
         startTransition(async () => {
             const newDate = addDays(new Date(), days).toISOString();
-            await snoozeReminderAction(reminder.id, newDate, reminder.project_id);
+            await snoozeReminderAction(reminder.id, newDate, reminder.projectId);
         });
     };
 
-    const isOverdue = isPast(new Date(reminder.reminder_date)) && !isToday(new Date(reminder.reminder_date));
-    const isDueToday = isToday(new Date(reminder.reminder_date));
+    const isOverdue = isPast(new Date(reminder.reminderDate)) && !isToday(new Date(reminder.reminderDate));
+    const isDueToday = isToday(new Date(reminder.reminderDate));
 
     // Type definition
     const TypeIcon = {
@@ -64,25 +67,25 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
         payment: DollarSign,
         deadline: CalendarClock,
         general: AlertCircle,
-    }[reminder.reminder_type] || AlertCircle;
+    }[reminder.reminderType] || AlertCircle;
 
     const typeLabel = {
         follow_up: 'Follow-up',
         payment: 'Payment',
         deadline: 'Deadline',
         general: 'Reminder',
-    }[reminder.reminder_type];
+    }[reminder.reminderType];
 
     const typeColor = {
         follow_up: 'text-blue-500 bg-blue-50',
         payment: 'text-green-500 bg-green-50',
         deadline: 'text-red-500 bg-red-50',
         general: 'text-gray-500 bg-gray-50',
-    }[reminder.reminder_type];
+    }[reminder.reminderType];
 
-    console.log('ReminderCard Debug:', { id: reminder.id, client: reminder.clients });
+    console.log('ReminderCard Debug:', { id: reminder.id, client: reminder.client });
 
-    const clientEmail = reminder.clients?.email;
+    const clientEmail = reminder.client?.email;
 
     const handleSendEmail = () => {
         setIsEmailModalOpen(true);
@@ -137,9 +140,9 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                             <TypeIcon className="h-3 w-3 mr-1" />
                             {typeLabel}
                         </Badge>
-                        {reminder.projects && (
+                        {reminder.project && (
                             <span className="text-xs text-muted-foreground truncate">
-                                • {reminder.projects.name}
+                                • {reminder.project.name}
                             </span>
                         )}
                     </div>
@@ -162,8 +165,8 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                             "font-medium",
                             isOverdue ? "text-red-600" : isDueToday ? "text-yellow-600" : "text-muted-foreground"
                         )}>
-                            {isOverdue ? "Overdue" : isDueToday ? "Due Today" : format(new Date(reminder.reminder_date), "MMM d")}
-                            {" • " + format(new Date(reminder.reminder_date), "h:mm a")}
+                            {isOverdue ? "Overdue" : isDueToday ? "Due Today" : format(new Date(reminder.reminderDate), "MMM d")}
+                            {" • " + format(new Date(reminder.reminderDate), "h:mm a")}
                         </span>
                     </div>
 
@@ -228,8 +231,8 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {reminder.project_id && (
-                        <Link href={`/projects/${reminder.project_id}`}>
+                    {reminder.projectId && (
+                        <Link href={`/${workspaceId}/projects/${reminder.projectId}`}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" title="Open Project">
                                 <ArrowUpRight className="h-4 w-4" />
                             </Button>

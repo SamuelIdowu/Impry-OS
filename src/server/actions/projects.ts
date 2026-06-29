@@ -9,8 +9,7 @@ import {
     updateProjectStatus,
     deleteProject,
     getProjectPaymentSummary,
-    getProjectNextReminder,
-    updateProjectProgress
+    getProjectNextReminder
 } from '@/lib/projects';
 import { CreateProjectInput, UpdateProjectInput, ProjectStatus } from '@/lib/types/project';
 import { revalidatePath } from 'next/cache';
@@ -63,9 +62,9 @@ export async function fetchClientProjects(clientId: string) {
 export async function createProjectAction(data: CreateProjectInput) {
     try {
         const newProject = await createProject(data);
-        revalidatePath('/projects');
-        revalidatePath('/clients/' + data.client_id);
-        revalidatePath('/'); // Dashboard
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout'); // Dashboard
         return { success: true, data: newProject };
     } catch (error) {
         console.error('Error creating project:', error);
@@ -79,8 +78,8 @@ export async function createProjectAction(data: CreateProjectInput) {
 export async function updateProjectAction(id: string, data: UpdateProjectInput) {
     try {
         const updatedProject = await updateProject(id, data);
-        revalidatePath('/projects');
-        revalidatePath(`/projects/${id}`);
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout');
         // Also revalidate client page if we could infer client ID, but it's okay
         return { success: true, data: updatedProject };
     } catch (error) {
@@ -95,9 +94,9 @@ export async function updateProjectAction(id: string, data: UpdateProjectInput) 
 export async function updateProjectStatusAction(id: string, status: ProjectStatus) {
     try {
         const updatedProject = await updateProjectStatus(id, status);
-        revalidatePath('/projects');
-        revalidatePath(`/projects/${id}`);
-        revalidatePath('/'); // Dashboard activity might change
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout'); // Dashboard activity might change
         return { success: true, data: updatedProject };
     } catch (error) {
         console.error('Error updating project status:', error);
@@ -108,29 +107,13 @@ export async function updateProjectStatusAction(id: string, status: ProjectStatu
 
 
 /**
- * Update project progress
- */
-export async function updateProjectProgressAction(id: string, progress: number) {
-    try {
-        const updatedProject = await updateProjectProgress(id, progress);
-        revalidatePath('/projects');
-        revalidatePath(`/projects/${id}`);
-        revalidatePath('/'); // Dashboard activity might change
-        return { success: true, data: updatedProject };
-    } catch (error) {
-        console.error('Error updating project progress:', error);
-        return { success: false, error: (error as Error).message };
-    }
-}
-
-/**
  * Delete a project
  */
 export async function deleteProjectAction(id: string) {
     try {
         await deleteProject(id);
-        revalidatePath('/projects');
-        revalidatePath('/');
+        revalidatePath('/', 'layout');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (error) {
         console.error('Error deleting project:', error);
@@ -160,3 +143,4 @@ export async function fetchProjectSummary(id: string) {
         return { success: false, error: (error as Error).message };
     }
 }
+

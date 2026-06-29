@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
-import type { CalendarEvent } from '@/server/actions/calendar'
+import type { CalendarEvent } from '@/lib/calendar'
 import { Badge } from '@/components/ui/badge'
 
 interface EventDialogProps {
