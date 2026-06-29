@@ -43,3 +43,9 @@ next-env.d.ts
 
 # # docs
 /docs
+
+# mock_clients
+/mock_clients.csv
+
+# scratch
+/scratch
