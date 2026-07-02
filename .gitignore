@@ -49,3 +49,7 @@ next-env.d.ts
 
 # scratch
 /scratch
+
+# temp config files (may contain credentials)
+drizzle.config.temp.ts
+*.temp.ts
