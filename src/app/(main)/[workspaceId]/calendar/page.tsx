@@ -6,7 +6,7 @@ export default async function CalendarPage() {
     const { events } = await fetchCalendarEventsAction()
 
     return (
-        <div className="h-full flex flex-col space-y-6 p-10">
+        <div className="h-full flex flex-col space-y-4 md:space-y-6 p-4 md:p-10">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Calendar</h1>

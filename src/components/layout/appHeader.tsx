@@ -75,7 +75,7 @@ export function AppHeader({ user }: { user: User }) {
                             </svg>
                         </div>
                         <h1 className="text-lg font-bold tracking-tight text-zinc-900">
-                            FreelanceShield
+                            Impry OS
                         </h1>
                     </div>
 
@@ -119,28 +119,39 @@ export function AppHeader({ user }: { user: User }) {
             </header>
 
             {/* Mobile Sidebar Overlay */}
-            {mobileMenuOpen && (
-                <div className="fixed inset-0 z-50 md:hidden">
-                    {/* Backdrop */}
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                        onClick={() => setMobileMenuOpen(false)}
-                    />
+            <div className={cn(
+                "fixed inset-0 z-50 md:hidden transition-all duration-300",
+                mobileMenuOpen ? "pointer-events-auto" : "pointer-events-none"
+            )}>
+                {/* Backdrop */}
+                <div
+                    className={cn(
+                        "absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300",
+                        mobileMenuOpen ? "opacity-100" : "opacity-0"
+                    )}
+                    onClick={() => setMobileMenuOpen(false)}
+                />
 
-                    {/* Sidebar Container */}
-                    <div className="absolute inset-y-0 left-0 w-64 bg-white shadow-xl animate-in slide-in-from-left duration-200">
-                        <div className="relative h-full">
-                            <button
-                                className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-900 z-10"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <X className="size-5" />
-                            </button>
-                            <Sidebar user={user} className="block w-full border-none" />
-                        </div>
+                {/* Sidebar Container */}
+                <div className={cn(
+                    "absolute inset-y-0 left-0 w-64 bg-white shadow-xl transition-transform duration-300 ease-in-out",
+                    mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+                )}>
+                    <div className="relative h-full">
+                        <button
+                            className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-900 z-10"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            <X className="size-5" />
+                        </button>
+                        <Sidebar 
+                            user={user} 
+                            className="block w-full border-none" 
+                            onNavigate={() => setMobileMenuOpen(false)}
+                        />
                     </div>
                 </div>
-            )}
+            </div>
         </>
     )
 }

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
 
 interface FormInputProps {
     label: string;
@@ -28,6 +29,10 @@ export function FormInput({
     disabled = false,
     autoComplete,
 }: FormInputProps) {
+    const [showPassword, setShowPassword] = useState(false);
+    const isPassword = type === "password";
+    const currentType = isPassword && showPassword ? "text" : type;
+
     return (
         <div className="space-y-2">
             <label
@@ -46,18 +51,31 @@ export function FormInput({
                 <Input
                     id={name}
                     name={name}
-                    type={type}
+                    type={currentType}
                     placeholder={placeholder}
                     required={required}
                     value={value}
                     onChange={onChange}
                     disabled={disabled}
                     autoComplete={autoComplete}
-                    className={`h-11 ${icon ? "pl-10" : ""} ${error
+                    className={`h-11 ${icon ? "pl-10" : ""} ${isPassword ? "pr-10" : ""} ${error
                             ? "border-destructive focus-visible:ring-destructive"
                             : ""
                         }`}
                 />
+                {isPassword && (
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                    >
+                        {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                        ) : (
+                            <Eye className="h-4 w-4" />
+                        )}
+                    </button>
+                )}
             </div>
             {error && (
                 <p className="text-sm text-destructive flex items-center gap-1">

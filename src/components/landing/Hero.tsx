@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, DollarSign, Clock, Shield } from "lucide-react";
 import Image from "next/image";
 
-export function Hero() {
+export function Hero({ hasSession }: { hasSession?: boolean }) {
     return (
         <section className="relative overflow-hidden bg-white min-h-[90vh] flex flex-col justify-center">
             {/* Subtle Glowing Background Effects (Light Mode Version of the Inspo) */}
@@ -31,12 +31,21 @@ export function Hero() {
 
                 {/* CTAs */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <Link href="/register">
-                        <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-full bg-zinc-900 text-white hover:bg-zinc-800 shadow-xl shadow-zinc-900/10">
-                            Get Started Free
-                            <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                    </Link>
+                    {hasSession ? (
+                        <Link href="/workspaces">
+                            <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-full bg-zinc-900 text-white hover:bg-zinc-800 shadow-xl shadow-zinc-900/10">
+                                Go to Dashboard
+                                <ArrowRight className="ml-2 h-5 w-5" />
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Link href="/register">
+                            <Button size="lg" className="h-12 px-8 text-base font-semibold rounded-full bg-zinc-900 text-white hover:bg-zinc-800 shadow-xl shadow-zinc-900/10">
+                                Get Started Free
+                                <ArrowRight className="ml-2 h-5 w-5" />
+                            </Button>
+                        </Link>
+                    )}
                     <Link href="#features">
                         <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold rounded-full border-zinc-200 bg-white/50 backdrop-blur-sm hover:bg-zinc-50 text-zinc-900">
                             Discover More

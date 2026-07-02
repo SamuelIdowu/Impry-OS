@@ -51,20 +51,18 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
     const loadLatestVersion = async () => {
         try {
             setLoading(true);
-            const [latestResult, versionsResult] = await Promise.all([
-                fetchLatestScopeVersion(project.id),
-                fetchScopeVersions(project.id)
-            ]);
-
-            if (latestResult.success && latestResult.data) {
-                setCurrentVersion(latestResult.data);
-                setDeliverables(latestResult.data.deliverables || '');
-                setOutOfScope(latestResult.data.outOfScope || '');
-                setAssumptions(latestResult.data.assumptions || '');
-            }
+            const versionsResult = await fetchScopeVersions(project.id);
 
             if (versionsResult.success && versionsResult.data) {
                 setVersions(versionsResult.data);
+                
+                if (versionsResult.data.length > 0) {
+                    const latestResult = versionsResult.data[0];
+                    setCurrentVersion(latestResult);
+                    setDeliverables(latestResult.deliverables || '');
+                    setOutOfScope(latestResult.outOfScope || '');
+                    setAssumptions(latestResult.assumptions || '');
+                }
             }
         } catch (error) {
             console.error('Failed to load scope version:', error);

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { Pencil, ListTodo, BellPlus, FileText, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusSelector } from '@/components/statusSelector';
@@ -18,6 +19,8 @@ interface ProjectHeaderProps {
 }
 
 export function ProjectHeader({ project, onStatusChange, onProjectUpdate, onTabChange }: ProjectHeaderProps) {
+    const params = useParams();
+    const workspaceId = params.workspaceId as string;
     const appStatus = mapDatabaseToAppStatus(project.status);
 
     return (
@@ -35,7 +38,7 @@ export function ProjectHeader({ project, onStatusChange, onProjectUpdate, onTabC
                     Client:{' '}
                     {project.client ? (
                         <Link
-                            href={`/clients/${project.client.id}`}
+                            href={`/${workspaceId}/clients/${project.client.id}`}
                             className="font-medium text-foreground hover:underline"
                         >
                             {project.client.name}
@@ -45,7 +48,7 @@ export function ProjectHeader({ project, onStatusChange, onProjectUpdate, onTabC
                     )}
                 </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar w-full md:w-auto pb-2 md:pb-0">
                 {onTabChange && (
                     <Button variant="outline" className="gap-2" onClick={() => onTabChange('scope')}>
                         <FileText className="h-4 w-4" />

@@ -211,9 +211,10 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                 {/* Projects Content */}
                 {view === "list" ? (
                     <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-zinc-50/50 border-b border-zinc-200">
+                        <div className="overflow-x-auto hide-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr className="bg-zinc-50/50 border-b border-zinc-200">
                                     <th className="py-3 px-6 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Project Name</th>
                                     <th className="py-3 px-6 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Client</th>
                                     <th className="py-3 px-6 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Deadline</th>
@@ -278,7 +279,8 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                                     </tr>
                                 )}
                             </tbody>
-                        </table>
+                            </table>
+                        </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">

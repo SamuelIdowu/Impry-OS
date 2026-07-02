@@ -15,7 +15,7 @@ import {
 import { CalendarHeader } from './CalendarHeader'
 import { CalendarDay } from './CalendarDay'
 import { EventDialog } from './EventDialog'
-import type { CalendarEvent } from '@/lib/calendar'
+import type { CalendarEvent, CalendarEventType } from '@/lib/calendar'
 
 interface CalendarViewProps {
     initialEvents: CalendarEvent[]
@@ -25,6 +25,13 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
     const [currentDate, setCurrentDate] = React.useState(new Date())
     const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null)
     const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+    const [selectedFilters, setSelectedFilters] = React.useState<CalendarEventType[]>([
+        'project_deadline',
+        'project_start',
+        'payment_due',
+        'reminder',
+        'note'
+    ])
 
     // Navigation handlers
     const prevMonth = () => setCurrentDate(subMonths(currentDate, 1))
@@ -45,7 +52,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
     // Group events by day
     const getEventsForDay = (day: Date) => {
         return initialEvents.filter(event =>
-            isSameDay(parseISO(event.date), day)
+            isSameDay(parseISO(event.date), day) && selectedFilters.includes(event.type)
         )
     }
 
@@ -63,6 +70,8 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
                 onPrevMonth={prevMonth}
                 onNextMonth={nextMonth}
                 onToday={goToToday}
+                selectedFilters={selectedFilters}
+                onFilterChange={setSelectedFilters}
             />
 
             <div className="grid grid-cols-7 border-b border-zinc-100 bg-zinc-50">

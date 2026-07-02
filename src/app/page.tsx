@@ -4,6 +4,7 @@ import { Pricing } from "@/components/landing/Pricing";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { CallToAction } from "@/components/landing/CallToAction";
 import { Footer } from "@/components/landing/Footer";
+import { getSession } from "@/lib/auth";
 import { Logo } from "@/components/ui/logo";
 import { MobileNav } from "@/components/landing/MobileNav";
 import { generatePageMetadata } from "@/lib/metadata-config";
@@ -26,7 +27,10 @@ export const metadata = generatePageMetadata({
   ],
 });
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession();
+  const hasSession = !!session;
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-6 z-50 mx-auto w-[95%] max-w-5xl rounded-full border border-white/40 bg-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
@@ -41,24 +45,32 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-3">
-              <a href="/login" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 px-4 py-2">
-                Sign In
-              </a>
-              <a href="/register" className="text-sm font-semibold bg-zinc-900 text-white hover:bg-zinc-800 px-5 py-2.5 rounded-full transition-all hover:scale-105 shadow-sm">
-                Get Started
-              </a>
+              {hasSession ? (
+                <a href="/workspaces" className="text-sm font-semibold bg-zinc-900 text-white hover:bg-zinc-800 px-5 py-2.5 rounded-full transition-all hover:scale-105 shadow-sm">
+                  Dashboard
+                </a>
+              ) : (
+                <>
+                  <a href="/login" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 px-4 py-2">
+                    Sign In
+                  </a>
+                  <a href="/register" className="text-sm font-semibold bg-zinc-900 text-white hover:bg-zinc-800 px-5 py-2.5 rounded-full transition-all hover:scale-105 shadow-sm">
+                    Get Started
+                  </a>
+                </>
+              )}
             </div>
-            <MobileNav />
+            <MobileNav hasSession={hasSession} />
           </div>
         </div>
       </header>
 
       <main className="flex-1">
-        <Hero />
+        <Hero hasSession={hasSession} />
         <Features />
-        <Pricing />
+        <Pricing hasSession={hasSession} />
         <Testimonials />
-        <CallToAction />
+        <CallToAction hasSession={hasSession} />
       </main>
 
       <Footer />

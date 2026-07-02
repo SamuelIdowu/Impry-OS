@@ -4,15 +4,34 @@ import * as React from 'react'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Filter } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdownMenu"
+import type { CalendarEventType } from '@/lib/calendar'
 
 interface CalendarHeaderProps {
     currentDate: Date
     onPrevMonth: () => void
     onNextMonth: () => void
     onToday: () => void
+    selectedFilters: CalendarEventType[]
+    onFilterChange: (filters: CalendarEventType[]) => void
 }
 
-export function CalendarHeader({ currentDate, onPrevMonth, onNextMonth, onToday }: CalendarHeaderProps) {
+const filterOptions: { label: string; value: CalendarEventType }[] = [
+    { label: 'Project Deadlines', value: 'project_deadline' },
+    { label: 'Project Starts', value: 'project_start' },
+    { label: 'Payments', value: 'payment_due' },
+    { label: 'Reminders', value: 'reminder' },
+    { label: 'Notes', value: 'note' },
+]
+
+export function CalendarHeader({ currentDate, onPrevMonth, onNextMonth, onToday, selectedFilters, onFilterChange }: CalendarHeaderProps) {
     return (
         <div className="flex items-center justify-between p-4 border-b border-zinc-100 table-fixed">
             <div className="flex items-center gap-4">
@@ -33,11 +52,33 @@ export function CalendarHeader({ currentDate, onPrevMonth, onNextMonth, onToday 
             </div>
 
             <div className="flex items-center gap-2">
-                {/* Future implementation: Filter dropdown or View switcher */}
-                <Button variant="outline" size="sm" className="gap-2 text-zinc-600">
-                    <Filter className="size-3.5" />
-                    <span>Filter</span>
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2 text-zinc-600">
+                            <Filter className="size-3.5" />
+                            <span>Filter</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuLabel>Filter Events</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {filterOptions.map((option) => (
+                            <DropdownMenuCheckboxItem
+                                key={option.value}
+                                checked={selectedFilters.includes(option.value)}
+                                onCheckedChange={(checked) => {
+                                    if (checked) {
+                                        onFilterChange([...selectedFilters, option.value])
+                                    } else {
+                                        onFilterChange(selectedFilters.filter(f => f !== option.value))
+                                    }
+                                }}
+                            >
+                                {option.label}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </div>
     )
