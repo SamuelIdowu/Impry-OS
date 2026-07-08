@@ -14,8 +14,8 @@ import { withAuth } from '@/lib/auth-guard';
 /**
  * Fetch dashboard data for the follow-up inbox
  */
-export async function fetchDashboardReminders() {
-    return withAuth(async (user, workspaceId) => {
+export async function fetchDashboardReminders(workspaceId?: string) {
+    return withAuth(async (user, resolvedWorkspaceId) => {
         try {
             const reminders = await getDashboardReminders();
             return { success: true, data: reminders };
@@ -26,14 +26,14 @@ export async function fetchDashboardReminders() {
                 error: error instanceof Error ? error.message : 'Failed to fetch reminders',
             };
         }
-    });
+    }, workspaceId);
 }
 
 /**
  * Fetch at-risk projects for the dashboard
  */
-export async function fetchAtRiskProjects() {
-    return withAuth(async (user, workspaceId) => {
+export async function fetchAtRiskProjects(workspaceId?: string) {
+    return withAuth(async (user, resolvedWorkspaceId) => {
         try {
             const projects = await getAtRiskProjects();
             return { success: true, data: projects };
@@ -44,14 +44,14 @@ export async function fetchAtRiskProjects() {
                 error: error instanceof Error ? error.message : 'Failed to fetch at-risk projects',
             };
         }
-    });
+    }, workspaceId);
 }
 
 /**
  * Fetch dashboard metrics (revenue, pending invoices, etc.)
  */
-export async function fetchDashboardMetrics() {
-    return withAuth(async (user, workspaceId) => {
+export async function fetchDashboardMetrics(workspaceId?: string) {
+    return withAuth(async (user, resolvedWorkspaceId) => {
         try {
             const metrics = await getDashboardMetrics();
             return { success: true, data: metrics };
@@ -62,7 +62,7 @@ export async function fetchDashboardMetrics() {
                 error: error instanceof Error ? error.message : 'Failed to fetch metrics',
             };
         }
-    });
+    }, workspaceId);
 }
 
 /**

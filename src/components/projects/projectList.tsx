@@ -59,7 +59,7 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
     const router = useRouter()
     const params = useParams()
     const workspaceId = (params?.workspaceId as string) || 'default'
-    const [view, setView] = useState<"list" | "grid">("list")
+    const [view, setView] = useState<"list" | "grid">("grid")
     const [searchTerm, setSearchTerm] = useState("")
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
     const [selectedStatuses, setSelectedStatuses] = useState<Status[]>([])

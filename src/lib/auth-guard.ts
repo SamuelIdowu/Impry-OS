@@ -6,14 +6,15 @@ import { getCurrentWorkspaceId } from "@/server/actions/workspaces";
  * Ensures the user is logged in and a valid workspace context is present.
  */
 export async function withAuth<T>(
-    action: (user: any, workspaceId: string) => Promise<T>
+    action: (user: any, workspaceId: string) => Promise<T>,
+    providedWorkspaceId?: string
 ): Promise<T> {
     const user = await getUser();
     if (!user) {
         throw new Error('Not authenticated');
     }
 
-    const workspaceId = await getCurrentWorkspaceId();
+    const workspaceId = providedWorkspaceId || await getCurrentWorkspaceId();
     if (!workspaceId) {
         throw new Error('Workspace context required');
     }
