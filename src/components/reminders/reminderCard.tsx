@@ -47,14 +47,14 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
 
     const handleComplete = () => {
         startTransition(async () => {
-            await completeReminderAction(reminder.id, reminder.projectId);
+            await completeReminderAction(reminder.id, reminder.projectId || undefined);
         });
     };
 
     const handleSnooze = (days: number) => {
         startTransition(async () => {
             const newDate = addDays(new Date(), days).toISOString();
-            await snoozeReminderAction(reminder.id, newDate, reminder.projectId);
+            await snoozeReminderAction(reminder.id, newDate, reminder.projectId || undefined);
         });
     };
 
@@ -62,26 +62,28 @@ export function ReminderCard({ reminder }: ReminderCardProps) {
     const isDueToday = isToday(new Date(reminder.reminderDate));
 
     // Type definition
+    const safeType = (reminder.reminderType as 'follow_up' | 'payment' | 'deadline' | 'general') || 'general';
+
     const TypeIcon = {
         follow_up: StickyNote,
         payment: DollarSign,
         deadline: CalendarClock,
         general: AlertCircle,
-    }[reminder.reminderType] || AlertCircle;
+    }[safeType] || AlertCircle;
 
     const typeLabel = {
         follow_up: 'Follow-up',
         payment: 'Payment',
         deadline: 'Deadline',
         general: 'Reminder',
-    }[reminder.reminderType];
+    }[safeType];
 
     const typeColor = {
         follow_up: 'text-blue-500 bg-blue-50',
         payment: 'text-green-500 bg-green-50',
         deadline: 'text-red-500 bg-red-50',
         general: 'text-gray-500 bg-gray-50',
-    }[reminder.reminderType];
+    }[safeType];
 
     console.log('ReminderCard Debug:', { id: reminder.id, client: reminder.client });
 

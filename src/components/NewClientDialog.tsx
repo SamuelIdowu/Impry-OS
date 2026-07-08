@@ -56,14 +56,14 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
                     id: res.data.id,
                     name: res.data.name,
                     companyName: res.data.company || res.data.name,
-                    email: res.data.email,
+                    email: res.data.email || "",
                     status: 'Active',
                     totalRevenue: 0,
                     projectCount: 0,
                     lastActive: 'Just now',
                     location: formData.location, // preserving form input for UI if needed, but it won't persist if not in DB
                     description: res.data.notes || undefined,
-                    joinedDate: new Date(res.data.created_at).toLocaleDateString(),
+                    joinedDate: res.data.createdAt ? new Date(res.data.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
                     avatar: res.data.name.substring(0, 2).toUpperCase()
                 };
 

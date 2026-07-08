@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } 
 import { Logo } from "@/components/ui/logo";
 import { Menu } from "lucide-react";
 
-export function MobileNav() {
+export function MobileNav({ hasSession }: { hasSession?: boolean }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -53,16 +53,26 @@ export function MobileNav() {
                             </Link>
                         </nav>
                         <div className="mt-12 flex flex-col gap-4">
-                            <Link href="/login" onClick={() => setOpen(false)}>
-                                <Button variant="outline" size="lg" className="w-full text-base">
-                                    Sign In
-                                </Button>
-                            </Link>
-                            <Link href="/register" onClick={() => setOpen(false)}>
-                                <Button size="lg" className="w-full text-base bg-zinc-900 text-white hover:bg-zinc-800">
-                                    Get Started
-                                </Button>
-                            </Link>
+                            {hasSession ? (
+                                <Link href="/workspaces" onClick={() => setOpen(false)}>
+                                    <Button size="lg" className="w-full text-base bg-zinc-900 text-white hover:bg-zinc-800">
+                                        Dashboard
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link href="/login" onClick={() => setOpen(false)}>
+                                        <Button variant="outline" size="lg" className="w-full text-base">
+                                            Sign In
+                                        </Button>
+                                    </Link>
+                                    <Link href="/register" onClick={() => setOpen(false)}>
+                                        <Button size="lg" className="w-full text-base bg-zinc-900 text-white hover:bg-zinc-800">
+                                            Get Started
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -44,7 +44,7 @@ export async function getReminders(filters?: {
         }
     });
 
-    return result as unknown as Reminder[];
+    return result as Reminder[];
 }
 
 /**
@@ -63,7 +63,7 @@ export async function getDueReminders(): Promise<Reminder[]> {
         }
     });
 
-    return result as unknown as Reminder[];
+    return result as Reminder[];
 }
 
 /**
@@ -87,7 +87,7 @@ export async function createReminder(input: CreateReminderInput): Promise<Remind
         isSent: false,
     }).returning();
 
-    return newReminder as unknown as Reminder;
+    return newReminder as Reminder;
 }
 
 /**
@@ -112,7 +112,7 @@ export async function updateReminder(id: string, input: UpdateReminderInput): Pr
     .where(and(eq(reminders.id, id), eq(reminders.workspaceId, await getCurrentWorkspaceId()), eq(reminders.userId, user.id)))
     .returning();
 
-    return updatedReminder as unknown as Reminder;
+    return updatedReminder as Reminder;
 }
 
 /**

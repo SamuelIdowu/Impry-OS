@@ -79,19 +79,19 @@ export function MarkPaidDialog({ payment, open, onOpenChange, onSuccess }: MarkP
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Total Amount:</span>
                                 <span className="font-semibold">
-                                    {formatCurrency(Number(payment.amount), payment.currency)}
+                                    {formatCurrency(Number(payment.amount), payment.currency || undefined)}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Already Paid:</span>
                                 <span className="font-semibold">
-                                    {formatCurrency(Number(payment.amountPaid), payment.currency)}
+                                    {formatCurrency(Number(payment.amountPaid), payment.currency || undefined)}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm border-t border-border pt-2">
                                 <span className="text-muted-foreground">Remaining:</span>
                                 <span className="font-bold">
-                                    {formatCurrency(remainingAmount, payment.currency)}
+                                    {formatCurrency(remainingAmount, payment.currency || undefined)}
                                 </span>
                             </div>
                         </div>

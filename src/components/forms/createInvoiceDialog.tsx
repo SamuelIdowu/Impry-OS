@@ -59,8 +59,8 @@ export function CreateInvoiceDialog({ payment, open, onOpenChange, onSuccess }: 
             }
 
             // Initialize line items from payment if none exist
-            if (payment.lineItems && payment.lineItems.length > 0) {
-                setItems(payment.lineItems);
+            if (Array.isArray(payment.lineItems) && payment.lineItems.length > 0) {
+                setItems(payment.lineItems as any[]);
             } else {
                 setItems([
                     {
@@ -231,7 +231,7 @@ export function CreateInvoiceDialog({ payment, open, onOpenChange, onSuccess }: 
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-mono text-right">
-                                                    {formatCurrency(item.amount, payment.currency)}
+                                                    {formatCurrency(item.amount, payment.currency || undefined)}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -256,7 +256,7 @@ export function CreateInvoiceDialog({ payment, open, onOpenChange, onSuccess }: 
                                 <div className="flex justify-between py-2 border-t border-b">
                                     <span className="font-bold">Total</span>
                                     <span className="font-bold text-lg">
-                                        {formatCurrency(subtotal, payment.currency)}
+                                        {formatCurrency(subtotal, payment.currency || undefined)}
                                     </span>
                                 </div>
                             </div>

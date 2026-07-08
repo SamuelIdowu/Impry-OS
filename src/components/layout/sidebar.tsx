@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { UserMenu } from "./userMenu"
 import { Logo } from "@/components/ui/logo"
@@ -38,40 +39,39 @@ interface TeamMember {
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
     user?: User
+    onNavigate?: () => void
 }
 
-export function Sidebar({ className, user }: SidebarProps) {
+export function Sidebar({ className, user, onNavigate }: SidebarProps) {
     const pathname = usePathname()
     const params = useParams()
     const workspaceId = params.workspaceId as string || 'default'
 
-    // Team members state
-    const [members, setMembers] = React.useState<TeamMember[]>([])
-    const [isLoadingMembers, setIsLoadingMembers] = React.useState(true)
+    const queryClient = useQueryClient()
+
+    // Fetch team members and profile using React Query
+    const { data: membersData, isLoading: isLoadingMembers } = useQuery({
+        queryKey: ['teamMembers'],
+        queryFn: async () => {
+            const res = await getTeamMembersAction()
+            return res.success ? (res.members as TeamMember[]) : []
+        }
+    })
+    const members = membersData || []
+
+    const { data: profileData } = useQuery({
+        queryKey: ['userProfile'],
+        queryFn: async () => {
+            const res = await getProfileAction()
+            return res.success ? res.profile : null
+        }
+    })
+    const subscriptionPlan = (profileData as any)?.subscription_plan || 'free'
+
     const [showAddMember, setShowAddMember] = React.useState(false)
     const [isAddingMember, setIsAddingMember] = React.useState(false)
     const [newMember, setNewMember] = React.useState({ name: '', role: '' })
     const [dashboardExpanded, setDashboardExpanded] = React.useState(true)
-    const [subscriptionPlan, setSubscriptionPlan] = React.useState<string>('free') // Default to free until fetched
-
-    // Fetch team members and profile on mount
-    React.useEffect(() => {
-        const fetchData = async () => {
-            const [membersRes, profileRes] = await Promise.all([
-                getTeamMembersAction(),
-                getProfileAction()
-            ]);
-
-            if (membersRes.success) {
-                setMembers(membersRes.members)
-            }
-            if (profileRes.success && profileRes.profile) {
-                setSubscriptionPlan((profileRes.profile as any).subscription_plan || 'free')
-            }
-            setIsLoadingMembers(false)
-        }
-        fetchData()
-    }, [])
 
     const handleAddMember = async () => {
         if (!newMember.name.trim()) return
@@ -83,7 +83,7 @@ export function Sidebar({ className, user }: SidebarProps) {
         })
 
         if (res.success && res.member) {
-            setMembers([...members, res.member])
+            queryClient.setQueryData(['teamMembers'], (old: TeamMember[] | undefined) => [...(old || []), res.member as TeamMember])
             setNewMember({ name: '', role: '' })
             setShowAddMember(false)
         }
@@ -93,7 +93,7 @@ export function Sidebar({ className, user }: SidebarProps) {
     const handleDeleteMember = async (memberId: string) => {
         const res = await deleteTeamMemberAction(memberId)
         if (res.success) {
-            setMembers(members.filter(m => m.id !== memberId))
+            queryClient.setQueryData(['teamMembers'], (old: TeamMember[] | undefined) => (old || []).filter(m => m.id !== memberId))
         }
     }
 
@@ -177,6 +177,7 @@ export function Sidebar({ className, user }: SidebarProps) {
                                         <Link
                                             key={subItem.href}
                                             href={subItem.href}
+                                            onClick={onNavigate}
                                             className={cn(
                                                 "group flex items-center rounded-md px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
                                                 (subItem.exact ? pathname === subItem.href : pathname === subItem.href)
@@ -203,6 +204,7 @@ export function Sidebar({ className, user }: SidebarProps) {
                             <Link
                                 key={item.href}
                                 href={item.href}
+                                onClick={onNavigate}
                                 className={cn(
                                     "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
                                     pathname.startsWith(item.href)

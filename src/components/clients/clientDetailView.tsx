@@ -74,7 +74,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
     const outstandingAmount = outstandingInvoices.reduce((sum, p) => sum + Number(p.amount || 0), 0)
 
     const uiProjects: UIProject[] = projects.map(p => {
-        const appStatus = mapDatabaseToAppStatus(p.status);
+        const appStatus = mapDatabaseToAppStatus((p.status as any) || 'planning');
         let uiStatus: import("@/lib/types").Status = 'Active'; // Default fallback
 
         switch (appStatus) {
@@ -93,7 +93,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
             progress: 0, // Default for now
             dueDate: p.deadline || new Date().toISOString(), // Fallback
             startDate: p.startDate || new Date().toISOString(),
-            totalValue: p.budget || 0,
+            totalValue: Number(p.budget || 0),
             paidAmount: 0, // Needs calculation from payments if linked
             description: p.description || undefined,
         }
@@ -189,7 +189,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 overflow-x-auto hide-scrollbar w-full md:w-auto pb-2 md:pb-0">
                     <Select
                         defaultValue={client.status || 'active'}
                         onValueChange={handleStatusChange}
@@ -373,48 +373,50 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
                             </div>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="w-full">
-                                <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-zinc-50 border-b border-zinc-100 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                                    <div className="col-span-5">Project Name</div>
-                                    <div className="col-span-3">Timeline</div>
-                                    <div className="col-span-2">Revenue</div>
-                                    <div className="col-span-2 text-right">Status</div>
-                                </div>
+                            <div className="w-full overflow-x-auto hide-scrollbar">
+                                <div className="min-w-[700px]">
+                                    <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-zinc-50 border-b border-zinc-100 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                                        <div className="col-span-5">Project Name</div>
+                                        <div className="col-span-3">Timeline</div>
+                                        <div className="col-span-2">Revenue</div>
+                                        <div className="col-span-2 text-right">Status</div>
+                                    </div>
                                 <div className="divide-y divide-zinc-100">
-                                    {uiProjects.length > 0 ? (
-                                        uiProjects.map((project) => (
-                                            <div key={project.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-zinc-50/50 transition-colors group cursor-pointer">
-                                                <div className="col-span-5 min-w-0">
-                                                    <h4 className="text-sm font-semibold text-zinc-900 truncate">{project.name}</h4>
-                                                    <Badge variant="secondary" className="mt-1 bg-zinc-100 text-zinc-500 font-normal text-xs border-none shadow-none rounded-sm px-1.5 h-5 inline-flex">
-                                                        {project.name.toLowerCase().includes('marketing') ? 'Marketing' : 'Development'}
-                                                    </Badge>
-                                                </div>
-                                                <div className="col-span-3">
-                                                    <div className="flex items-center gap-1.5 text-sm text-zinc-500">
-                                                        <Calendar className="h-3.5 w-3.5" />
-                                                        <span className="truncate">{project.startDate} - {project.dueDate.split(',')[0]}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <span className="text-sm font-bold text-zinc-900">${project.totalValue.toLocaleString()}</span>
-                                                </div>
-                                                <div className="col-span-2 flex justify-end items-center">
-                                                    <StatusBadge status={project.status} />
-                                                    <ArrowRight className="h-4 w-4 text-zinc-300 ml-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    {uiProjects.length > 0 && uiProjects.map((project) => (
+                                        <div key={project.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-zinc-50/50 transition-colors group cursor-pointer">
+                                            <div className="col-span-5 min-w-0">
+                                                <h4 className="text-sm font-semibold text-zinc-900 truncate">{project.name}</h4>
+                                                <Badge variant="secondary" className="mt-1 bg-zinc-100 text-zinc-500 font-normal text-xs border-none shadow-none rounded-sm px-1.5 h-5 inline-flex">
+                                                    {project.name.toLowerCase().includes('marketing') ? 'Marketing' : 'Development'}
+                                                </Badge>
+                                            </div>
+                                            <div className="col-span-3">
+                                                <div className="flex items-center gap-1.5 text-sm text-zinc-500">
+                                                    <Calendar className="h-3.5 w-3.5" />
+                                                    <span className="truncate">{project.startDate} - {project.dueDate.split(',')[0]}</span>
                                                 </div>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="p-4">
-                                            <EmptyClientProjects
-                                                onAddProject={() => setIsAddProjectOpen(true)}
-                                                clientName={client.name}
-                                            />
+                                            <div className="col-span-2">
+                                                <span className="text-sm font-bold text-zinc-900">${project.totalValue.toLocaleString()}</span>
+                                            </div>
+                                            <div className="col-span-2 flex justify-end items-center">
+                                                <StatusBadge status={project.status} />
+                                                <ArrowRight className="h-4 w-4 text-zinc-300 ml-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </div>
                                         </div>
-                                    )}
+                                    ))}
+                                </div>
                                 </div>
                             </div>
+                            
+                            {uiProjects.length === 0 && (
+                                <div className="p-4 border-t border-zinc-100">
+                                    <EmptyClientProjects
+                                        onAddProject={() => setIsAddProjectOpen(true)}
+                                        clientName={client.name}
+                                    />
+                                </div>
+                            )}
                             <div className="p-4 border-t border-zinc-100 flex justify-center">
                                 <Button variant="ghost" size="sm" className="text-xs text-zinc-500 hover:text-zinc-900 font-medium tracking-wide items-center uppercase">
                                     View Full History

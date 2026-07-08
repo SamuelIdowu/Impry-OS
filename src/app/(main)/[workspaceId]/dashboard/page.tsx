@@ -12,13 +12,15 @@ import {
 import { Reminder, Risk } from "@/lib/types"
 import { getUser } from "@/lib/auth"
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ params }: { params: Promise<{ workspaceId: string }> }) {
+    const resolvedParams = await params;
+    const workspaceId = resolvedParams.workspaceId;
     const user = await getUser();
     // Fetch all dashboard data in parallel
     const [metricsRes, remindersRes, risksRes] = await Promise.all([
-        fetchDashboardMetrics(),
-        fetchDashboardReminders(),
-        fetchAtRiskProjects()
+        fetchDashboardMetrics(workspaceId),
+        fetchDashboardReminders(workspaceId),
+        fetchAtRiskProjects(workspaceId)
     ]);
 
     // Map Metrics (snake_case from DB -> camelCase for UI)

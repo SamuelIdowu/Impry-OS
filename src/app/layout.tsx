@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat_Alternates, Poppins } from "next/font/google";
 import "./globals.css";
 import { defaultMetadata } from "@/lib/metadata-config";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const montserratAlternates = Montserrat_Alternates({
   subsets: ["latin"],
@@ -37,7 +38,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserratAlternates.variable} ${poppins.variable}`}>
       <body className={`antialiased ${montserratAlternates.className}`}>
-        {children}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );

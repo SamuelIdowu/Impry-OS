@@ -12,23 +12,10 @@ export type DatabaseProjectStatus =
     | 'on_hold'
     | 'cancelled';
 
-export interface Project {
-    id: string;
-    userId: string;
-    clientId: string | null;
-    name: string;
-    description?: string | null;
-    status: DatabaseProjectStatus;
-    startDate?: string | null;
-    deadline?: string | null;
-    budget?: number | null;
-    currency?: string | null;
-    notes?: string | null;
-    progress?: number;
-    total_value?: number;
-    createdAt: string | Date;
-    updatedAt: string | Date;
-}
+import { InferSelectModel } from 'drizzle-orm';
+import { projects } from '@/server/db/schema';
+
+export type Project = InferSelectModel<typeof projects>;
 
 export interface ProjectWithClient extends Project {
     client?: {
@@ -46,11 +33,10 @@ export interface ProjectWithDetails extends ProjectWithClient {
         status: string;
         description?: string | null;
         createdAt: string | Date;
-        created_at: string;
     }>;
     payments?: Array<{
         id: string;
-        amount: number;
+        amount: string | number;
         currency: string;
         status: string;
         description?: string | null;

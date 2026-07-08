@@ -18,7 +18,7 @@ import { InvoiceDocument } from "./InvoiceDocument"
 import { ClientEmailDialog } from "./ClientEmailDialog"
 import { sendInvoiceEmailAction } from "@/server/actions/email"
 import { updateClientAction } from "@/server/actions/clients"
-import { Payment } from "@/lib/types/payment"
+import { Payment, PaymentStatus } from "@/lib/types/payment"
 
 interface InvoiceDetailViewProps {
     invoice: Payment & {
@@ -39,10 +39,11 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
 
     const {
         invoice_number,
-        status,
         projects,
         clients
     } = invoice
+
+    const status = (invoice.status as PaymentStatus) || 'pending'
 
     const projectName = projects?.name
     const clientName = clients?.name

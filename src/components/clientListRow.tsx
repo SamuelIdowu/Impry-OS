@@ -8,11 +8,16 @@ import { Client } from '@/lib/types';
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils";
 
+import { useParams } from "next/navigation";
+
 interface ClientListRowProps {
     client: Client;
 }
 
 export function ClientListRow({ client }: ClientListRowProps) {
+    const params = useParams();
+    const workspaceId = params.workspaceId as string;
+    
     const initials = client.name
         .split(' ')
         .map(n => n[0])
@@ -33,7 +38,7 @@ export function ClientListRow({ client }: ClientListRowProps) {
 
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                        <Link href={`/clients/${client.id}`} className="font-semibold text-sm text-zinc-900 hover:text-blue-600 transition-colors truncate">
+                        <Link href={`/${workspaceId}/clients/${client.id}`} className="font-semibold text-sm text-zinc-900 hover:text-blue-600 transition-colors truncate">
                             {client.name}
                         </Link>
                         {client.companyName && client.companyName !== client.name && (
@@ -61,7 +66,7 @@ export function ClientListRow({ client }: ClientListRowProps) {
             </div>
 
             <div className="flex items-center gap-2 pl-4">
-                <Link href={`/clients/${client.id}`}>
+                <Link href={`/${workspaceId}/clients/${client.id}`}>
                     <button className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 transition-colors">
                         <ChevronRight className="h-4 w-4" />
                     </button>

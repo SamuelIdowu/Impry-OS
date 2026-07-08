@@ -117,6 +117,16 @@
 }
 
 @layer base {
+  html {
+    font-size: 14px; /* Scale down by 12.5% on mobile */
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 16px; /* Default 1rem = 16px on md+ */
+    }
+  }
+
   * {
     @apply border-border outline-ring/50;
   }

@@ -12,7 +12,7 @@ interface ScopeData {
     description?: string | null;
     status: string;
     progress?: number;
-    created_at: string;
+    createdAt: string | Date;
 }
 
 interface ScopeSummaryCardProps {
@@ -88,7 +88,7 @@ export function ScopeSummaryCard({ projectId, scopes, onDefineScope }: ScopeSumm
                                     <p className="text-sm font-bold text-zinc-900 truncate">{scope.title}</p>
                                     {isCompleted && (
                                         <p className="text-xs text-zinc-500 mt-0.5">
-                                            Approved on {new Date(scope.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            Approved on {new Date(scope.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                         </p>
                                     )}
                                     {isInProgress && (

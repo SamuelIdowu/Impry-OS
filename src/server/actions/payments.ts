@@ -5,6 +5,39 @@ import { db } from '@/server/db';
 import { payments, projects, clients, users } from '@/server/db/schema';
 import { eq, and, ne, lt, isNotNull, desc, asc } from 'drizzle-orm';
 import { getUser } from '@/lib/auth';
+import { withAuth } from '@/lib/auth-guard';
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+
+const createPaymentSchema = z.object({
+    projectId: z.string().min(1, 'Project is required'),
+    milestoneName: z.string().min(1, 'Milestone name is required'),
+    description: z.string().optional(),
+    amount: z.union([z.string(), z.number()]),
+    currency: z.string().optional(),
+    dueDate: z.string().optional(),
+    notes: z.string().optional(),
+    taxRate: z.union([z.string(), z.number()]).optional(),
+    discountRate: z.union([z.string(), z.number()]).optional(),
+});
+
+const updatePaymentSchema = createPaymentSchema.partial().omit({ projectId: true });
+
+const createStandaloneInvoiceSchema = z.object({
+    clientId: z.string().min(1, 'Client is required'),
+    projectId: z.string().optional(),
+    amount: z.union([z.string(), z.number()]),
+    currency: z.string().optional(),
+    status: z.enum(['pending', 'paid', 'partial', 'overdue', 'cancelled']).optional(),
+    invoiceNumber: z.string().min(1, 'Invoice number is required'),
+    dueDate: z.string(),
+    notes: z.string().optional(),
+    taxRate: z.union([z.string(), z.number()]).optional(),
+    discountRate: z.union([z.string(), z.number()]).optional(),
+    lineItems: z.any().optional(), // Can add a more specific schema here if needed
+});
+
+const updateStandaloneInvoiceSchema = createStandaloneInvoiceSchema.partial();
 
 import type {
     Payment,
@@ -51,7 +84,7 @@ export async function getProjectPayments(projectId: string): Promise<Payment[]> 
         orderBy: (payments, { asc }) => [asc(payments.dueDate)]
     });
 
-    return result as unknown as Payment[];
+    return result as Payment[];
 }
 
 /**
@@ -113,7 +146,7 @@ export async function getInvoice(id: string): Promise<Payment> {
     if (!result) throw new Error('Invoice not found');
     if (!result.invoiceNumber) throw new Error('This payment does not have an invoice generated.');
 
-    return result as unknown as Payment;
+    return result as Payment;
 }
 
 /**
@@ -139,52 +172,62 @@ export async function getInvoiceByNumber(invoiceNumber: string): Promise<Payment
 
     if (!result) throw new Error('Invoice not found');
 
-    return result as unknown as Payment;
+    return result as Payment;
 }
 
 /**
  * Create a new payment milestone
  */
 export async function createPayment(input: CreatePaymentInput): Promise<Payment> {
-    const user = await getUser();
-    if (!user) throw new Error('User not authenticated');
+    return withAuth(async (user, workspaceId) => {
+        try {
+            const validatedInput = createPaymentSchema.parse(input) as CreatePaymentInput;
+            const project = await db.query.projects.findFirst({
+                where: and(eq(projects.id, validatedInput.projectId), eq(projects.userId, user.id)),
+                columns: { id: true, clientId: true }
+            });
 
-    const project = await db.query.projects.findFirst({
-        where: and(eq(projects.id, input.projectId), eq(projects.userId, user.id)),
-        columns: { id: true, clientId: true }
-    });
+            if (!project) {
+                throw new Error('Project not found or does not belong to user');
+            }
 
-    if (!project) {
-        throw new Error('Project not found or does not belong to user');
-    }
+            const { description, ...restInput } = validatedInput;
 
-    const { description, ...restInput } = input;
+            const [newPayment] = await db.insert(payments).values({
+                ...restInput,
+                projectId: validatedInput.projectId,
+                milestoneName: validatedInput.milestoneName,
+                notes: description || restInput.notes,
+                userId: user.id,
+                workspaceId,
 
-    const [newPayment] = await db.insert(payments).values({
-        ...restInput,
-        projectId: input.projectId,
-        milestoneName: input.milestoneName,
-        notes: description || restInput.notes,
-        userId: user.id,
-        workspaceId: await getCurrentWorkspaceId(),
+                clientId: project.clientId,
+                amountPaid: '0',
+                amount: validatedInput.amount.toString(),
+                status: 'pending',
+                currency: validatedInput.currency || 'USD',
+                dueDate: validatedInput.dueDate,
+                taxRate: validatedInput.taxRate?.toString(),
+                discountRate: validatedInput.discountRate?.toString()
+            }).returning();
 
-        clientId: project.clientId,
-        amountPaid: '0',
-        amount: input.amount.toString(),
-        status: 'pending',
-        currency: input.currency || 'USD',
-        dueDate: input.dueDate,
-        taxRate: input.taxRate?.toString(),
-        discountRate: input.discountRate?.toString()
-    }).returning();
+            await logPaymentTimeline(validatedInput.projectId, 'payment', `Payment milestone added: ${validatedInput.milestoneName}`, {
+                payment_id: newPayment.id,
+                amount: validatedInput.amount,
+                currency: validatedInput.currency || 'USD',
+            });
 
-    await logPaymentTimeline(input.projectId, 'payment', `Payment milestone added: ${input.milestoneName}`, {
-        payment_id: newPayment.id,
-        amount: input.amount,
-        currency: input.currency || 'USD',
-    });
-
-    return newPayment as unknown as Payment;
+            revalidatePath(`/${workspaceId}/projects/${validatedInput.projectId}`);
+            revalidatePath(`/${workspaceId}/payments`);
+            return newPayment as Payment;
+        } catch (error: any) {
+            console.error('Error creating payment:', error);
+            if (error instanceof z.ZodError) {
+                throw new Error(error.issues[0].message);
+            }
+            throw error;
+        }
+    }) as Promise<Payment>;
 }
 
 /**
@@ -217,7 +260,7 @@ export async function updatePayment(id: string, input: UpdatePaymentInput): Prom
         });
     }
 
-    return updatedPayment as unknown as Payment;
+    return updatedPayment as Payment;
 }
 
 /**
@@ -280,7 +323,7 @@ export async function updatePaymentStatus(
         }
     }
 
-    return updatedPayment as unknown as Payment;
+    return updatedPayment as Payment;
 }
 
 /**
@@ -375,7 +418,7 @@ export async function generateInvoice(input: import('@/lib/types/payment').Creat
         );
     }
 
-    return updatedPayment as unknown as Payment;
+    return updatedPayment as Payment;
 }
 
 /**
@@ -398,7 +441,7 @@ export async function getInvoices(): Promise<Payment[]> {
         }
     });
 
-    return result as unknown as Payment[];
+    return result as Payment[];
 }
 
 /**
@@ -406,36 +449,45 @@ export async function getInvoices(): Promise<Payment[]> {
  * Used when creating an invoice directly (not from an existing payment milestone)
  */
 export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInput): Promise<Payment> {
-    const user = await getUser();
-    if (!user) throw new Error('User not authenticated');
+    return withAuth(async (user, workspaceId) => {
+        try {
+            const validatedInput = createStandaloneInvoiceSchema.parse(input) as CreateStandaloneInvoiceInput;
+            const [newInvoice] = await db.insert(payments).values({
+                userId: user.id,
+                workspaceId,
 
-    const [newInvoice] = await db.insert(payments).values({
-        userId: user.id,
-        workspaceId: await getCurrentWorkspaceId(),
+                clientId: validatedInput.clientId,
+                projectId: validatedInput.projectId || null, // handle "none" or empty string
+                amount: validatedInput.amount.toString(),
+                amountPaid: "0",
+                currency: validatedInput.currency || 'USD',
+                status: 'pending', // Default to pending for new invoices
+                invoiceNumber: validatedInput.invoiceNumber,
+                dueDate: validatedInput.dueDate,
+                lineItems: validatedInput.lineItems,
+                notes: validatedInput.notes,
+                taxRate: validatedInput.taxRate?.toString() || "0",
+                discountRate: validatedInput.discountRate?.toString() || "0"
+            }).returning();
 
-        clientId: input.clientId,
-        projectId: input.projectId || null, // handle "none" or empty string
-        amount: input.amount.toString(),
-        amountPaid: "0",
-        currency: input.currency || 'USD',
-        status: 'pending', // Default to pending for new invoices
-        invoiceNumber: input.invoiceNumber,
-        dueDate: input.dueDate,
-        lineItems: input.lineItems,
-        notes: input.notes,
-        taxRate: input.taxRate?.toString() || "0",
-        discountRate: input.discountRate?.toString() || "0"
-    }).returning();
+            // Log to timeline if project exists
+            if (validatedInput.projectId) {
+                await logPaymentTimeline(validatedInput.projectId, 'payment', `Invoice created: ${validatedInput.invoiceNumber}`, {
+                    payment_id: newInvoice.id,
+                    amount: validatedInput.amount,
+                });
+            }
 
-    // Log to timeline if project exists
-    if (input.projectId) {
-        await logPaymentTimeline(input.projectId, 'payment', `Invoice created: ${input.invoiceNumber}`, {
-            payment_id: newInvoice.id,
-            amount: input.amount,
-        });
-    }
-
-    return newInvoice as unknown as Payment;
+            revalidatePath(`/${workspaceId}/payments`);
+            return newInvoice as Payment;
+        } catch (error: any) {
+            console.error('Error creating standalone invoice:', error);
+            if (error instanceof z.ZodError) {
+                throw new Error(error.issues[0].message);
+            }
+            throw error;
+        }
+    }) as Promise<Payment>;
 }
 
 /**
@@ -470,15 +522,15 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
         });
     }
 
-    return updatedInvoice as unknown as Payment;
+    return updatedInvoice as Payment;
 }
 
 /**
- * Get a single public invoice by ID (bypasses RLS)
+ * Get a single public invoice by share token (bypasses RLS)
  */
-export async function getPublicInvoice(id: string): Promise<Payment> {
+export async function getPublicInvoice(shareToken: string): Promise<Payment> {
     const result = await db.query.payments.findFirst({
-        where: eq(payments.id, id),
+        where: eq(payments.shareToken, shareToken),
         with: {
             project: {
                 columns: { id: true, name: true }
@@ -507,6 +559,6 @@ export async function getPublicInvoice(id: string): Promise<Payment> {
         companyName: result.user?.companyName || result.user?.name
     };
 
-    return enrichedData as unknown as Payment;
+    return enrichedData as Payment;
 }
 

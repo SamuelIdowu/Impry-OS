@@ -28,7 +28,7 @@ export async function getClients(): Promise<ClientWithProjects[]> {
             (p: any) => p.status === 'in_progress' || p.status === 'review' || p.status === 'planning'
         ).length || 0,
         totalRevenue: client.payments?.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
-    })) as unknown as ClientWithProjects[];
+    })) as ClientWithProjects[];
 }
 
 export async function getClientById(id: string): Promise<ClientWithProjects | null> {
@@ -55,7 +55,7 @@ export async function getClientById(id: string): Promise<ClientWithProjects | nu
             (p: any) => p.status === 'in_progress' || p.status === 'review' || p.status === 'planning'
         ).length || 0,
         totalRevenue: client.payments?.filter((p: any) => p.status === 'paid').reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0,
-    } as unknown as ClientWithProjects;
+    } as ClientWithProjects;
 }
 
 export async function createClient(input: CreateClientInput): Promise<Client> {
@@ -77,7 +77,7 @@ export async function createClient(input: CreateClientInput): Promise<Client> {
         lastContactDate: new Date(),
     }).returning();
 
-    return newClient as unknown as Client;
+    return newClient as Client;
 }
 
 export async function updateClient(id: string, input: UpdateClientInput): Promise<Client> {
@@ -91,7 +91,7 @@ export async function updateClient(id: string, input: UpdateClientInput): Promis
     .where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)))
     .returning();
 
-    return updatedClient as unknown as Client;
+    return updatedClient as Client;
 }
 
 export async function deleteClient(id: string): Promise<void> {

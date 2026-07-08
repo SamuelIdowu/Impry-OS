@@ -23,7 +23,7 @@ export async function addTimelineEventAction(input: CreateTimelineEventInput) {
     try {
         await logTimelineEvent(input);
         if (input.project_id) {
-            revalidatePath('/', 'layout');
+            revalidatePath('/projects');
         }
         return { success: true };
     } catch (error) {

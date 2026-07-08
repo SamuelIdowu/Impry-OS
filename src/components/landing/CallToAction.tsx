@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
-export function CallToAction() {
+export function CallToAction({ hasSession }: { hasSession?: boolean }) {
     return (
         <section className="bg-[#fafafa] py-24 md:py-32">
             <div className="container px-6 lg:px-10 mx-auto max-w-[1400px] text-center">
@@ -15,12 +15,21 @@ export function CallToAction() {
                         Start protecting your revenue today. No credit card required. 14-day free trial on all plans.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                        <Link href="/register">
-                            <Button size="lg" className="h-14 px-10 text-base font-semibold rounded-lg">
-                                Get Started Free
-                                <ArrowRight className="ml-2 h-5 w-5" />
-                            </Button>
-                        </Link>
+                        {hasSession ? (
+                            <Link href="/workspaces">
+                                <Button size="lg" className="h-14 px-10 text-base font-semibold rounded-lg">
+                                    Go to Dashboard
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>
+                            </Link>
+                        ) : (
+                            <Link href="/register">
+                                <Button size="lg" className="h-14 px-10 text-base font-semibold rounded-lg">
+                                    Get Started Free
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>

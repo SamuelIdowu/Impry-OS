@@ -1,18 +1,9 @@
 // Scope version types for Sprint 5: Scope Management
 
-export interface ScopeVersion {
-    id: string;
-    projectId: string;
-    userId: string;
-    versionNumber: number;
-    deliverables: string | null;
-    outOfScope: string | null;
-    assumptions: string | null;
-    shareToken: string | null;
-    createdBy: string;
-    createdAt: string | Date;
-    updatedAt: string | Date;
-}
+import { InferSelectModel } from 'drizzle-orm';
+import { scopeVersions } from '@/server/db/schema';
+
+export type ScopeVersion = InferSelectModel<typeof scopeVersions>;
 
 export interface ScopeVersionWithProject extends ScopeVersion {
     project?: {

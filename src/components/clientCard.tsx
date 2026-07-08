@@ -8,11 +8,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Client } from '@/lib/types';
 import { cn } from "@/lib/utils";
 
+import { useParams } from "next/navigation";
+
 interface ClientCardProps {
     client: Client;
 }
 
 export function ClientCard({ client }: ClientCardProps) {
+    const params = useParams();
+    const workspaceId = params.workspaceId as string;
+    
     const isDark = client.name === 'North Star'; // For demo matching
 
     // Initials generation
@@ -104,7 +109,7 @@ export function ClientCard({ client }: ClientCardProps) {
                         </div>
                     </div>
 
-                    <Link href={`/clients/${client.id}`} className="block w-full">
+                    <Link href={`/${workspaceId}/clients/${client.id}`} className="block w-full">
                         <button className={cn(
                             "w-full py-2 px-4 rounded-full text-xs font-semibold transition-all border",
                             isDark

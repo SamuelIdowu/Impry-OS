@@ -53,13 +53,13 @@ function mapDbClientToUiClient(dbClient: ClientWithProjects): UIClient {
     return {
         id: dbClient.id,
         name: dbClient.name,
-        email: dbClient.email,
+        email: dbClient.email || '',
         companyName: dbClient.company || dbClient.name,
         status: status,
         totalRevenue: totalRevenue,
         projectCount: dbClient.active_projects_count,
-        lastActive: dbClient.last_contact_date ? new Date(dbClient.last_contact_date).toLocaleDateString() : 'Never',
-        joinedDate: new Date(dbClient.created_at).toLocaleDateString(),
+        lastActive: dbClient.lastContactDate ? new Date(dbClient.lastContactDate).toLocaleDateString() : 'Never',
+        joinedDate: new Date(dbClient.createdAt || new Date()).toLocaleDateString(),
         location: 'Remote', // Placeholder
         description: dbClient.notes || undefined,
         avatar: dbClient.name.substring(0, 2).toUpperCase()
@@ -70,6 +70,12 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
     const [searchTerm, setSearchTerm] = useState("")
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const [activeTab, setActiveTab] = useState('All Clients')
+    const [currentPage, setCurrentPage] = useState(1)
+
+    // Reset page when tab or search changes
+    React.useEffect(() => {
+        setCurrentPage(1)
+    }, [activeTab, searchTerm])
 
     // State for clients list
     const [dbClients, setDbClients] = useState<ClientWithProjects[]>(initialClients)
@@ -137,6 +143,10 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
         }
     })
 
+    const itemsPerPage = 10;
+    const totalPages = Math.max(1, Math.ceil(filteredClients.length / itemsPerPage));
+    const paginatedClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
     return (
         <div className="flex flex-col py-8 px-4 lg:px-8 w-full max-w-[1600px] mx-auto space-y-8">
 
@@ -154,7 +164,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
             />
 
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-zinc-900">My Clients</h1>
                     <p className="text-zinc-500 mt-1">Manage relationships and active scopes.</p>
@@ -207,9 +217,9 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col md:flex-row gap-6 justify-between items-center border-b border-zinc-100 pb-1">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-between items-start md:items-center border-b border-zinc-100 pb-2 md:pb-1">
                 {/* Search */}
-                <div className="relative w-full md:w-80 pb-4 md:pb-0">
+                <div className="relative w-full md:w-80">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
                         <Search className="h-4 w-4" />
                     </div>
@@ -223,7 +233,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center gap-6 overflow-x-auto w-full md:w-auto pb-4 md:pb-0 hide-scrollbar">
+                <div className="flex items-center gap-6 overflow-x-auto w-full md:w-auto hide-scrollbar">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
@@ -241,7 +251,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                 </div>
 
                 {/* View Toggle */}
-                <div className="hidden md:flex items-center gap-2 pb-4 md:pb-0">
+                <div className="flex items-center gap-2 w-full md:w-auto justify-end md:justify-start">
                     <button
                         onClick={() => setViewMode('grid')}
                         className={cn("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600")}
@@ -260,7 +270,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
             {/* Client Grid / List */}
             {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredClients.map(client => (
+                    {paginatedClients.map(client => (
                         <ClientCard key={client.id} client={client} />
                     ))}
 
@@ -281,8 +291,8 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
             ) : (
                 <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
                     <div className="flex flex-col">
-                        {filteredClients.length > 0 ? (
-                            filteredClients.map(client => (
+                        {paginatedClients.length > 0 ? (
+                            paginatedClients.map(client => (
                                 <ClientListRow key={client.id} client={client} />
                             ))
                         ) : (
@@ -295,17 +305,45 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
             )}
 
             {/* Pagination */}
-            <div className="flex items-center justify-end gap-2 pt-8">
-                <button className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 disabled:opacity-50">
-                    <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button className="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-sm font-medium">1</button>
-                <button className="h-8 w-8 rounded-full border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 flex items-center justify-center text-sm font-medium">2</button>
-                <button className="h-8 w-8 rounded-full border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 flex items-center justify-center text-sm font-medium">3</button>
-                <button className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50">
-                    <ChevronRight className="h-4 w-4" />
-                </button>
-            </div>
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-8 border-t border-zinc-100">
+                    <p className="text-sm text-zinc-500 hidden sm:block">
+                        Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredClients.length)}</span> of <span className="font-medium">{filteredClients.length}</span> clients
+                    </p>
+                    <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={cn(
+                                    "h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                                    currentPage === page 
+                                        ? "bg-zinc-900 text-white" 
+                                        : "border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
+                                )}
+                            >
+                                {page}
+                            </button>
+                        ))}
+
+                        <button 
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -68,11 +68,11 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
     const [activeTab, setActiveTab] = React.useState('overview')
 
     // Calculated fields
-    const totalValue = project.budget || 0;
+    const totalValue = Number(project.budget) || 0;
     // Calculate paid amount from payments
-    const paidAmount = project.payments?.reduce((sum, p) => p.status === 'paid' ? sum + p.amount : sum, 0) || 0;
+    const paidAmount = project.payments?.reduce((sum, p) => p.status === 'paid' ? sum + Number(p.amount) : sum, 0) || 0;
     const pendingAmount = totalValue - paidAmount;
-    const progress = project.progress || 0;
+    const progress = 0;
 
     // Helper for dates
     const startDate = project.startDate ? new Date(project.startDate) : new Date();
@@ -255,7 +255,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
             )}
 
             {activeTab === 'scope' && (
-                <ScopeTab project={projectForScope} client={clientForScope} />
+                <ScopeTab project={projectForScope as any} client={clientForScope} />
             )}
 
             {activeTab === 'payments' && (

@@ -57,7 +57,7 @@ const pricingTiers = [
     },
 ];
 
-export function Pricing() {
+export function Pricing({ hasSession }: { hasSession?: boolean }) {
     return (
         <section id="pricing" className="bg-background py-20 md:py-28">
             <div className="container px-6 lg:px-10 mx-auto max-w-[1400px]">
@@ -97,14 +97,14 @@ export function Pricing() {
                                     </span>
                                     <span className="text-zinc-600">/{tier.period}</span>
                                 </div>
-                                <Link href={tier.name === "Enterprise" ? "/contact" : "/register"} className="block">
+                                <Link href={tier.name === "Enterprise" ? "/contact" : (hasSession ? "/workspaces" : "/register")} className="block">
                                     <Button
                                         className={`w-full h-12 text-base font-semibold rounded-lg ${tier.highlighted
                                             ? "bg-zinc-900 hover:bg-zinc-800 text-white"
                                             : "bg-zinc-100 hover:bg-zinc-200 text-zinc-900"
                                             }`}
                                     >
-                                        {tier.cta}
+                                        {hasSession && tier.name !== "Enterprise" ? "Go to Dashboard" : tier.cta}
                                     </Button>
                                 </Link>
                                 <ul className="space-y-3 pt-4">

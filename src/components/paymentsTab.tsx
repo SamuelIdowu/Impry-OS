@@ -31,27 +31,8 @@ export function PaymentsTab({ projectId, payments = [], totalValue, paidAmount }
     const outstandingAmount = totalContractValue - collectedAmount;
     const progressPercentage = totalContractValue > 0 ? Math.round((collectedAmount / totalContractValue) * 100) : 0;
 
-    // Map DB payments to UI Payment format if needed
-    // Assuming the passed payments are already close enough or we map them here
-    // for now let's map what we have from ProjectWithDetails
-    const mappedPayments: Payment[] = payments.map(p => ({
-        id: p.id,
-        projectId: projectId,
-        milestoneName: p.description || 'Payment',
-        amount: p.amount,
-        currency: p.currency,
-        status: p.status as any,
-        dueDate: p.dueDate || '',
-        amountPaid: p.status === 'paid' ? p.amount : 0,
-        invoice_id: p.id, // Using payment ID as invoice ID for now
-        invoiceNumber: p.id.substring(0, 8).toUpperCase(),
-        description: p.description || 'Payment',
-        userId: p.userId || '',
-        clientId: null,
-        createdAt: p.updatedAt || new Date().toISOString(),
-        updatedAt: p.updatedAt || new Date().toISOString()
-    }));
-
+    // Use the passed payments directly, assuming they match the Payment type
+    const mappedPayments: Payment[] = payments as Payment[];
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Summary Cards */}

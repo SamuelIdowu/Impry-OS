@@ -29,7 +29,7 @@ export function EditClientDialog({ client, open, onOpenChange, onSuccess, onSubm
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [formData, setFormData] = useState<UpdateClientInput>({
         name: client.name,
-        email: client.email,
+        email: client.email || undefined,
         company: client.company || '',
         notes: client.notes || '',
     });

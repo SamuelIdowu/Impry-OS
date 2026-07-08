@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, uuid, decimal, integer, date, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, uuid, decimal, integer, date, jsonb, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Better Auth core tables
@@ -128,7 +128,10 @@ export const scopeVersions = pgTable('scope_versions', {
   createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  projectIdIdx: index('scope_versions_project_id_idx').on(table.projectId),
+  userIdIdx: index('scope_versions_user_id_idx').on(table.userId),
+}));
 
 export const payments = pgTable('payments', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -150,6 +153,7 @@ export const payments = pgTable('payments', {
   notes: text('notes'),
   taxRate: decimal('tax_rate', { precision: 5, scale: 2 }).default('0'),
   discountRate: decimal('discount_rate', { precision: 5, scale: 2 }).default('0'),
+  shareToken: uuid('share_token').defaultRandom().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
