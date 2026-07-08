@@ -63,8 +63,8 @@ export async function getCurrentWorkspaceId() {
         }
     }
     if (!workspaceId) {
-        // Return a dummy UUID to prevent DB type errors and crashes during Next.js static pre-rendering
-        return '00000000-0000-0000-0000-000000000000';
+        // Throw an explicit error instead of silent dummy UUID failure
+        throw new Error('Workspace context required for this operation');
     }
     return workspaceId;
 }

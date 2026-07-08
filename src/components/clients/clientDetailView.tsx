@@ -74,7 +74,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
     const outstandingAmount = outstandingInvoices.reduce((sum, p) => sum + Number(p.amount || 0), 0)
 
     const uiProjects: UIProject[] = projects.map(p => {
-        const appStatus = mapDatabaseToAppStatus(p.status);
+        const appStatus = mapDatabaseToAppStatus((p.status as any) || 'planning');
         let uiStatus: import("@/lib/types").Status = 'Active'; // Default fallback
 
         switch (appStatus) {
@@ -93,7 +93,7 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
             progress: 0, // Default for now
             dueDate: p.deadline || new Date().toISOString(), // Fallback
             startDate: p.startDate || new Date().toISOString(),
-            totalValue: p.budget || 0,
+            totalValue: Number(p.budget || 0),
             paidAmount: 0, // Needs calculation from payments if linked
             description: p.description || undefined,
         }

@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import * as schema from "@/server/db/schema";
 import { headers } from "next/headers";
 import { dash } from "@better-auth/infra";
+import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
@@ -17,7 +18,8 @@ export const auth = betterAuth({
         }
     }),
     plugins: [
-        dash()
+        dash(),
+        nextCookies()
     ],
     emailAndPassword: {
         enabled: true,

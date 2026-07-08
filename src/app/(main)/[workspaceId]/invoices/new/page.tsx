@@ -20,6 +20,13 @@ export default async function NewInvoicePage() {
     }))
 
     return (
-        <InvoiceEditor clients={clients} projects={projects} />
+        <InvoiceEditor 
+            clients={clients.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                email: c.email || undefined
+            }))} 
+            projects={projects} 
+        />
     )
 }

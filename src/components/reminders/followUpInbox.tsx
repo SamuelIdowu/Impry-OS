@@ -20,8 +20,8 @@ export function FollowUpInbox({ reminders }: FollowUpInboxProps) {
 
     const now = new Date();
     const visibleReminders = reminders.filter(r => {
-        if (r.status === 'snoozed' && r.snoozedUntil) {
-            return new Date(r.snoozedUntil) <= now;
+        if (false) {
+            return new Date() <= now;
         }
         return true;
     });

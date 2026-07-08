@@ -31,7 +31,7 @@ export async function getProjects(): Promise<ProjectWithClient[]> {
         }
     });
 
-    return result as unknown as ProjectWithClient[];
+    return result as ProjectWithClient[];
 }
 
 /**
@@ -46,7 +46,7 @@ export async function getProjectsByClient(clientId: string): Promise<Project[]> 
         orderBy: [desc(projects.createdAt)],
     });
 
-    return result as unknown as Project[];
+    return result as Project[];
 }
 
 /**
@@ -69,7 +69,7 @@ export async function getProjectById(id: string): Promise<ProjectWithDetails | n
 
     if (!result) return null;
 
-    return result as unknown as ProjectWithDetails;
+    return result as ProjectWithDetails;
 }
 
 /**
@@ -103,7 +103,7 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
 
     }).returning();
 
-    return newProject as unknown as Project;
+    return newProject as Project;
 }
 
 /**
@@ -127,7 +127,7 @@ export async function updateProject(id: string, input: UpdateProjectInput): Prom
     .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
     .returning();
 
-    return updatedProject as unknown as Project;
+    return updatedProject as Project;
 }
 
 /**
@@ -167,7 +167,7 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
         });
     }
 
-    return updatedProject as unknown as Project;
+    return updatedProject as Project;
 }
 
 /**

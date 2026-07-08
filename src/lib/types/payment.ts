@@ -3,28 +3,10 @@
 
 export type PaymentStatus = 'pending' | 'paid' | 'partial' | 'overdue' | 'cancelled';
 
-export interface Payment {
-    id: string;
-    userId: string;
-    projectId: string | null;
-    clientId: string | null;
-    milestoneName?: string | null;
-    description?: string | null;
-    amount: string | number;
-    amountPaid: string | number;
-    currency: string;
-    status: PaymentStatus;
-    dueDate?: string | null;
-    paidDate?: string | null;
-    paymentMethod?: string | null;
-    invoiceNumber?: string | null;
-    lineItems?: InvoiceLineItem[] | null;
-    notes?: string | null;
-    taxRate?: string | number | null;
-    discountRate?: string | number | null;
-    createdAt: Date | string;
-    updatedAt: Date | string;
-}
+import { InferSelectModel } from 'drizzle-orm';
+import { payments } from '@/server/db/schema';
+
+export type Payment = InferSelectModel<typeof payments>;
 
 export interface InvoiceLineItem {
     description: string;

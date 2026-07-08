@@ -3,6 +3,7 @@
 import { logTimelineEvent } from '@/lib/timeline';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { withAuth } from '@/lib/auth-guard';
 
 const createNoteSchema = z.object({
     projectId: z.string().uuid(),
@@ -10,24 +11,26 @@ const createNoteSchema = z.object({
 });
 
 export async function createManualNote(input: z.infer<typeof createNoteSchema>) {
-    try {
-        const { projectId, content } = createNoteSchema.parse(input);
+    return withAuth(async (user, workspaceId) => {
+        try {
+            const { projectId, content } = createNoteSchema.parse(input);
 
-        await logTimelineEvent({
-            project_id: projectId,
-            event_type: 'note',
-            title: 'Note added', // Standard title for manual notes
-            description: content,
-        });
+            await logTimelineEvent({
+                project_id: projectId,
+                event_type: 'note',
+                title: 'Note added', // Standard title for manual notes
+                description: content,
+            });
 
-        revalidatePath('/', 'layout');
-        return { success: true };
-    } catch (error) {
-        console.error('Failed to create manual note:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to create note'
-        };
-    }
+            revalidatePath(`/${workspaceId}/projects/${projectId}`);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to create manual note:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to create note'
+            };
+        }
+    });
 }
 

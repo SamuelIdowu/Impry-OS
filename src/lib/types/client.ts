@@ -1,15 +1,7 @@
-export interface Client {
-    id: string;
-    user_id: string;
-    name: string;
-    email: string;
-    company?: string | null;
-    notes?: string | null;
-    last_contact_date?: string | null;
-    status: 'active' | 'inactive' | 'archived' | 'lead';
-    created_at: string;
-    updated_at: string;
-}
+import { InferSelectModel } from 'drizzle-orm';
+import { clients } from '@/server/db/schema';
+
+export type Client = InferSelectModel<typeof clients>;
 
 export interface CreateClientInput {
     name: string;

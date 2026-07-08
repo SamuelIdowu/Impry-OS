@@ -300,7 +300,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                                         <div className="absolute left-0 top-1.5 size-3 rounded-full bg-zinc-900 ring-4 ring-white" />
                                         <div className="flex flex-col">
                                             <span className="text-sm font-medium text-zinc-900">Version {version.versionNumber}</span>
-                                            <span className="text-xs text-zinc-500 mt-1">{new Date(version.createdAt).toLocaleDateString()} at {new Date(version.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="text-xs text-zinc-500 mt-1">{new Date(version.createdAt || Date.now()).toLocaleDateString()} at {new Date(version.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                     </div>
                                 ))

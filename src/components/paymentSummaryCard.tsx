@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 interface PaymentData {
     id: string;
-    amount: number;
+    amount: number | string;
     currency: string;
     status: string;
     due_date?: string | null;
@@ -21,10 +21,10 @@ interface PaymentSummaryCardProps {
 }
 
 export function PaymentSummaryCard({ projectId, payments, onViewInvoices }: PaymentSummaryCardProps) {
-    const totalExpected = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalExpected = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const totalPaid = payments
         .filter(p => p.status.toLowerCase() === 'paid')
-        .reduce((sum, p) => sum + (p.amount || 0), 0);
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
     const summary = {
         totalExpected,

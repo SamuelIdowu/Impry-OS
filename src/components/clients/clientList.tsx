@@ -53,13 +53,13 @@ function mapDbClientToUiClient(dbClient: ClientWithProjects): UIClient {
     return {
         id: dbClient.id,
         name: dbClient.name,
-        email: dbClient.email,
+        email: dbClient.email || '',
         companyName: dbClient.company || dbClient.name,
         status: status,
         totalRevenue: totalRevenue,
         projectCount: dbClient.active_projects_count,
-        lastActive: dbClient.last_contact_date ? new Date(dbClient.last_contact_date).toLocaleDateString() : 'Never',
-        joinedDate: new Date(dbClient.created_at).toLocaleDateString(),
+        lastActive: dbClient.lastContactDate ? new Date(dbClient.lastContactDate).toLocaleDateString() : 'Never',
+        joinedDate: new Date(dbClient.createdAt || new Date()).toLocaleDateString(),
         location: 'Remote', // Placeholder
         description: dbClient.notes || undefined,
         avatar: dbClient.name.substring(0, 2).toUpperCase()

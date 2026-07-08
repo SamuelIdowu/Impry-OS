@@ -20,7 +20,11 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
 
     return (
         <InvoiceEditor
-            clients={clients}
+            clients={clients.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                email: c.email || undefined
+            }))}
             projects={projects.map((p: any) => ({
                 id: p.id,
                 name: p.name,

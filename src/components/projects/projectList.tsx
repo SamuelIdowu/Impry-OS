@@ -48,10 +48,10 @@ function mapDbProjectToUiProject(dbProject: ProjectWithClient): UIProject {
         progress: 0, // Not in DB yet
         dueDate: dbProject.deadline ? new Date(dbProject.deadline).toLocaleDateString() : 'No date',
         startDate: dbProject.startDate ? new Date(dbProject.startDate).toLocaleDateString() : 'No date',
-        totalValue: dbProject.budget || 0,
+        totalValue: Number(dbProject.budget) || 0,
         paidAmount: 0,
         description: dbProject.description || undefined,
-        avatar: dbProject.client?.name.substring(0, 2).toUpperCase()
+        avatar: dbProject.client?.name?.substring(0, 2).toUpperCase() || 'NA'
     };
 }
 

@@ -15,6 +15,13 @@
       "when": 1782992482754,
       "tag": "0001_real_wendell_rand",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783032408662,
+      "tag": "0002_awesome_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }

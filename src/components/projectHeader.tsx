@@ -21,7 +21,7 @@ interface ProjectHeaderProps {
 export function ProjectHeader({ project, onStatusChange, onProjectUpdate, onTabChange }: ProjectHeaderProps) {
     const params = useParams();
     const workspaceId = params.workspaceId as string;
-    const appStatus = mapDatabaseToAppStatus(project.status);
+    const appStatus = mapDatabaseToAppStatus((project.status as any) || 'planning');
 
     return (
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">

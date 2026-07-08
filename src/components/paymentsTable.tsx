@@ -114,7 +114,7 @@ function PaymentRow({ payment, onMarkPaid, onMarkPartial, onGenerateInvoice, onD
             </td>
             <td className="px-6 py-5 align-top">
                 <span className="text-sm font-bold text-zinc-900">
-                    {formatCurrency(Number(payment.amount), payment.currency)}
+                    {formatCurrency(Number(payment.amount), payment.currency || undefined)}
                 </span>
             </td>
             <td className="px-6 py-5 align-top">
@@ -123,7 +123,7 @@ function PaymentRow({ payment, onMarkPaid, onMarkPartial, onGenerateInvoice, onD
                 </span>
             </td>
             <td className="px-6 py-5 align-top">
-                <StatusBadge status={payment.status} />
+                <StatusBadge status={payment.status || 'pending'} />
             </td>
             <td className="px-6 py-5 align-top text-right">
                 <DropdownMenu>

@@ -11,83 +11,101 @@ import {
 } from '@/lib/scopes';
 import type { CreateScopeVersionInput } from '@/lib/types/scope';
 import { revalidatePath } from 'next/cache';
+import { withAuth } from '@/lib/auth-guard';
+import { z } from 'zod';
+
+const createScopeVersionSchema = z.object({
+    projectId: z.string().min(1, 'Project is required'),
+    content: z.string().min(1, 'Content is required'),
+});
 
 /**
  * Fetch all scope versions for a project
  */
 export async function fetchScopeVersions(projectId: string) {
-    try {
-        const versions = await getScopeVersions(projectId);
-        return { success: true, data: versions };
-    } catch (error) {
-        console.error('Error fetching scope versions:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch scope versions',
-        };
-    }
+    return withAuth(async (user, workspaceId) => {
+        try {
+            const versions = await getScopeVersions(projectId);
+            return { success: true, data: versions };
+        } catch (error) {
+            console.error('Error fetching scope versions:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to fetch scope versions',
+            };
+        }
+    });
 }
 
 /**
  * Fetch the latest scope version for a project
  */
 export async function fetchLatestScopeVersion(projectId: string) {
-    try {
-        const version = await getLatestScopeVersion(projectId);
-        return { success: true, data: version };
-    } catch (error) {
-        console.error('Error fetching latest scope version:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch latest scope version',
-        };
-    }
+    return withAuth(async (user, workspaceId) => {
+        try {
+            const version = await getLatestScopeVersion(projectId);
+            return { success: true, data: version };
+        } catch (error) {
+            console.error('Error fetching latest scope version:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to fetch latest scope version',
+            };
+        }
+    });
 }
 
 /**
  * Create a new scope version (save & freeze)
  */
 export async function createScopeVersionAction(input: CreateScopeVersionInput) {
-    try {
-        // Get the current latest version to determine if this is first version or an update
-        const currentVersion = await getLatestScopeVersion(input.projectId);
+    return withAuth(async (user, workspaceId) => {
+        try {
+            const validatedInput = createScopeVersionSchema.parse(input) as CreateScopeVersionInput;
+            
+            // Get the current latest version to determine if this is first version or an update
+            const currentVersion = await getLatestScopeVersion(validatedInput.projectId);
 
-        // Create the new version
-        const newVersion = await createScopeVersion(input);
+            // Create the new version
+            const newVersion = await createScopeVersion(validatedInput);
 
-        // Log to timeline
-        if (currentVersion) {
-            await logScopeUpdated(
-                input.projectId,
-                currentVersion.versionNumber,
-                newVersion.versionNumber,
-                newVersion.shareToken || ''
-            );
-        } else {
-            await logScopeCreated(
-                input.projectId,
-                newVersion.versionNumber,
-                newVersion.shareToken || ''
-            );
+            // Log to timeline
+            if (currentVersion) {
+                await logScopeUpdated(
+                    validatedInput.projectId,
+                    currentVersion.versionNumber,
+                    newVersion.versionNumber,
+                    newVersion.shareToken || ''
+                );
+            } else {
+                await logScopeCreated(
+                    validatedInput.projectId,
+                    newVersion.versionNumber,
+                    newVersion.shareToken || ''
+                );
+            }
+
+            // Revalidate the project page
+            revalidatePath(`/${workspaceId}/projects/${validatedInput.projectId}`);
+
+            return {
+                success: true,
+                data: {
+                    version: newVersion,
+                    shareUrl: getScopeShareUrl(newVersion.shareToken || ''),
+                },
+            };
+        } catch (error: any) {
+            console.error('Error creating scope version:', error);
+            if (error instanceof z.ZodError) {
+                return { success: false, error: error.issues[0].message };
+            }
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to create scope version',
+            };
         }
-
-        // Revalidate the project page
-        revalidatePath('/', 'layout');
-
-        return {
-            success: true,
-            data: {
-                version: newVersion,
-                shareUrl: getScopeShareUrl(newVersion.shareToken || ''),
-            },
-        };
-    } catch (error) {
-        console.error('Error creating scope version:', error);
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Failed to create scope version',
-        };
-    }
+    });
 }
 
 /**

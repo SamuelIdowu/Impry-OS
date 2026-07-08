@@ -21,7 +21,7 @@ export async function updateProfileAction(data: { name: string; bio: string }) {
             .set({ name: data.name, updatedAt: new Date() })
             .where(eq(users.id, user.id));
 
-        revalidatePath('/', 'layout');
+        revalidatePath('/settings');
         return { success: true };
     } catch (error) {
         console.error('Error in updateProfileAction:', error);
@@ -65,8 +65,8 @@ export async function updateBrandingAction(data: { logo_url?: string; brand_colo
             })
             .where(eq(users.id, user.id));
 
-        revalidatePath('/', 'layout');
-        revalidatePath('/', 'layout');
+        revalidatePath('/settings');
+        revalidatePath('/settings');
         return { success: true };
     } catch (error) {
         console.error('Error in updateBrandingAction:', error);

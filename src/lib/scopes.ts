@@ -27,7 +27,7 @@ export async function getScopeVersions(projectId: string): Promise<ScopeVersion[
         orderBy: [desc(scopeVersions.versionNumber)]
     });
 
-    return data as unknown as ScopeVersion[];
+    return data as ScopeVersion[];
 }
 
 /**
@@ -50,7 +50,7 @@ export async function getLatestScopeVersion(projectId: string): Promise<ScopeVer
 
     if (!data) return null;
 
-    return data as unknown as ScopeVersion;
+    return data as ScopeVersion;
 }
 
 /**
@@ -72,7 +72,7 @@ export async function getScopeVersionById(versionId: string): Promise<ScopeVersi
 
     if (!data) return null;
 
-    return data as unknown as ScopeVersion;
+    return data as ScopeVersion;
 }
 
 /**
@@ -123,7 +123,7 @@ export async function createScopeVersion(input: CreateScopeVersionInput): Promis
         })
         .returning();
 
-    return data as unknown as ScopeVersion;
+    return data as ScopeVersion;
 }
 
 /**
@@ -141,7 +141,7 @@ export async function getScopeByShareToken(token: string): Promise<ScopeVersionW
 
     if (!data) return null;
 
-    return data as unknown as ScopeVersionWithProject;
+    return data as ScopeVersionWithProject;
 }
 
 /**

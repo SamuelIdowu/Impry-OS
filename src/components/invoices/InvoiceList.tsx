@@ -130,7 +130,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                 "Amount": inv.amount,
                 "Status": inv.status,
                 "Due Date": inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '',
-                "Created At": new Date(inv.createdAt).toLocaleDateString()
+                "Created At": new Date(inv.createdAt || new Date()).toLocaleDateString()
             }))
 
             const csv = unparse(dataToExport)
@@ -200,12 +200,14 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
                                 const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
                                 
+                                const getValidDate = (d: any) => new Date(d || new Date());
+                                
                                 const currentMonthPaid = paidInvoices
-                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === currentMonth && new Date(i.paidDate || i.createdAt).getFullYear() === currentYear)
+                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === currentMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === currentYear)
                                     .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
                                     
                                 const prevMonthPaid = paidInvoices
-                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === prevMonth && new Date(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
+                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === prevMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
                                     .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
 
                                 if (prevMonthPaid === 0) return currentMonthPaid > 0 ? "+100%" : "0%";
@@ -222,12 +224,14 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
                                 const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
                                 
+                                const getValidDate = (d: any) => new Date(d || new Date());
+                                
                                 const currentMonthPaid = paidInvoices
-                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === currentMonth && new Date(i.paidDate || i.createdAt).getFullYear() === currentYear)
+                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === currentMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === currentYear)
                                     .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
                                     
                                 const prevMonthPaid = paidInvoices
-                                    .filter(i => new Date(i.paidDate || i.createdAt).getMonth() === prevMonth && new Date(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
+                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === prevMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
                                     .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
 
                                 return currentMonthPaid >= prevMonthPaid ? "up" as const : "down" as const;
@@ -390,7 +394,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                     <td className="py-4 px-6 font-bold text-sm text-zinc-900">${inv.amount.toLocaleString()}</td>
                                     <td className="py-4 px-6 text-sm text-zinc-500">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                                     <td className="py-4 px-6">
-                                        <StatusBadge status={inv.status} />
+                                        <StatusBadge status={inv.status || 'pending'} />
                                     </td>
                                     <td className="py-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenu>

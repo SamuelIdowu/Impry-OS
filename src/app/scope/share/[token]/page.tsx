@@ -76,7 +76,7 @@ export default async function PublicScopePage({ params }: PublicScopePageProps) 
                                 v{scope.versionNumber}
                             </span>
                             <span className="text-muted-foreground text-xs">
-                                • Created {new Date(scope.createdAt).toLocaleDateString()}
+                                • Created {new Date(scope.createdAt || new Date()).toLocaleDateString()}
                             </span>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">

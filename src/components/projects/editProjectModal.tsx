@@ -52,8 +52,8 @@ export function EditProjectModal({
     // Form State
     const [name, setName] = useState(project.name);
     const [description, setDescription] = useState(project.description || '');
-    const [status, setStatus] = useState<DatabaseProjectStatus>(project.status);
-    const [progress, setProgress] = useState(project.progress || 0);
+    const [status, setStatus] = useState<DatabaseProjectStatus>((project.status as DatabaseProjectStatus) || 'active');
+    const [progress, setProgress] = useState(0); // Progress removed from Project type
     const [startDate, setStartDate] = useState(project.startDate?.split('T')[0] || '');
     const [deadline, setDeadline] = useState(project.deadline?.split('T')[0] || '');
     const [budget, setBudget] = useState(project.budget?.toString() || '');

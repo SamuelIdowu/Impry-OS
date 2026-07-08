@@ -224,7 +224,7 @@ export function ProjectPaymentsView({ project, payments }: ProjectPaymentsViewPr
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 font-mono text-zinc-900 font-medium">${invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="px-6 py-4 font-mono text-zinc-900 font-medium">${Number(invoice.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                             <td className="px-6 py-4 text-zinc-500">{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</td>
                                             <td className="px-6 py-4">
                                                 <span className={cn(
