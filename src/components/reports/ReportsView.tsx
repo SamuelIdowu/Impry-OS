@@ -14,6 +14,8 @@ import {
     ArrowRight,
     ChevronRight,
     X,
+    LayoutGrid,
+    List
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -55,6 +57,7 @@ interface ReportsViewProps {
 export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewProps) {
     const [searchQuery, setSearchQuery] = React.useState("")
     const [statusFilter, setStatusFilter] = React.useState<string>("All")
+    const [projectReportView, setProjectReportView] = React.useState<"list" | "grid">("list")
     const [dateRange, setDateRange] = React.useState<DateRange>("30days")
     
     const params = useParams()
@@ -353,10 +356,83 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                     )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200">
+                                <button
+                                    onClick={() => setProjectReportView("list")}
+                                    className={cn(
+                                        "p-1.5 rounded-md transition-all",
+                                        projectReportView === "list"
+                                            ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
+                                            : "text-zinc-500 hover:bg-zinc-100"
+                                    )}
+                                    title="List View"
+                                >
+                                    <List className="h-4 w-4" />
+                                </button>
+                                <button
+                                    onClick={() => setProjectReportView("grid")}
+                                    className={cn(
+                                        "p-1.5 rounded-md transition-all",
+                                        projectReportView === "grid"
+                                            ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
+                                            : "text-zinc-500 hover:bg-zinc-100"
+                                    )}
+                                    title="Grid View"
+                                >
+                                    <LayoutGrid className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                    {projectReportView === "grid" ? (
+                        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {filteredProjects.length > 0 ? (
+                                filteredProjects.map((project) => (
+                                    <Link
+                                        key={project.id}
+                                        href={`/${workspaceId}/projects/${project.id}`}
+                                        className="p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-all flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md group"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="size-7 rounded-full bg-zinc-100 text-zinc-600 flex items-center justify-center text-xs font-bold">
+                                                        {(project.client?.name || 'C').substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <span className="text-xs text-zinc-500 font-medium">{project.client?.name || 'Unknown'}</span>
+                                                </div>
+                                                <StatusBadge status={project.status} />
+                                            </div>
+                                            <h4 className="font-bold text-zinc-900 text-base mb-1">{project.name}</h4>
+                                            <p className="text-xs text-zinc-500 line-clamp-2">{project.description || 'No description provided.'}</p>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center justify-between text-xs text-zinc-500 mb-2">
+                                                <span>Progress</span>
+                                                <span className="font-semibold text-zinc-900">{project.progress || 0}%</span>
+                                            </div>
+                                            <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden mb-3">
+                                                <div
+                                                    className={cn("h-full rounded-full", (project.progress || 0) > 70 ? "bg-green-500" : "bg-blue-500")}
+                                                    style={{ width: `${project.progress || 0}%` }}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs text-zinc-400">
+                                                <span>Deadline: {project.dueDate ? new Date(project.dueDate).toLocaleDateString() : '-'}</span>
+                                                <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900 transition-colors" />
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-12 text-center text-zinc-500 text-sm">
+                                    No projects found matching your criteria.
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto hide-scrollbar">
+                            <table className="w-full text-left border-collapse min-w-[700px]">
                             <thead>
                                 <tr className="bg-zinc-50/50 border-b border-zinc-200">
                                     <th className="py-3 px-6 text-xs font-semibold text-zinc-500 uppercase tracking-wider">Project Name</th>
@@ -414,6 +490,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                             </tbody>
                         </table>
                     </div>
+                    )}
                     <div className="p-4 border-t border-zinc-200 flex justify-center">
                         <Link href={`/${workspaceId}/projects`} className="text-sm text-zinc-500 hover:text-zinc-900 font-medium transition-colors flex items-center gap-1">
                             View All Projects

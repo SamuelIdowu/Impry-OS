@@ -418,7 +418,12 @@ export function ClientDetailView({ client, projects, payments }: ClientDetailVie
                                 </div>
                             )}
                             <div className="p-4 border-t border-zinc-100 flex justify-center">
-                                <Button variant="ghost" size="sm" className="text-xs text-zinc-500 hover:text-zinc-900 font-medium tracking-wide items-center uppercase">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-xs text-zinc-500 hover:text-zinc-900 font-medium tracking-wide items-center uppercase cursor-pointer"
+                                    onClick={() => router.push(`/${workspaceId}/projects`)}
+                                >
                                     View Full History
                                     <ArrowRight className="ml-1.5 h-3 w-3" />
                                 </Button>

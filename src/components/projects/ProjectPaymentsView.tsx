@@ -195,10 +195,10 @@ export function ProjectPaymentsView({ project, payments }: ProjectPaymentsViewPr
 
                 {/* Milestones Table */}
                 <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                    <div className="overflow-x-auto hide-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[600px]">
                             <thead>
-                                <tr className="border-b border-zinc-200 text-zinc-500 text-xs uppercase tracking-wider bg-zinc-50/50">
+                                <tr className="border-b border-zinc-200 text-zinc-500 text-xs uppercase tracking-wider bg-zinc-50/50 whitespace-nowrap">
                                     <th className="px-6 py-4 font-semibold">Milestone Name</th>
                                     <th className="px-6 py-4 font-semibold">Amount</th>
                                     <th className="px-6 py-4 font-semibold">Due Date</th>
