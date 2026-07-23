@@ -12,7 +12,9 @@ import {
     MoreHorizontal,
     ChevronLeft,
     ChevronRight,
-    ArrowUpRight
+    ArrowUpRight,
+    LayoutGrid,
+    List
 } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/shared/PageHeader"
@@ -21,7 +23,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils"
 // import { Invoice } from "@/lib/types" // We will use Payment type now or Invoice type mapped
 import { useRouter, useParams } from "next/navigation"
-import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment" // Use updated types
+import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment"
 import { createStandaloneInvoice, deletePayment, updatePaymentStatus } from "@/server/actions/payments"
 import {
     DropdownMenu,
@@ -46,6 +48,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
     const [activeTab, setActiveTab] = useState("All Invoices")
     // const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false) // Unused
     const [invoices, setInvoices] = useState<PaymentWithClient[]>(initialInvoices)
+    const [viewMode, setViewMode] = useState<"list" | "grid">("list")
 
     // Filter states
     const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -298,6 +301,32 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200">
+                                <button
+                                    onClick={() => setViewMode("list")}
+                                    className={cn(
+                                        "p-1.5 rounded-md transition-all",
+                                        viewMode === "list"
+                                            ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
+                                            : "text-zinc-500 hover:bg-zinc-100"
+                                    )}
+                                    title="List View"
+                                >
+                                    <List className="h-4 w-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("grid")}
+                                    className={cn(
+                                        "p-1.5 rounded-md transition-all",
+                                        viewMode === "grid"
+                                            ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
+                                            : "text-zinc-500 hover:bg-zinc-100"
+                                    )}
+                                    title="Grid View"
+                                >
+                                    <LayoutGrid className="h-4 w-4" />
+                                </button>
+                            </div>
                             <button
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                                 className={cn(
@@ -358,9 +387,51 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     )}
                 </div>
 
-                {/* Invoices Table */}
-                <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto hide-scrollbar">
+                {/* Invoices Content */}
+                {viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredInvoices.map((inv) => (
+                            <div
+                                key={inv.id}
+                                onClick={() => router.push(`/${workspaceId}/invoices/${inv.invoiceNumber}`)}
+                                className="p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-sm"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-8 w-8 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-600 font-mono text-xs font-bold">
+                                            <FileText className="h-4 w-4 text-zinc-500" />
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-mono font-medium text-zinc-500">#{inv.invoiceNumber}</div>
+                                            <div className="text-xs text-zinc-400 font-medium">{(inv as any).project?.name || 'No project'}</div>
+                                        </div>
+                                    </div>
+                                    <StatusBadge status={inv.status || 'pending'} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-zinc-900 text-base">{inv.client?.name || 'Unknown Client'}</h4>
+                                </div>
+                                <div className="pt-3 border-t border-zinc-100 flex items-center justify-between">
+                                    <div>
+                                        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block">Amount</span>
+                                        <span className="text-base font-bold text-zinc-900">${inv.amount.toLocaleString()}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block">Due Date</span>
+                                        <span className="text-xs font-medium text-zinc-600">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {filteredInvoices.length === 0 && (
+                            <div className="col-span-full py-12 text-center text-zinc-500 text-sm bg-white border border-zinc-200 rounded-xl">
+                                No invoices found.
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto hide-scrollbar">
                         <div className="min-w-[800px]">
                             <table className="w-full text-left border-collapse">
                                 <thead>
@@ -461,7 +532,8 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                             </button>
                         </div>
                     </div>
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     )

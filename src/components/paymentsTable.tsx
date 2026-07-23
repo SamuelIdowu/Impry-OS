@@ -24,10 +24,10 @@ interface PaymentsTableProps {
 
 export function PaymentsTable({ payments, onMarkPaid, onMarkPartial, onGenerateInvoice, onDelete, onSendReminder }: PaymentsTableProps) {
     return (
-        <div className="w-full">
-            <table className="w-full text-left border-collapse">
+        <div className="w-full overflow-x-auto hide-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
-                    <tr className="border-b border-zinc-100 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    <tr className="border-b border-zinc-100 text-xs font-semibold uppercase tracking-wider text-zinc-400 whitespace-nowrap">
                         <th className="px-6 py-4 w-[30%]">Milestone</th>
                         <th className="px-6 py-4 w-[20%]">Amount</th>
                         <th className="px-6 py-4 w-[20%]">Due Date</th>

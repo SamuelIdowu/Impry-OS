@@ -1,19 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { FormInput } from "@/components/auth/FormInput";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
+    const searchParams = useSearchParams();
     const [error, setError] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const router = useRouter();
+
+    useEffect(() => {
+        const errorParam = searchParams.get("error");
+        if (errorParam === "account_not_linked") {
+            setError("An account with this email already exists. Please sign in with your email and password first, or try again now that account linking is enabled.");
+        } else if (errorParam === "unauthorized") {
+            setError("Please sign in to access your workspace.");
+        } else if (errorParam) {
+            setError(errorParam);
+        }
+    }, [searchParams]);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -52,9 +64,9 @@ export default function LoginPage() {
         try {
             await authClient.signIn.social({
                 provider: "google",
+                callbackURL: "/workspaces",
             }, {
                 onSuccess: () => {
-                    // Redirects automatically usually, or we can use the callbackUrl
                     router.push("/workspaces");
                 },
                 onError: (ctx) => {
@@ -236,5 +248,13 @@ export default function LoginPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-sm text-muted-foreground">Loading...</div>}>
+            <LoginForm />
+        </Suspense>
     );
 }

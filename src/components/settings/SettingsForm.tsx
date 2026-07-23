@@ -268,7 +268,7 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
     const isMfaEnabled = mfaFactors.some(f => f.status === 'verified')
 
     return (
-        <div className="flex flex-1 p-6 mx-auto w-full">
+        <div className="flex flex-1 p-4 md:p-6 mx-auto w-full">
             {/* Side Navigation */}
             <aside className="hidden md:flex flex-col w-64 pt-8 pb-10 pr-6 border-r border-zinc-200">
                 <div className="flex flex-col gap-6 sticky top-24">
@@ -314,9 +314,9 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 py-8 px-4 md:px-10">
+            <main className="flex-1 py-4 md:py-8 px-0 sm:px-4 md:px-10">
                 {/* Mobile Tab Navigation */}
-                <div className="flex md:hidden gap-2 mb-6 p-1 bg-zinc-100 rounded-lg">
+                <div className="flex md:hidden gap-2 mb-4 p-1 bg-zinc-100 rounded-lg">
                     <button
                         onClick={() => setActiveTab('general')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'general'
@@ -354,8 +354,8 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                 {activeTab === 'general' && (
                     <>
                         {/* Page Heading */}
-                        <div className="mb-8">
-                            <h1 className="text-zinc-900 text-3xl font-bold leading-tight tracking-tight mb-2">Account Settings</h1>
+                        <div className="mb-6 md:mb-8">
+                            <h1 className="text-zinc-900 text-2xl md:text-3xl font-bold leading-tight tracking-tight mb-2">Account Settings</h1>
                             <p className="text-zinc-500 text-base font-normal">Manage your personal information and profile details.</p>
                         </div>
 

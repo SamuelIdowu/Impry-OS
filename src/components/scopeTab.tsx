@@ -271,7 +271,17 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                                         <span className="text-xs text-zinc-500">{client.companyName}</span>
                                     </div>
                                 </div>
-                                <Button variant="outline" className="w-full text-zinc-700 border-zinc-200 hover:bg-zinc-50">
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full text-zinc-700 border-zinc-200 hover:bg-zinc-50"
+                                    onClick={() => {
+                                        if (client?.email) {
+                                            window.location.href = `mailto:${client.email}?subject=${encodeURIComponent(`Project Scope: ${project.name}`)}`;
+                                        } else {
+                                            alert('No email address available for this client.');
+                                        }
+                                    }}
+                                >
                                     <Mail className="h-4 w-4 mr-2" />
                                     Contact Client
                                 </Button>

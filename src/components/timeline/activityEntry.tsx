@@ -12,30 +12,48 @@ import { Bell, Plus, FileText, CheckCircle2 } from 'lucide-react';
 interface ActivityEntryProps {
     activity: {
         id: string;
-        event_type: TimelineEventType;
+        event_type?: TimelineEventType;
+        eventType?: TimelineEventType;
         title: string;
         description?: string;
-        event_date: string;
+        event_date?: string;
+        eventDate?: string;
         metadata?: any;
         user?: {
             name: string;
-            avatar: string;
+            avatar?: string;
         };
     };
 }
 
 export function ActivityEntry({ activity }: ActivityEntryProps) {
-    const date = new Date(activity.event_date);
-    const timeAgo = formatDistanceToNow(date, { addSuffix: true });
+    const rawEventType = activity.event_type || activity.eventType || 'other';
+    const rawDate = activity.event_date || activity.eventDate;
+
+    let timeAgo = '';
+    if (rawDate) {
+        try {
+            const parsedDate = new Date(rawDate);
+            if (!isNaN(parsedDate.getTime())) {
+                timeAgo = formatDistanceToNow(parsedDate, { addSuffix: true });
+            }
+        } catch {
+            timeAgo = '';
+        }
+    }
 
     // Render Note (User Comment)
-    if (activity.event_type === 'note') {
+    if (rawEventType === 'note') {
         return (
             <div className="flex gap-4">
                 {/* User Avatar */}
                 <div className="flex-shrink-0">
-                    <div className="size-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm border-2 border-white shadow-sm">
-                        {activity.user?.avatar || 'U'}
+                    <div className="size-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm border-2 border-white shadow-sm overflow-hidden">
+                        {activity.user?.avatar && activity.user.avatar.length > 2 ? (
+                            <img src={activity.user.avatar} alt={activity.user.name} className="size-full object-cover" />
+                        ) : (
+                            activity.user?.avatar || activity.user?.name?.charAt(0).toUpperCase() || 'U'
+                        )}
                     </div>
                 </div>
 
@@ -46,7 +64,7 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
                             <span className="font-bold text-zinc-900">{activity.user?.name || 'User'}</span>
                             <span className="text-zinc-500">added a note</span>
                         </div>
-                        <span className="text-xs text-zinc-400">{timeAgo}</span>
+                        {timeAgo && <span className="text-xs text-zinc-400">{timeAgo}</span>}
                     </div>
                     <p className="text-zinc-600 leading-relaxed">
                         {activity.description}
@@ -57,7 +75,7 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
     }
 
     // Render Payment Reminder (System Event)
-    if (activity.event_type === 'payment') {
+    if (rawEventType === 'payment') {
         return (
             <div className="flex gap-4">
                 {/* Icon */}
@@ -79,9 +97,11 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
                                 </span>
                             )}
                         </div>
-                        <p className="text-sm text-zinc-500">
-                            {activity.description}
-                        </p>
+                        {activity.description && (
+                            <p className="text-sm text-zinc-500">
+                                {activity.description}
+                            </p>
+                        )}
                     </div>
                     {activity.metadata?.invoiceId && (
                         <Link href={`/invoices/${activity.metadata.invoiceId}`}>
@@ -96,13 +116,17 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
     }
 
     // Render Scope Update
-    if (activity.event_type === 'scope_update') {
+    if (rawEventType === 'scope_update') {
         return (
             <div className="flex gap-4">
                 {/* User Avatar */}
                 <div className="flex-shrink-0">
-                    <div className="size-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm border-2 border-white shadow-sm">
-                        {activity.user?.avatar || 'U'}
+                    <div className="size-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 font-bold text-sm border-2 border-white shadow-sm overflow-hidden">
+                        {activity.user?.avatar && activity.user.avatar.length > 2 ? (
+                            <img src={activity.user.avatar} alt={activity.user.name} className="size-full object-cover" />
+                        ) : (
+                            activity.user?.avatar || activity.user?.name?.charAt(0).toUpperCase() || 'U'
+                        )}
                     </div>
                 </div>
 
@@ -113,7 +137,7 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
                             <span className="font-bold text-zinc-900">{activity.user?.name || 'User'}</span>
                             <span className="text-zinc-500">updated scope</span>
                         </div>
-                        <span className="text-xs text-zinc-400">{timeAgo}</span>
+                        {timeAgo && <span className="text-xs text-zinc-400">{timeAgo}</span>}
                     </div>
 
                     {/* Scope Card */}
@@ -154,9 +178,13 @@ export function ActivityEntry({ activity }: ActivityEntryProps) {
                 <div className="size-2 bg-zinc-400 rounded-full" />
             </div>
             <div className="flex-1 bg-white p-4 rounded-xl border border-zinc-200">
-                <h4 className="font-semibold text-zinc-900">{activity.title}</h4>
+                <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-zinc-900">{activity.title}</h4>
+                    {timeAgo && <span className="text-xs text-zinc-400">{timeAgo}</span>}
+                </div>
                 {activity.description && <p className="text-zinc-500 text-sm mt-1">{activity.description}</p>}
             </div>
         </div>
     );
 }
+

@@ -33,8 +33,8 @@ const filterOptions: { label: string; value: CalendarEventType }[] = [
 
 export function CalendarHeader({ currentDate, onPrevMonth, onNextMonth, onToday, selectedFilters, onFilterChange }: CalendarHeaderProps) {
     return (
-        <div className="flex items-center justify-between p-4 border-b border-zinc-100 table-fixed">
-            <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-zinc-100">
+            <div className="flex items-center gap-2 sm:gap-4">
                 <div className="flex items-center gap-1 bg-zinc-50 rounded-lg p-1 border border-zinc-200">
                     <Button variant="ghost" size="icon" onClick={onPrevMonth} className="h-7 w-7 text-zinc-500 hover:text-zinc-900">
                         <ChevronLeft className="size-4" />
@@ -46,7 +46,7 @@ export function CalendarHeader({ currentDate, onPrevMonth, onNextMonth, onToday,
                         <ChevronRight className="size-4" />
                     </Button>
                 </div>
-                <h2 className="text-lg font-semibold text-zinc-900 w-48">
+                <h2 className="text-base sm:text-lg font-semibold text-zinc-900 w-auto sm:w-48 whitespace-nowrap">
                     {format(currentDate, 'MMMM yyyy')}
                 </h2>
             </div>
