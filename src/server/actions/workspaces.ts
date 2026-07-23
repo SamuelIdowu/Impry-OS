@@ -9,7 +9,7 @@ export async function getUserWorkspaces() {
   const user = await getUser()
   
   if (!user) {
-    throw new Error("Unauthorized")
+    return []
   }
 
   const userWorkspaces = await db

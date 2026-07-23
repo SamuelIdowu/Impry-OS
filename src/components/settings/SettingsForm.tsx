@@ -31,6 +31,7 @@ import {
     getMfaFactorsAction
 } from "@/server/actions/user"
 import { useRouter } from "next/navigation"
+import { authClient } from "@/lib/auth-client"
 
 type SettingsTab = 'general' | 'security' | 'billing'
 
@@ -253,7 +254,12 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
         try {
             const res = await deleteAccountAction()
             if (res.success) {
-                router.push('/login')
+                try {
+                    await authClient.signOut()
+                } catch (e) {
+                    console.error('Error signing out on client:', e)
+                }
+                window.location.href = '/login'
             } else {
                 alert(res.error || 'Failed to delete account')
             }

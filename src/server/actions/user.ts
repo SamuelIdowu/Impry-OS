@@ -3,7 +3,7 @@ import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 
 import { getUser, auth } from '@/lib/auth';
 import { db } from '@/server/db';
-import { users } from '@/server/db/schema';
+import { users, sessions } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -66,7 +66,6 @@ export async function updateBrandingAction(data: { logo_url?: string; brand_colo
             .where(eq(users.id, user.id));
 
         revalidatePath('/settings');
-        revalidatePath('/settings');
         return { success: true };
     } catch (error) {
         console.error('Error in updateBrandingAction:', error);
@@ -88,7 +87,7 @@ export async function signOutAllSessionsAction() {
         const user = await getUser();
         if (!user) return { success: false, error: 'Not authenticated' };
         
-        await auth.api.revokeOtherSessions({
+        await auth.api.revokeSessions({
             headers: await headers()
         });
 
@@ -107,8 +106,17 @@ export async function deleteAccountAction() {
             return { success: false, error: 'Not authenticated' };
         }
 
+        // Delete user's active sessions in DB first
+        try {
+            await db.delete(sessions).where(eq(sessions.userId, user.id));
+        } catch (e) {
+            console.error('Error deleting sessions:', e);
+        }
+
+        // Delete user record from database
         await db.delete(users).where(eq(users.id, user.id));
-        return { success: true, message: 'Account deletion requested. You will be signed out.' };
+
+        return { success: true, message: 'Account deleted successfully' };
     } catch (error) {
         console.error('Error in deleteAccountAction:', error);
         return { success: false, error: 'Failed to delete account' };
@@ -130,4 +138,3 @@ export async function unenrollMfaAction(factorId: string) {
 export async function getMfaFactorsAction() {
     return { success: true, factors: [] };
 }
-
