@@ -23,7 +23,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils"
 // import { Invoice } from "@/lib/types" // We will use Payment type now or Invoice type mapped
 import { useRouter, useParams } from "next/navigation"
-import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment" // Use updated types
+import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment"
 import { createStandaloneInvoice, deletePayment, updatePaymentStatus } from "@/server/actions/payments"
 import {
     DropdownMenu,
