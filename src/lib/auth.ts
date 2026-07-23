@@ -17,12 +17,28 @@ export const auth = betterAuth({
             verification: schema.verifications
         }
     }),
+    secret: process.env.BETTER_AUTH_SECRET,
+    baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    trustedOrigins: [
+        process.env.NEXT_PUBLIC_APP_URL,
+        process.env.BETTER_AUTH_URL,
+        "https://impry-os.vercel.app",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ].filter(Boolean) as string[],
     plugins: [
         dash(),
         nextCookies()
     ],
     emailAndPassword: {
         enabled: true,
+    },
+    account: {
+        accountLinking: {
+            enabled: true,
+            trustedProviders: ["google"],
+            requireLocalEmailVerified: false,
+        }
     },
     socialProviders: {
         google: {
