@@ -53,16 +53,14 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
         if (!element) return
 
         try {
-            // Force light mode and ensure no modern color functions are used
             const htmlElement = document.documentElement
             const originalClass = htmlElement.className
-            const wasLight = !htmlElement.classList.contains('dark')
 
-            // Temporarily remove dark mode to ensure consistent color rendering
+            // Force light mode so colors render correctly
             htmlElement.classList.remove('dark')
 
-            // Wait for styles to be applied
-            await new Promise(resolve => setTimeout(resolve, 50))
+            // Give the DOM time to settle after mode switch
+            await new Promise(resolve => setTimeout(resolve, 100))
 
             // Apply PDF-safe inline styles to all elements
             applyPdfSafeStyles(element as HTMLElement)
@@ -71,27 +69,51 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
             const html2canvas = (await import("html2canvas")).default
             const jsPDF = (await import("jspdf")).default
 
+            // Use a fixed desktop width (900px) so the invoice layout renders
+            // correctly regardless of the current viewport size (mobile/tablet/desktop).
+            const PDF_CAPTURE_WIDTH = 900
+
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
-                windowWidth: element.scrollWidth,
+                // Force fixed capture width — critical for mobile where the
+                // viewport is narrow and responsive classes collapse the layout
+                width: PDF_CAPTURE_WIDTH,
+                windowWidth: PDF_CAPTURE_WIDTH,
+                // Capture the full scrollable height of the element
+                height: element.scrollHeight,
                 windowHeight: element.scrollHeight,
-                // Disable SVG rendering which might contain unsupported colors
                 foreignObjectRendering: false,
             })
 
-            // Remove the inline styles and restore original class
+            // Remove inline styles and restore original class
             removePdfSafeStyles(element as HTMLElement)
             htmlElement.className = originalClass
 
             const imgData = canvas.toDataURL("image/png")
             const pdf = new jsPDF("p", "mm", "a4")
-            const pdfWidth = pdf.internal.pageSize.getWidth()
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+            const pdfPageWidth = pdf.internal.pageSize.getWidth()
+            const pdfPageHeight = pdf.internal.pageSize.getHeight()
 
-            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
+            // Calculate image height in PDF units
+            const imgHeightInPdf = (canvas.height * pdfPageWidth) / canvas.width
+
+            // Handle multi-page invoices
+            if (imgHeightInPdf <= pdfPageHeight) {
+                // Fits on one page
+                pdf.addImage(imgData, "PNG", 0, 0, pdfPageWidth, imgHeightInPdf)
+            } else {
+                // Split across pages
+                let yOffset = 0
+                while (yOffset < imgHeightInPdf) {
+                    if (yOffset > 0) pdf.addPage()
+                    pdf.addImage(imgData, "PNG", 0, -yOffset, pdfPageWidth, imgHeightInPdf)
+                    yOffset += pdfPageHeight
+                }
+            }
+
             pdf.save(`${invoice.invoice_number || 'invoice'}.pdf`)
         } catch (err) {
             console.error("PDF generation failed", err)
@@ -153,18 +175,19 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
             </nav>
 
             {/* Header Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-3xl font-bold text-zinc-900">Invoice #{invoice_number}</h1>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">Invoice #{invoice_number}</h1>
                         <StatusBadge status={status} />
                     </div>
-                    <p className="text-zinc-500 text-base">
+                    <p className="text-zinc-500 text-sm md:text-base">
                         Project: <span className="text-zinc-900 font-medium">{projectName || 'General'}</span> for <span className="text-zinc-900 font-medium">{clientName || 'Unknown Client'}</span>
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2 self-start md:self-auto">
+                {/* Action buttons — wrap on mobile, single row on desktop */}
+                <div className="flex flex-wrap items-center gap-2">
                     <InvoiceStatusControls
                         invoiceId={invoice.id}
                         currentStatus={status}

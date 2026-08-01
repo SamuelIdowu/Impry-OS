@@ -58,7 +58,7 @@ export default async function PublicScopePage({ params }: PublicScopePageProps) 
                             />
                         </svg>
                     </div>
-                    <h2 className="text-lg font-bold tracking-tight">FreelanceOS</h2>
+                    <h2 className="text-lg font-bold tracking-tight">Impry</h2>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Lock className="h-4 w-4" />
@@ -137,7 +137,7 @@ export default async function PublicScopePage({ params }: PublicScopePageProps) 
 
                     {/* Footer */}
                     <div className="text-center text-sm text-muted-foreground pt-8 border-t">
-                        <p>Powered by <span className="font-semibold">FreelanceOS</span></p>
+                        <p>Powered by <span className="font-semibold">Impry</span></p>
                         <p className="text-xs mt-1">
                             This is a read-only view. Changes can only be made by the project owner.
                         </p>

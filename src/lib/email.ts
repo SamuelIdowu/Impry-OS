@@ -46,7 +46,7 @@ export async function sendInvoiceEmail(invoiceId: string, email?: string) {
     });
 
     const brandColor = profile?.brandColor || '#18181b';
-    const companyName = profile?.companyName || profile?.name || 'FreelanceOS User';
+    const companyName = profile?.companyName || profile?.name || 'Impry User';
 
     // Send Email
     const resend = getResendClient();
@@ -90,7 +90,7 @@ export async function sendEmail(email: string, subject: string, htmlBody: string
     });
 
     const brandColor = profile?.brandColor || '#18181b';
-    const companyName = profile?.companyName || profile?.name || 'FreelanceOS User';
+    const companyName = profile?.companyName || profile?.name || 'Impry User';
 
     // Wrap basic text body in template if needed, or pass full HTML
     const finalHtml = `
@@ -105,7 +105,7 @@ export async function sendEmail(email: string, subject: string, htmlBody: string
     // Send Email
     const resend = getResendClient();
     const { data, error } = await resend.emails.send({
-        from: 'FreelanceOS <onboarding@resend.dev>', // Update this with verified domain in prod
+        from: 'Impry <onboarding@resend.dev>', // Update this with verified domain in prod
         to: email,
         subject: subject,
         html: finalHtml

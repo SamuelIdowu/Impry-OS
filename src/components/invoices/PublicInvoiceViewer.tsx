@@ -83,7 +83,7 @@ export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, 
                                 <Zap className="h-4 w-4 fill-current" />
                             </div>
                         )}
-                        <span>{companyName || 'FreelanceOS'}</span>
+                        <span>{companyName || 'Impry'}</span>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -119,7 +119,7 @@ export function PublicInvoiceViewer({ invoice, brandColor = "#18181b", logoUrl, 
 
                 {/* Footer */}
                 <div className="max-w-4xl mx-auto mt-12 text-center text-sm text-zinc-400">
-                    <p>Powered by FreelanceOS</p>
+                    <p>Powered by Impry</p>
                 </div>
             </div>
 

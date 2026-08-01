@@ -272,7 +272,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                         </div>
 
                         {/* Middle Tabs */}
-                        <div className="flex items-center gap-6 overflow-x-auto hide-scrollbar w-full md:w-auto pb-2 md:pb-0">
+                        <div className="flex items-center gap-6 overflow-x-auto hide-scrollbar w-full md:w-auto pb-2 md:pb-0 shrink-0">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.name}
@@ -300,7 +300,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                             ))}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200">
                                 <button
                                     onClick={() => setViewMode("list")}

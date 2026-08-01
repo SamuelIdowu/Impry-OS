@@ -73,7 +73,6 @@ export function InvoiceDocument({ invoice, previewMode = false, brandColor = "#1
 
     return (
         <div
-            id="invoice-document" // ID for html2canvas
             className={`bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden min-h-[800px] flex flex-col h-full ${previewMode ? 'scale-100 origin-top' : ''} print:shadow-none print:border-0`}
         >
             <div className="p-8 md:p-12 flex-1">
@@ -95,7 +94,7 @@ export function InvoiceDocument({ invoice, previewMode = false, brandColor = "#1
                                 className="text-xl font-bold tracking-tight"
                                 style={{ color: brandColor }}
                             >
-                                FreelanceOS
+                                Impry
                             </span>
                         </div>
 

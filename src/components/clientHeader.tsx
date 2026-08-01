@@ -38,15 +38,15 @@ export function ClientHeader({ client, onEdit, onDelete }: ClientHeaderProps) {
 
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                         <div className="flex items-start gap-4">
-                            <Avatar className="h-16 w-16">
+                            <Avatar className="h-16 w-16 shrink-0">
                                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-xl">
                                     {initials}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="space-y-2">
-                                <h1 className="text-3xl font-bold tracking-tight">{client.name}</h1>
+                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{client.name}</h1>
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <Mail className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function ClientHeader({ client, onEdit, onDelete }: ClientHeaderProps) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 shrink-0">
                             <Button variant="outline" size="sm" onClick={onEdit}>
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit
