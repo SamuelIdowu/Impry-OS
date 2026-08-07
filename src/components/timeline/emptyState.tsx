@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button';
 import { EmptyState as UIEmptyState } from '@/components/ui/empty-state';
 import { Clock, Plus, FileText } from 'lucide-react';
 
-export function EmptyState() {
+import { AddNoteModal } from '@/components/timeline/AddNoteModal';
+
+interface EmptyStateProps {
+    projectId?: string;
+    onSuccess?: () => void;
+    onUpdateScope?: () => void;
+}
+
+export function EmptyState({ projectId, onSuccess, onUpdateScope }: EmptyStateProps) {
     return (
         <UIEmptyState
             title="No activity yet"
@@ -20,11 +28,24 @@ export function EmptyState() {
             ]}
             action={
                 <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                    <Button className="gap-2 font-bold w-full sm:w-auto">
-                        <FileText className="h-5 w-5" />
-                        Add Note
-                    </Button>
-                    <Button variant="outline" className="gap-2 font-bold w-full sm:w-auto">
+                    {projectId ? (
+                        <AddNoteModal
+                            projectId={projectId}
+                            onSuccess={onSuccess}
+                            trigger={
+                                <Button className="gap-2 font-bold w-full sm:w-auto">
+                                    <FileText className="h-5 w-5" />
+                                    Add Note
+                                </Button>
+                            }
+                        />
+                    ) : (
+                        <Button className="gap-2 font-bold w-full sm:w-auto" onClick={onSuccess}>
+                            <FileText className="h-5 w-5" />
+                            Add Note
+                        </Button>
+                    )}
+                    <Button variant="outline" className="gap-2 font-bold w-full sm:w-auto" onClick={onUpdateScope}>
                         <FileText className="h-5 w-5" />
                         Update Scope
                     </Button>

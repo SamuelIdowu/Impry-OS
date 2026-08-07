@@ -188,16 +188,28 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             // Apply PDF-safe inline styles to all elements
             applyPdfSafeStyles(element as HTMLElement)
 
+            const PDF_CAPTURE_WIDTH = 900
+            const originalElementWidth = element.style.width
+            const originalElementMaxWidth = element.style.maxWidth
+            element.style.width = `${PDF_CAPTURE_WIDTH}px`
+            element.style.maxWidth = `${PDF_CAPTURE_WIDTH}px`
+
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
-                windowWidth: element.scrollWidth,
+                width: PDF_CAPTURE_WIDTH,
+                windowWidth: PDF_CAPTURE_WIDTH,
+                height: element.scrollHeight,
                 windowHeight: element.scrollHeight,
                 // Disable SVG rendering which might contain unsupported colors
                 foreignObjectRendering: false,
             })
+
+            // Restore element width
+            element.style.width = originalElementWidth
+            element.style.maxWidth = originalElementMaxWidth
 
             // Remove the inline styles and restore original class
             removePdfSafeStyles(element as HTMLElement)

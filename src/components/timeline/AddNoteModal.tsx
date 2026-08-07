@@ -23,14 +23,30 @@ interface AddNoteModalProps {
     onOpenChange?: (open: boolean) => void;
 }
 
-export function AddNoteModal({ projectId, trigger, onSuccess, open, onOpenChange }: AddNoteModalProps) {
-    const [isOpen, setIsOpen] = useState(false);
+export function AddNoteModal({
+    projectId,
+    trigger,
+    onSuccess,
+    open: controlledOpen,
+    onOpenChange: setControlledOpen,
+}: AddNoteModalProps) {
+    const [internalOpen, setInternalOpen] = useState(false);
+    const isControlled = controlledOpen !== undefined;
+    const show = isControlled ? controlledOpen : internalOpen;
+
+    const handleOpenChange = (newOpen: boolean) => {
+        if (!isControlled) {
+            setInternalOpen(newOpen);
+        }
+        setControlledOpen?.(newOpen);
+    };
+
+    const handleClose = () => {
+        handleOpenChange(false);
+    };
+
     const [note, setNote] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Handle controlled vs uncontrolled state
-    const show = open !== undefined ? open : isOpen;
-    const setShow = onOpenChange || setIsOpen;
 
     const handleSubmit = async () => {
         if (!note.trim()) return;
@@ -48,7 +64,7 @@ export function AddNoteModal({ projectId, trigger, onSuccess, open, onOpenChange
             if (res.success) {
                 // toast.success('Note added successfully');
                 setNote('');
-                setShow(false);
+                handleClose();
                 if (onSuccess) {
                     onSuccess();
                 }
@@ -65,7 +81,7 @@ export function AddNoteModal({ projectId, trigger, onSuccess, open, onOpenChange
     };
 
     return (
-        <Dialog open={show} onOpenChange={setShow}>
+        <Dialog open={show} onOpenChange={handleOpenChange}>
             {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -84,7 +100,7 @@ export function AddNoteModal({ projectId, trigger, onSuccess, open, onOpenChange
                     />
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setShow(false)} disabled={isSubmitting}>
+                    <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
                     <Button onClick={handleSubmit} disabled={isSubmitting || !note.trim()}>

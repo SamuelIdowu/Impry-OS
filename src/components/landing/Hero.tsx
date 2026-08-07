@@ -53,36 +53,41 @@ export function Hero({ hasSession }: { hasSession?: boolean }) {
                     </Link>
                 </div>
 
-                {/* Floating Nodes (Inspired by the Dribbble shot) */}
-                <div className="hidden lg:block absolute inset-0 pointer-events-none">
-                    {/* Node 1: Scope */}
-                    <div className="absolute top-[20%] left-[15%] flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-lg flex items-center justify-center mb-2">
-                            <Shield className="w-4 h-4 text-zinc-900" />
+                {/* Floating Nodes */}
+                <div className="hidden xl:block absolute inset-0 pointer-events-none z-0">
+                    {/* Node 1: Scope Guard */}
+                    <div className="absolute top-[18%] left-2 2xl:left-12 flex items-center gap-3 bg-white/90 backdrop-blur-md border border-zinc-200/80 px-3.5 py-2 rounded-2xl shadow-lg shadow-zinc-900/5">
+                        <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center text-white shrink-0">
+                            <Shield className="w-4 h-4" />
                         </div>
-                        <div className="text-xs font-semibold text-zinc-900">Scope Guard</div>
-                        <div className="text-[10px] text-zinc-500">Active</div>
-                        <div className="h-16 w-px bg-gradient-to-b from-zinc-200 to-transparent mt-2"></div>
+                        <div className="text-left">
+                            <div className="text-xs font-semibold text-zinc-900">Scope Guard</div>
+                            <div className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active
+                            </div>
+                        </div>
                     </div>
 
                     {/* Node 2: Payment */}
-                    <div className="absolute top-[30%] right-[15%] flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-lg flex items-center justify-center mb-2">
-                            <DollarSign className="w-4 h-4 text-zinc-900" />
+                    <div className="absolute top-[28%] right-2 2xl:right-12 flex items-center gap-3 bg-white/90 backdrop-blur-md border border-zinc-200/80 px-3.5 py-2 rounded-2xl shadow-lg shadow-zinc-900/5">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
+                            <DollarSign className="w-4 h-4" />
                         </div>
-                        <div className="text-xs font-semibold text-zinc-900">Invoice Paid</div>
-                        <div className="text-[10px] text-zinc-500">+$2,400</div>
-                        <div className="h-20 w-px bg-gradient-to-b from-zinc-200 to-transparent mt-2"></div>
+                        <div className="text-left">
+                            <div className="text-xs font-semibold text-zinc-900">Invoice Paid</div>
+                            <div className="text-[10px] text-emerald-600 font-bold">+$2,400.00</div>
+                        </div>
                     </div>
 
                     {/* Node 3: Follow Up */}
-                    <div className="absolute bottom-[20%] left-[25%] flex flex-col items-center">
-                        <div className="h-16 w-px bg-gradient-to-t from-zinc-200 to-transparent mb-2"></div>
-                        <div className="w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-lg flex items-center justify-center mt-2">
-                            <Clock className="w-4 h-4 text-zinc-900" />
+                    <div className="absolute bottom-[22%] left-4 2xl:left-16 flex items-center gap-3 bg-white/90 backdrop-blur-md border border-zinc-200/80 px-3.5 py-2 rounded-2xl shadow-lg shadow-zinc-900/5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center text-white shrink-0">
+                            <Clock className="w-4 h-4" />
                         </div>
-                        <div className="text-xs font-semibold text-zinc-900 mt-2">Follow-up Sent</div>
-                        <div className="text-[10px] text-zinc-500">Just now</div>
+                        <div className="text-left">
+                            <div className="text-xs font-semibold text-zinc-900">Follow-up Sent</div>
+                            <div className="text-[10px] text-zinc-500">Just now</div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -52,9 +52,9 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
     const [activeTab, setActiveTab] = React.useState<SettingsTab>('general')
 
     // Profile state
-    const [name, setName] = React.useState(user.user_metadata?.full_name || 'Agnes')
-    const [email, setEmail] = React.useState(user.email || '')
-    const [bio, setBio] = React.useState(user.user_metadata?.bio || '')
+    const [name, setName] = React.useState(profile?.name || user?.name || '')
+    const [email, setEmail] = React.useState(profile?.email || user?.email || '')
+    const [bio, setBio] = React.useState(profile?.bio || user?.bio || '')
 
     const [isSavingProfile, setIsSavingProfile] = React.useState(false)
     const [isSavingPassword, setIsSavingPassword] = React.useState(false)
@@ -106,6 +106,7 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
             const res = await updateProfileAction({ name, bio })
             if (res.success) {
                 alert('Profile updated successfully')
+                router.refresh()
             } else {
                 alert(res.error || 'Failed to update profile')
             }

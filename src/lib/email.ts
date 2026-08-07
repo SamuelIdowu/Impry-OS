@@ -47,11 +47,12 @@ export async function sendInvoiceEmail(invoiceId: string, email?: string) {
 
     const brandColor = profile?.brandColor || '#18181b';
     const companyName = profile?.companyName || profile?.name || 'Impry User';
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Invoices <onboarding@resend.dev>';
 
     // Send Email
     const resend = getResendClient();
     const { data, error } = await resend.emails.send({
-        from: 'Invoices <onboarding@resend.dev>', // Update this with verified domain in prod
+        from: fromEmail, // Set via RESEND_FROM_EMAIL env var in production
         to: email || invoice.client?.email || '', // Use provided email or client's email from DB
         subject: `Invoice ${invoice.invoiceNumber || invoice.id} from ${companyName}`,
         html: `
@@ -61,7 +62,7 @@ export async function sendInvoiceEmail(invoiceId: string, email?: string) {
                 <p>Please find attached invoice for <strong>$${invoice.amount}</strong>.</p>
                 <p>Due Date: ${invoice.dueDate}</p>
                 <br/>
-                <a href="${baseUrl}/public/invoices/${invoiceId}" style="background-color: ${brandColor}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Invoice</a>
+                <a href="${baseUrl}/public/invoices/${invoice.shareToken || invoice.id}" style="background-color: ${brandColor}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Invoice</a>
                 <br/><br/>
                 <p>Thank you,<br/>${companyName}</p>
             </div>
@@ -91,6 +92,7 @@ export async function sendEmail(email: string, subject: string, htmlBody: string
 
     const brandColor = profile?.brandColor || '#18181b';
     const companyName = profile?.companyName || profile?.name || 'Impry User';
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Impry <onboarding@resend.dev>';
 
     // Wrap basic text body in template if needed, or pass full HTML
     const finalHtml = `
@@ -105,7 +107,7 @@ export async function sendEmail(email: string, subject: string, htmlBody: string
     // Send Email
     const resend = getResendClient();
     const { data, error } = await resend.emails.send({
-        from: 'Impry <onboarding@resend.dev>', // Update this with verified domain in prod
+        from: fromEmail,
         to: email,
         subject: subject,
         html: finalHtml

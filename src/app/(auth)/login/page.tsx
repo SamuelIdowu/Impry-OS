@@ -52,7 +52,7 @@ function LoginForm() {
             });
         } catch (err) {
             console.error("Login error:", err);
-            setError("An unexpected error occurred");
+            setError(err instanceof Error && err.message ? err.message : "Unable to connect to the authentication service. Please check your internet connection.");
             setIsLoading(false);
         }
     }
@@ -66,9 +66,6 @@ function LoginForm() {
                 provider: "google",
                 callbackURL: "/workspaces",
             }, {
-                onSuccess: () => {
-                    router.push("/workspaces");
-                },
                 onError: (ctx) => {
                     setError(ctx.error.message || "Google sign-in failed");
                     setIsGoogleLoading(false);

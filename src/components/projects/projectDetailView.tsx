@@ -251,7 +251,7 @@ export function ProjectDetailView({ project }: ProjectDetailViewProps) {
             )}
 
             {activeTab === 'timeline' && (
-                <TimelineTab projectId={project.id} />
+                <TimelineTab projectId={project.id} onUpdateScope={() => setActiveTab('scope')} />
             )}
 
             {activeTab === 'scope' && (

@@ -176,7 +176,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                                 value={deliverables}
                                 onChange={(e) => setDeliverables(e.target.value)}
                                 placeholder="- Homepage with Hero section&#10;- About page with team bios&#10;- Contact form integration (SendGrid)&#10;- Mobile responsive layout"
-                                className="min-h-[250px] text-base leading-relaxed resize-y font-mono bg-zinc-50/50 border-zinc-200 focus:border-zinc-900 focus:ring-zinc-900/10"
+                                className="min-h-[250px] text-base leading-relaxed resize-y font-mono bg-zinc-50/50 border-zinc-200"
                             />
                         </div>
                     </Card>
@@ -197,7 +197,7 @@ export function ScopeTab({ project, client }: ScopeTabProps) {
                                 value={outOfScope}
                                 onChange={(e) => setOutOfScope(e.target.value)}
                                 placeholder="- Logo design or branding work&#10;- Content writing or copywriting&#10;- Hosting setup beyond initial deployment"
-                                className="min-h-[180px] text-base leading-relaxed resize-y font-mono bg-zinc-50/50 border-zinc-200 focus:border-red-500 focus:ring-red-500/10"
+                                className="min-h-[180px] text-base leading-relaxed resize-y font-mono bg-zinc-50/50 border-zinc-200 focus-visible:ring-red-500 focus-visible:border-red-500"
                             />
                         </div>
                     </Card>

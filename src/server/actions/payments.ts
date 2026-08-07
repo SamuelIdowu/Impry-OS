@@ -3,7 +3,7 @@ import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 
 import { db } from '@/server/db';
 import { payments, projects, clients, users } from '@/server/db/schema';
-import { eq, and, ne, lt, isNotNull, desc, asc } from 'drizzle-orm';
+import { eq, and, ne, lt, isNotNull, desc, asc, or } from 'drizzle-orm';
 import { getUser } from '@/lib/auth';
 import { withAuth } from '@/lib/auth-guard';
 import { z } from 'zod';
@@ -526,11 +526,21 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
 }
 
 /**
- * Get a single public invoice by share token (bypasses RLS)
+ * Get a single public invoice by share token, ID, or invoice number (bypasses RLS)
  */
-export async function getPublicInvoice(shareToken: string): Promise<Payment> {
+export async function getPublicInvoice(identifier: string): Promise<Payment> {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
+
+    const conditions = [];
+    if (isUuid) {
+        conditions.push(eq(payments.shareToken, identifier));
+        conditions.push(eq(payments.id, identifier));
+    } else {
+        conditions.push(eq(payments.invoiceNumber, identifier));
+    }
+
     const result = await db.query.payments.findFirst({
-        where: eq(payments.shareToken, shareToken),
+        where: or(...conditions),
         with: {
             project: {
                 columns: { id: true, name: true }

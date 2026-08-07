@@ -53,7 +53,7 @@ export default function RegisterPage() {
             });
         } catch (err) {
             console.error("Registration error:", err);
-            setError("An unexpected error occurred");
+            setError(err instanceof Error && err.message ? err.message : "Unable to connect to the authentication service. Please check your internet connection.");
             setIsLoading(false);
         }
     }
@@ -67,9 +67,6 @@ export default function RegisterPage() {
                 provider: "google",
                 callbackURL: "/workspaces",
             }, {
-                onSuccess: () => {
-                    router.push("/workspaces");
-                },
                 onError: (ctx) => {
                     setError(ctx.error.message || "Google sign-in failed");
                     setIsGoogleLoading(false);

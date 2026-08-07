@@ -4,8 +4,9 @@ import { TimelinePage } from '@/components/timeline/timelinePage';
 
 interface TimelineTabProps {
     projectId: string;
+    onUpdateScope?: () => void;
 }
 
-export function TimelineTab({ projectId }: TimelineTabProps) {
-    return <TimelinePage projectId={projectId} />;
+export function TimelineTab({ projectId, onUpdateScope }: TimelineTabProps) {
+    return <TimelinePage projectId={projectId} onUpdateScope={onUpdateScope} />;
 }

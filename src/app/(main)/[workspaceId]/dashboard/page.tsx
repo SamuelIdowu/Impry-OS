@@ -12,6 +12,8 @@ import {
 import { Reminder, Risk } from "@/lib/types"
 import { getUser } from "@/lib/auth"
 
+import { DashboardHeader } from "@/components/dashboard/dashboardHeader"
+
 export default async function DashboardPage({ params }: { params: Promise<{ workspaceId: string }> }) {
     const resolvedParams = await params;
     const workspaceId = resolvedParams.workspaceId;
@@ -73,18 +75,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ work
             <div className="w-full flex flex-col gap-10">
 
                 {/* Custom Page Header */}
-                <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
-                    <div className="flex flex-col gap-1">
-                        <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">Good morning, {user?.name?.split(' ')[0] || 'User'}</h1>
-                        <p className="text-zinc-500 text-base">
-                            You have <span className="font-bold text-zinc-900">{reminders.length} items</span> requiring attention today.
-                            {metrics.totalRevenueChange >= 0 ? ' Revenue looks stable.' : ' Revenue is slightly down.'}
-                        </p>
-                    </div>
-                    <div className="w-full lg:w-auto">
-                        <QuickActions />
-                    </div>
-                </div>
+                <DashboardHeader
+                    userName={user?.name}
+                    reminderCount={reminders.length}
+                    revenueChangePercent={metrics.totalRevenueChange}
+                />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Column */}

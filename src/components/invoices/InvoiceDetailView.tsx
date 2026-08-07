@@ -72,6 +72,13 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
             // Use a fixed desktop width (900px) so the invoice layout renders
             // correctly regardless of the current viewport size (mobile/tablet/desktop).
             const PDF_CAPTURE_WIDTH = 900
+            
+            // Force the element itself to be 900px wide temporarily so that 
+            // tailwind classes layout correctly for a desktop view
+            const originalElementWidth = element.style.width
+            const originalElementMaxWidth = element.style.maxWidth
+            element.style.width = `${PDF_CAPTURE_WIDTH}px`
+            element.style.maxWidth = `${PDF_CAPTURE_WIDTH}px`
 
             const canvas = await html2canvas(element, {
                 scale: 2,
@@ -87,6 +94,10 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
                 windowHeight: element.scrollHeight,
                 foreignObjectRendering: false,
             })
+
+            // Restore element width
+            element.style.width = originalElementWidth
+            element.style.maxWidth = originalElementMaxWidth
 
             // Remove inline styles and restore original class
             removePdfSafeStyles(element as HTMLElement)
