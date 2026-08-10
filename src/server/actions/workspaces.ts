@@ -25,10 +25,12 @@ export async function getUserWorkspaces() {
   return userWorkspaces
 }
 
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 export async function verifyWorkspaceAccess(workspaceId: string) {
   const user = await getUser()
   
-  if (!user) {
+  if (!user || !workspaceId || !UUID_REGEX.test(workspaceId)) {
     return false
   }
 

@@ -119,3 +119,65 @@ export async function sendEmail(email: string, subject: string, htmlBody: string
 
     return data;
 }
+
+export async function sendWorkspaceInvitationEmail({
+    email,
+    workspaceName,
+    inviterName,
+    role,
+    token,
+}: {
+    email: string;
+    workspaceName: string;
+    inviterName: string;
+    role: string;
+    token: string;
+}) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const inviteUrl = `${baseUrl}/invite/${token}`;
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Impry <onboarding@resend.dev>';
+
+    const finalHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 20px; background: #ffffff; color: #18181b; border: 1px solid #e4e4e7; border-radius: 12px;">
+            <div style="margin-bottom: 24px;">
+                <div style="display: inline-block; width: 40px; height: 40px; background-color: #18181b; border-radius: 8px; text-align: center; line-height: 40px; color: #ffffff; font-weight: bold; font-size: 20px;">I</div>
+            </div>
+            <h1 style="font-size: 22px; font-weight: 700; margin-bottom: 12px; color: #18181b; letter-spacing: -0.5px;">
+                Join ${workspaceName} on Impry
+            </h1>
+            <p style="font-size: 15px; line-height: 24px; color: #52525b; margin-bottom: 24px;">
+                <strong>${inviterName}</strong> has invited you to collaborate in the <strong>${workspaceName}</strong> workspace as <strong>${role === 'admin' ? 'an Admin' : 'a Member'}</strong>.
+            </p>
+            <div style="margin: 32px 0;">
+                <a href="${inviteUrl}" style="background-color: #18181b; color: #ffffff; padding: 12px 28px; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; display: inline-block; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                    Accept Invitation &rarr;
+                </a>
+            </div>
+            <p style="font-size: 13px; line-height: 20px; color: #71717a; margin-bottom: 8px;">
+                Or copy and paste this link into your browser:
+            </p>
+            <p style="font-size: 12px; color: #a1a1aa; word-break: break-all;">
+                ${inviteUrl}
+            </p>
+            <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 32px 0 20px;" />
+            <p style="font-size: 12px; color: #a1a1aa;">
+                This invitation will expire in 7 days. If you were not expecting this invite, you can safely disregard this email.
+            </p>
+        </div>
+    `;
+
+    const resend = getResendClient();
+    const { data, error } = await resend.emails.send({
+        from: fromEmail,
+        to: email,
+        subject: `${inviterName} invited you to join ${workspaceName} on Impry`,
+        html: finalHtml
+    });
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return data;
+}
+

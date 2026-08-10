@@ -56,6 +56,12 @@ export const verifications = pgTable('verification', {
 export const workspaces = pgTable('workspaces', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
+  planTier: text('plan_tier').default('free'), // 'free', 'pro', 'studio'
+  subscriptionStatus: text('subscription_status').default('active'), // 'active', 'past_due', 'canceled', 'trialing'
+  paymentProvider: text('payment_provider').default('none'), // 'dodo', 'polar', 'stripe', 'mock'
+  subscriptionId: text('subscription_id'),
+  customerId: text('customer_id'),
+  currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -202,11 +208,43 @@ export const teamMembers = pgTable('team_members', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
 
+export const billingWebhookEvents = pgTable('billing_webhook_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  provider: text('provider').notNull(),
+  eventId: text('event_id').notNull().unique(),
+  eventType: text('event_type').notNull(),
+  status: text('status').default('processed'),
+  payload: jsonb('payload'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const workspaceInvitations = pgTable('workspace_invitations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  role: text('role').default('member'), // 'admin', 'member'
+  token: uuid('token').defaultRandom().unique().notNull(),
+  status: text('status').default('pending'), // 'pending', 'accepted', 'revoked', 'expired'
+  invitedBy: text('invited_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => ({
+  workspaceIdIdx: index('workspace_invitations_workspace_id_idx').on(table.workspaceId),
+  tokenIdx: index('workspace_invitations_token_idx').on(table.token),
+  emailIdx: index('workspace_invitations_email_idx').on(table.email),
+}));
+
 // Relations
 export const workspacesRelations = relations(workspaces, ({ many }) => ({
   members: many(workspaceMembers),
+  invitations: many(workspaceInvitations),
   clients: many(clients),
   projects: many(projects),
+}));
+
+export const workspaceInvitationsRelations = relations(workspaceInvitations, ({ one }) => ({
+  workspace: one(workspaces, { fields: [workspaceInvitations.workspaceId], references: [workspaces.id] }),
+  inviter: one(users, { fields: [workspaceInvitations.invitedBy], references: [users.id] }),
 }));
 
 export const workspaceMembersRelations = relations(workspaceMembers, ({ one }) => ({

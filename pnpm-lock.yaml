@@ -68,6 +68,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      dodopayments:
+        specifier: ^2.45.1
+        version: 2.45.1
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@neondatabase/serverless@1.1.0)(kysely@0.29.2)
@@ -2157,6 +2160,10 @@ packages:
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
+
+  dodopayments@2.45.1:
+    resolution: {integrity: sha512-BQrzo/jF5L/oQnV7qfIDCFp/1kmJR4oUk8jgWbo+D8KHas9tT74XViTslKU+/cM5mPVNaUQ9lnPj2XLVpXTTSA==}
+    hasBin: true
 
   dompurify@3.3.1:
     resolution: {integrity: sha512-qkdCKzLNtrgPFP1Vo+98FRzJnBRGe4ffyCea9IwHB1fyxPOeNTHpLKYGd4Uk9xvNoH0ZoOjwZxNptyMwqrId1Q==}
@@ -5190,6 +5197,10 @@ snapshots:
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
+
+  dodopayments@2.45.1:
+    dependencies:
+      standardwebhooks: 1.0.0
 
   dompurify@3.3.1:
     optionalDependencies:

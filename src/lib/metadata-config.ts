@@ -20,7 +20,7 @@ export const TWITTER_HANDLE = "@impryos"; // Update with actual Twitter handle
 export const OG_IMAGE = {
     url: "/og-image.png",
     width: 1200,
-    height: 600,
+    height: 630,
     alt: "Impry OS - Revenue Protection for Freelancers",
     type: "image/png" as const,
 };

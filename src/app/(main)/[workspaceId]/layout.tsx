@@ -22,9 +22,8 @@ export default async function MainLayout({
     // Verify user has access to this workspace
     const hasAccess = await verifyWorkspaceAccess(workspaceId)
     if (!hasAccess) {
-        // Redirect to a default workspace or 404/unauthorized
-        // For now we could redirect to a workspaces select page or just throw a 404
-        redirect("/login?error=unauthorized")
+        // Redirect to workspaces router to find valid active workspace
+        redirect("/workspaces")
     }
 
     return (

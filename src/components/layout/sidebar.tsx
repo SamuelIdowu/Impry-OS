@@ -28,6 +28,7 @@ import {
 import type { User } from "better-auth"
 import { getTeamMembersAction, addTeamMemberAction, deleteTeamMemberAction } from "@/server/actions/team"
 import { getProfileAction } from "@/server/actions/user"
+import { AddTeamMemberModal } from "@/components/settings/AddTeamMemberModal"
 
 interface TeamMember {
     id: string;
@@ -51,9 +52,9 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
 
     // Fetch team members and profile using React Query
     const { data: membersData, isLoading: isLoadingMembers } = useQuery({
-        queryKey: ['teamMembers'],
+        queryKey: ['teamMembers', workspaceId],
         queryFn: async () => {
-            const res = await getTeamMembersAction()
+            const res = await getTeamMembersAction(workspaceId)
             return res.success ? (res.members as TeamMember[]) : []
         }
     })
@@ -68,27 +69,8 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
     })
     const subscriptionPlan = (profileData as any)?.subscription_plan || 'free'
 
-    const [showAddMember, setShowAddMember] = React.useState(false)
-    const [isAddingMember, setIsAddingMember] = React.useState(false)
-    const [newMember, setNewMember] = React.useState({ name: '', role: '' })
+    const [showAddModal, setShowAddModal] = React.useState(false)
     const [dashboardExpanded, setDashboardExpanded] = React.useState(true)
-
-    const handleAddMember = async () => {
-        if (!newMember.name.trim()) return
-
-        setIsAddingMember(true)
-        const res = await addTeamMemberAction({
-            name: newMember.name,
-            role: newMember.role || undefined
-        })
-
-        if (res.success && res.member) {
-            queryClient.setQueryData(['teamMembers'], (old: TeamMember[] | undefined) => [...(old || []), res.member as TeamMember])
-            setNewMember({ name: '', role: '' })
-            setShowAddMember(false)
-        }
-        setIsAddingMember(false)
-    }
 
     const handleDeleteMember = async (memberId: string) => {
         const res = await deleteTeamMemberAction(memberId)
@@ -141,25 +123,25 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
 
     return (
         <aside className={cn("w-64 border-r border-zinc-200 bg-white hidden md:flex md:flex-col h-full", className)}>
-            <div className="space-y-4 py-4 flex-1 overflow-y-auto">
-                <div className="px-6 py-2">
-                    <Logo textClassName="text-xl font-bold" />
+            <div className="space-y-2 py-3 flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="px-6 py-1">
+                    <Logo textClassName="text-lg font-bold" />
                 </div>
-                <div className="px-3 py-2">
-                    <div className="space-y-1">
+                <div className="px-3 py-1">
+                    <div className="space-y-0.5">
                         {/* Dashboard with dropdown */}
                         <div>
                             <button
                                 onClick={() => setDashboardExpanded(!dashboardExpanded)}
                                 className={cn(
-                                    "w-full group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
+                                    "w-full group flex items-center justify-between rounded-md px-3 py-1.5 text-[13px] font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
                                     pathname.includes("/dashboard")
                                         ? "bg-zinc-100 text-zinc-900"
                                         : "text-zinc-500"
                                 )}
                             >
                                 <div className="flex items-center">
-                                    <LayoutGrid className={cn("mr-2 h-4 w-4",
+                                    <LayoutGrid className={cn("mr-2 h-3.5 w-3.5",
                                         pathname.includes("/dashboard")
                                             ? "text-zinc-900"
                                             : "text-zinc-400 group-hover:text-zinc-900"
@@ -167,19 +149,19 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                                     <span>Dashboard</span>
                                 </div>
                                 <ChevronDown className={cn(
-                                    "h-4 w-4 text-zinc-400 transition-transform",
+                                    "h-3.5 w-3.5 text-zinc-400 transition-transform",
                                     dashboardExpanded ? "rotate-180" : ""
                                 )} />
                             </button>
                             {dashboardExpanded && (
-                                <div className="ml-6 mt-1 space-y-1">
+                                <div className="ml-6 mt-0.5 space-y-0.5">
                                     {dashboardSubItems.map((subItem) => (
                                         <Link
                                             key={subItem.href}
                                             href={subItem.href}
                                             onClick={onNavigate}
                                             className={cn(
-                                                "group flex items-center rounded-md px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
+                                                "group flex items-center rounded-md px-3 py-1 text-[13px] font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
                                                 (subItem.exact ? pathname === subItem.href : pathname === subItem.href)
                                                     ? "text-zinc-900 bg-zinc-50"
                                                     : "text-zinc-500"
@@ -206,13 +188,13 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                                 href={item.href}
                                 onClick={onNavigate}
                                 className={cn(
-                                    "group flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
+                                    "group flex items-center rounded-md px-3 py-1.5 text-[13px] font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
                                     pathname.startsWith(item.href)
                                         ? "bg-zinc-100 text-zinc-900"
                                         : "text-zinc-500"
                                 )}
                             >
-                                <item.icon className={cn("mr-2 h-4 w-4",
+                                <item.icon className={cn("mr-2 h-3.5 w-3.5",
                                     pathname.startsWith(item.href)
                                         ? "text-zinc-900"
                                         : "text-zinc-400 group-hover:text-zinc-900"
@@ -222,93 +204,93 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                         ))}
                     </div>
                 </div>
-                <div className="px-6 py-4">
-                    <div className="flex items-center justify-between mb-2 px-2">
-                        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                <div className="px-4 py-2">
+                    <div className="flex items-center justify-between mb-1.5 px-2">
+                        <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                             Team Members
-                        </h3>
+                        </span>
                         <button
-                            onClick={() => setShowAddMember(!showAddMember)}
-                            className="p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors"
+                            onClick={() => setShowAddModal(true)}
+                            className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
                             title="Add team member"
                         >
-                            {showAddMember ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                            <Plus className="h-3 w-3" />
                         </button>
                     </div>
 
-                    {/* Add Member Form */}
-                    {showAddMember && (
-                        <div className="mb-4 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
-                            <input
-                                type="text"
-                                placeholder="Name"
-                                value={newMember.name}
-                                onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                                className="w-full text-sm px-2.5 py-1.5 rounded border border-zinc-200 bg-white mb-2 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Role (optional)"
-                                value={newMember.role}
-                                onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                                className="w-full text-sm px-2.5 py-1.5 rounded border border-zinc-200 bg-white mb-2 focus:outline-none focus:ring-1 focus:ring-zinc-400"
-                            />
-                            <button
-                                onClick={handleAddMember}
-                                disabled={isAddingMember || !newMember.name.trim()}
-                                className="w-full text-sm font-medium py-1.5 rounded bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-                            >
-                                {isAddingMember && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                Add Member
-                            </button>
-                        </div>
-                    )}
-
                     {/* Members List */}
-                    <div className="space-y-2 mt-4">
+                    <div className="space-y-0.5">
                         {isLoadingMembers ? (
-                            <div className="flex items-center justify-center py-4">
-                                <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                            <div className="flex items-center justify-center py-2">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
                             </div>
                         ) : members.length === 0 ? (
-                            <p className="text-xs text-zinc-400 text-center py-4 px-2">
-                                No team members yet. Add your first member!
-                            </p>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors my-0.5"
+                            >
+                                <Plus className="h-3 w-3" />
+                                <span>Add team member</span>
+                            </button>
                         ) : (
                             members.map((member) => (
-                                <div key={member.id} className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-zinc-50 group">
+                                <div key={member.id} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900/50 group transition-colors">
                                     <div className={cn(
-                                        "size-8 rounded-full flex items-center justify-center text-xs font-medium shrink-0",
-                                        member.avatarUrl ? "bg-transparent" : "bg-zinc-100 text-zinc-500"
+                                        "size-5 rounded-full flex items-center justify-center text-[9px] font-medium shrink-0",
+                                        member.avatarUrl ? "bg-transparent" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
                                     )}>
                                         {member.avatarUrl ? (
-                                            <img src={member.avatarUrl} alt={member.name} className="size-8 rounded-full object-cover" />
+                                            <img src={member.avatarUrl} alt={member.name} className="size-5 rounded-full object-cover" />
                                         ) : (
                                             getInitials(member.name)
                                         )}
                                     </div>
                                     <div className="flex flex-col flex-1 min-w-0">
-                                        <span className="text-sm font-medium text-zinc-700 truncate">{member.name}</span>
+                                        <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-200 truncate leading-tight">{member.name}</span>
                                         {member.role && (
-                                            <span className="text-xs text-zinc-400 truncate">{member.role}</span>
+                                            <span className="text-[9px] text-zinc-400 truncate leading-tight">{member.role}</span>
                                         )}
                                     </div>
                                     <button
                                         onClick={() => handleDeleteMember(member.id)}
-                                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-all"
+                                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-950/40 text-zinc-400 hover:text-red-500 transition-all"
                                         title="Remove member"
                                     >
-                                        <Trash2 className="h-3.5 w-3.5" />
+                                        <Trash2 className="h-3 w-3" />
                                     </button>
                                 </div>
                             ))
                         )}
                     </div>
+
+                    <div className="mt-1.5 pt-1.5 border-t border-zinc-100 dark:border-zinc-800/60">
+                        <Link
+                            href={`/${workspaceId}/settings?tab=team`}
+                            onClick={onNavigate}
+                            className="flex items-center justify-between px-2 py-1 rounded-lg text-[11px] font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-900 transition-all group"
+                        >
+                            <span className="flex items-center gap-2 truncate">
+                                <Users className="h-3 w-3 text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 shrink-0" />
+                                <span className="truncate">Manage Team</span>
+                            </span>
+                            <span className="text-[11px] text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200 shrink-0 ml-1 transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
 
-            <div className="mt-auto px-3 w-full">
-                <div className="border-t border-zinc-100 pt-4">
+            {/* Add Team Member Modal */}
+            <AddTeamMemberModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                workspaceId={workspaceId}
+                onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['teamMembers', workspaceId] });
+                }}
+            />
+
+            <div className="mt-auto px-3 pb-3 w-full">
+                <div className="border-t border-zinc-100 pt-3">
                     {user && <UserMenu user={user} subscriptionPlan={subscriptionPlan} />}
                 </div>
             </div>

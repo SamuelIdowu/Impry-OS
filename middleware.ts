@@ -17,8 +17,20 @@ export async function middleware(request: NextRequest) {
     const workspaceIdMatch = pathname.match(/^\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(?:\/|$)/);
     const workspaceId = workspaceIdMatch ? workspaceIdMatch[1] : null;
 
-    // We consider it a protected route if it's not an auth route, not the root, and not a public asset
-    const isProtectedRoute = !isAuthRoute && pathname !== "/";
+    // Define public routes that unauthenticated users can access
+    const isPublicRoute =
+        pathname === "/" ||
+        pathname.startsWith("/public") ||
+        pathname.startsWith("/scope/share") ||
+        pathname.startsWith("/invite") ||
+        pathname.startsWith("/forgot-password") ||
+        pathname.startsWith("/reset-password") ||
+        pathname.startsWith("/verify-email") ||
+        pathname.startsWith("/api/webhooks") ||
+        pathname.startsWith("/api/auth");
+
+    // We consider it a protected route if it's not an auth route and not a public route
+    const isProtectedRoute = !isAuthRoute && !isPublicRoute;
 
     // Redirect unauthenticated users to login
     if (isProtectedRoute && !sessionCookie) {

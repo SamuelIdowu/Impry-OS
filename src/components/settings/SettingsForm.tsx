@@ -18,8 +18,11 @@ import {
     X,
     Copy,
     Check,
-    CreditCard
+    CreditCard,
+    Users
 } from "lucide-react"
+import { TeamSettingsTab } from "@/components/settings/TeamSettingsTab"
+import { BillingSettingsTab } from "@/components/settings/BillingSettingsTab"
 import {
     updateProfileAction,
     updatePasswordAction,
@@ -30,10 +33,10 @@ import {
     unenrollMfaAction,
     getMfaFactorsAction
 } from "@/server/actions/user"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
 
-type SettingsTab = 'general' | 'security' | 'billing'
+type SettingsTab = 'general' | 'security' | 'billing' | 'team'
 
 interface MfaFactor {
     id: string;
@@ -45,11 +48,23 @@ interface MfaFactor {
 interface SettingsFormProps {
     user: any; // User object from Better Auth
     profile?: any; // Public profile with subscription info
+    workspaceId?: string;
 }
 
-export function SettingsForm({ user, profile }: SettingsFormProps) {
+export function SettingsForm({ user, profile, workspaceId }: SettingsFormProps) {
     const router = useRouter()
-    const [activeTab, setActiveTab] = React.useState<SettingsTab>('general')
+    const searchParams = useSearchParams()
+    const urlTab = searchParams?.get('tab') as SettingsTab | null
+    const [activeTab, setActiveTab] = React.useState<SettingsTab>(
+        urlTab && ['general', 'security', 'billing', 'team'].includes(urlTab) ? urlTab : 'general'
+    )
+
+    // Update active tab if url search param changes
+    React.useEffect(() => {
+        if (urlTab && ['general', 'security', 'billing', 'team'].includes(urlTab)) {
+            setActiveTab(urlTab)
+        }
+    }, [urlTab])
 
     // Profile state
     const [name, setName] = React.useState(profile?.name || user?.name || '')
@@ -274,90 +289,75 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
 
     const isMfaEnabled = mfaFactors.some(f => f.status === 'verified')
 
+    const handleTabChange = (tab: SettingsTab) => {
+        setActiveTab(tab)
+        const targetUrl = workspaceId ? `/${workspaceId}/settings?tab=${tab}` : `/settings?tab=${tab}`
+        router.push(targetUrl)
+    }
+
     return (
-        <div className="flex flex-1 p-4 md:p-6 mx-auto w-full">
-            {/* Side Navigation */}
-            <aside className="hidden md:flex flex-col w-64 pt-8 pb-10 pr-6 border-r border-zinc-200">
-                <div className="flex flex-col gap-6 sticky top-24">
-                    <div className="flex flex-col px-2">
-                        <h1 className="text-zinc-900 text-base font-bold leading-normal">Settings</h1>
-                        <p className="text-zinc-500 text-sm font-normal leading-normal">Manage account preferences</p>
-                    </div>
-                    <nav className="flex flex-col gap-1">
-                        <button
-                            onClick={() => setActiveTab('general')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left w-full ${activeTab === 'general'
-                                ? 'bg-zinc-900/10 text-zinc-900 font-medium'
-                                : 'text-zinc-500 hover:bg-zinc-100'
-                                }`}
-                        >
-                            <User className="h-5 w-5" />
-                            <span className="text-sm">General</span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('security')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left w-full ${activeTab === 'security'
-                                ? 'bg-zinc-900/10 text-zinc-900 font-medium'
-                                : 'text-zinc-500 hover:bg-zinc-100'
-                                }`}
-                        >
-                            <Lock className="h-5 w-5" />
-                            <span className="text-sm font-medium">Security</span>
-                        </button>
-                        {/* Billing tab disabled
-                        <button
-                            onClick={() => setActiveTab('billing')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left w-full ${activeTab === 'billing'
-                                ? 'bg-zinc-900/10 text-zinc-900 font-medium'
-                                : 'text-zinc-500 hover:bg-zinc-100'
-                                }`}
-                        >
-                            <CreditCard className="h-5 w-5" />
-                            <span className="text-sm font-medium">Billing</span>
-                        </button>
-                        */}
-                    </nav>
+        <div className="flex flex-col space-y-6 p-4 md:p-8 max-w-6xl mx-auto w-full">
+            {/* Page Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                        Settings
+                    </h1>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                        Manage your account preferences, team members, security, and billing subscriptions.
+                    </p>
                 </div>
-            </aside>
+            </div>
 
-            {/* Main Content */}
-            <main className="flex-1 py-4 md:py-8 px-0 sm:px-4 md:px-10">
-                {/* Mobile Tab Navigation */}
-                <div className="flex md:hidden gap-2 mb-4 p-1 bg-zinc-100 rounded-lg">
-                    <button
-                        onClick={() => setActiveTab('general')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'general'
-                            ? 'bg-white text-zinc-900 shadow-sm'
-                            : 'text-zinc-500'
-                            }`}
-                    >
-                        <User className="h-4 w-4" />
-                        General
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('security')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'security'
-                            ? 'bg-white text-zinc-900 shadow-sm'
-                            : 'text-zinc-500'
-                            }`}
-                    >
-                        <Lock className="h-4 w-4" />
-                        Security
-                    </button>
-                    {/* Billing tab mobile disabled
-                    <button
-                        onClick={() => setActiveTab('billing')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'billing'
-                            ? 'bg-white text-zinc-900 shadow-sm'
-                            : 'text-zinc-500'
-                            }`}
-                    >
-                        <CreditCard className="h-4 w-4" />
-                        Billing
-                    </button>
-                    */}
-                </div>
+            {/* Horizontal Pill Tab Bar */}
+            <div className="bg-zinc-100/90 dark:bg-zinc-900/90 p-1.5 rounded-2xl flex items-center gap-1 border border-zinc-200/60 dark:border-zinc-800/60 shadow-sm overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <button
+                    onClick={() => handleTabChange('general')}
+                    className={`px-4 py-2 text-xs sm:text-sm rounded-xl transition-all duration-150 shrink-0 font-medium ${
+                        activeTab === 'general'
+                            ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm border border-zinc-200/80 dark:border-zinc-800/80'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                >
+                    Account
+                </button>
 
+                <button
+                    onClick={() => handleTabChange('team')}
+                    className={`px-4 py-2 text-xs sm:text-sm rounded-xl transition-all duration-150 shrink-0 font-medium ${
+                        activeTab === 'team'
+                            ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm border border-zinc-200/80 dark:border-zinc-800/80'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                >
+                    Team Management
+                </button>
+
+                <button
+                    onClick={() => handleTabChange('billing')}
+                    className={`px-4 py-2 text-xs sm:text-sm rounded-xl transition-all duration-150 shrink-0 font-medium ${
+                        activeTab === 'billing'
+                            ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm border border-zinc-200/80 dark:border-zinc-800/80'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                >
+                    Billing & Subscription
+                </button>
+
+                <button
+                    onClick={() => handleTabChange('security')}
+                    className={`px-4 py-2 text-xs sm:text-sm rounded-xl transition-all duration-150 shrink-0 font-medium ${
+                        activeTab === 'security'
+                            ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm border border-zinc-200/80 dark:border-zinc-800/80'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50'
+                    }`}
+                >
+                    Security
+                </button>
+            </div>
+
+            {/* Main Content Area */}
+            <main className="flex-1 pt-2 w-full">
                 {activeTab === 'general' && (
                     <>
                         {/* Page Heading */}
@@ -806,6 +806,13 @@ export function SettingsForm({ user, profile }: SettingsFormProps) {
                     </>
                 )}
 
+                {activeTab === 'billing' && workspaceId && (
+                    <BillingSettingsTab workspaceId={workspaceId} />
+                )}
+
+                {activeTab === 'team' && workspaceId && (
+                    <TeamSettingsTab workspaceId={workspaceId} currentUser={user} />
+                )}
 
             </main>
         </div>
