@@ -6,6 +6,7 @@ import { payments, projects, clients, users } from '@/server/db/schema';
 import { eq, and, ne, lt, isNotNull, desc, asc, or } from 'drizzle-orm';
 import { getUser } from '@/lib/auth';
 import { withAuth } from '@/lib/auth-guard';
+import { canCreateInvoice } from '@/lib/payments/guards';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
@@ -451,6 +452,13 @@ export async function getInvoices(): Promise<Payment[]> {
 export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInput): Promise<Payment> {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canCreateInvoice(workspaceId);
+            if (!limitCheck.allowed) {
+                throw new Error(
+                    `Monthly invoice limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} invoices). Upgrade to Pro for unlimited invoices.`
+                );
+            }
+
             const validatedInput = createStandaloneInvoiceSchema.parse(input) as CreateStandaloneInvoiceInput;
             const [newInvoice] = await db.insert(payments).values({
                 userId: user.id,

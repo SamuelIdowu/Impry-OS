@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/server/db";
-import { workspaces } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+import { workspaces, teamMembers, projects, clients } from "@/server/db/schema";
+import { eq, count } from "drizzle-orm";
 import { getUser } from "@/lib/auth";
 import { verifyWorkspaceAccess } from "@/server/actions/workspaces";
 import { getPaymentProvider, getPlanConfig, PlanTier, BillingCycle } from "@/lib/payments";
@@ -37,6 +37,22 @@ export async function getWorkspaceBillingInfo(workspaceId: string) {
     throw new Error("Workspace not found.");
   }
 
+  // Fetch real workspace usage counts
+  const [{ count: totalTeamMembers }] = await db
+    .select({ count: count() })
+    .from(teamMembers)
+    .where(eq(teamMembers.workspaceId, workspaceId));
+
+  const [{ count: totalProjects }] = await db
+    .select({ count: count() })
+    .from(projects)
+    .where(eq(projects.workspaceId, workspaceId));
+
+  const [{ count: totalClients }] = await db
+    .select({ count: count() })
+    .from(clients)
+    .where(eq(clients.workspaceId, workspaceId));
+
   const currentTier = (workspace.planTier as PlanTier) || "free";
   const planConfig = getPlanConfig(currentTier);
 
@@ -49,6 +65,11 @@ export async function getWorkspaceBillingInfo(workspaceId: string) {
     customerId: workspace.customerId,
     currentPeriodEnd: workspace.currentPeriodEnd,
     planConfig,
+    usage: {
+      teamMembers: totalTeamMembers || 0,
+      projects: totalProjects || 0,
+      clients: totalClients || 0,
+    }
   };
 }
 

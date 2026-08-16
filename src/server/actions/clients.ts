@@ -16,6 +16,7 @@ import { db } from '@/server/db';
 import { clients, projects, payments } from '@/server/db/schema';
 import { eq, inArray, and } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth-guard';
+import { canCreateClient } from '@/lib/payments/guards';
 import { z } from 'zod';
 
 const createClientSchema = z.object({
@@ -135,6 +136,16 @@ export async function fetchClient(id: string) {
 export async function createClientAction(data: CreateClientInput) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canCreateClient(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Workspace plan limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} clients). Upgrade to Pro for unlimited clients.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+
             const validatedData = createClientSchema.parse(data);
             const newClient = await createClient(validatedData);
             revalidatePath(`/${workspaceId}/clients`);
@@ -212,6 +223,24 @@ export async function updateClientNotesAction(id: string, notes: string) {
 export async function importClientsAction(clientsList: CreateClientInput[]) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canCreateClient(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Workspace plan limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} clients). Upgrade to Pro to import clients.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+            if (typeof limitCheck.maxAllowed === 'number' && limitCheck.currentCount + clientsList.length > limitCheck.maxAllowed) {
+                return {
+                    success: false,
+                    error: `Importing ${clientsList.length} clients exceeds your plan capacity (${limitCheck.currentCount}/${limitCheck.maxAllowed}). Upgrade to Pro.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+
             // Prepare data with user_id and timestamps
             const clientsToInsert = clientsList.map(client => ({
                 ...client,

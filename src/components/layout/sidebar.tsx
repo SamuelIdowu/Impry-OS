@@ -134,74 +134,84 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                             <button
                                 onClick={() => setDashboardExpanded(!dashboardExpanded)}
                                 className={cn(
-                                    "w-full group flex items-center justify-between rounded-md px-3 py-1.5 text-[13px] font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
+                                    "w-full group flex items-center justify-between rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                                     pathname.includes("/dashboard")
-                                        ? "bg-zinc-100 text-zinc-900"
-                                        : "text-zinc-500"
+                                        ? "bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-zinc-100"
+                                        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
                                 )}
                             >
                                 <div className="flex items-center">
-                                    <LayoutGrid className={cn("mr-2 h-3.5 w-3.5",
+                                    <LayoutGrid className={cn("mr-2.5 h-4 w-4 shrink-0 transition-colors",
                                         pathname.includes("/dashboard")
-                                            ? "text-zinc-900"
-                                            : "text-zinc-400 group-hover:text-zinc-900"
+                                            ? "text-zinc-900 dark:text-zinc-100"
+                                            : "text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
                                     )} />
                                     <span>Dashboard</span>
                                 </div>
                                 <ChevronDown className={cn(
-                                    "h-3.5 w-3.5 text-zinc-400 transition-transform",
+                                    "h-3.5 w-3.5 text-zinc-400 transition-transform duration-200",
                                     dashboardExpanded ? "rotate-180" : ""
                                 )} />
                             </button>
                             {dashboardExpanded && (
-                                <div className="ml-6 mt-0.5 space-y-0.5">
-                                    {dashboardSubItems.map((subItem) => (
-                                        <Link
-                                            key={subItem.href}
-                                            href={subItem.href}
-                                            onClick={onNavigate}
-                                            className={cn(
-                                                "group flex items-center rounded-md px-3 py-1 text-[13px] font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
-                                                (subItem.exact ? pathname === subItem.href : pathname === subItem.href)
-                                                    ? "text-zinc-900 bg-zinc-50"
-                                                    : "text-zinc-500"
-                                            )}
-                                        >
-                                            {subItem.icon && (
-                                                <subItem.icon className={cn("mr-2 h-3.5 w-3.5",
-                                                    pathname === subItem.href
-                                                        ? "text-zinc-900"
-                                                        : "text-zinc-400 group-hover:text-zinc-900"
-                                                )} />
-                                            )}
-                                            <span>{subItem.title}</span>
-                                        </Link>
-                                    ))}
+                                <div className="ml-4 pl-2 mt-1 space-y-0.5 border-l border-zinc-100 dark:border-zinc-800">
+                                    {dashboardSubItems.map((subItem) => {
+                                        const isActive = subItem.exact 
+                                            ? pathname === subItem.href 
+                                            : pathname === subItem.href;
+
+                                        return (
+                                            <Link
+                                                key={subItem.href}
+                                                href={subItem.href}
+                                                onClick={onNavigate}
+                                                className={cn(
+                                                    "group flex items-center rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-150",
+                                                    isActive
+                                                        ? "bg-zinc-900 text-white shadow-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                                                        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+                                                )}
+                                            >
+                                                {subItem.icon && (
+                                                    <subItem.icon className={cn("mr-2.5 h-3.5 w-3.5 shrink-0 transition-colors",
+                                                        isActive
+                                                            ? "text-white dark:text-zinc-900"
+                                                            : "text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+                                                    )} />
+                                                )}
+                                                <span>{subItem.title}</span>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
 
                         {/* Other nav items */}
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                onClick={onNavigate}
-                                className={cn(
-                                    "group flex items-center rounded-md px-3 py-1.5 text-[13px] font-medium hover:bg-zinc-100 hover:text-zinc-900 transition-colors",
-                                    pathname.startsWith(item.href)
-                                        ? "bg-zinc-100 text-zinc-900"
-                                        : "text-zinc-500"
-                                )}
-                            >
-                                <item.icon className={cn("mr-2 h-3.5 w-3.5",
-                                    pathname.startsWith(item.href)
-                                        ? "text-zinc-900"
-                                        : "text-zinc-400 group-hover:text-zinc-900"
-                                )} />
-                                <span>{item.title}</span>
-                            </Link>
-                        ))}
+                        {navItems.map((item) => {
+                            const isActive = pathname.startsWith(item.href);
+
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={onNavigate}
+                                    className={cn(
+                                        "group flex items-center rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
+                                        isActive
+                                            ? "bg-zinc-900 text-white shadow-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                                            : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+                                    )}
+                                >
+                                    <item.icon className={cn("mr-2.5 h-4 w-4 shrink-0 transition-colors",
+                                        isActive
+                                            ? "text-white dark:text-zinc-900"
+                                            : "text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+                                    )} />
+                                    <span>{item.title}</span>
+                                </Link>
+                            );
+                        })}
                     </div>
                 </div>
                 <div className="px-4 py-2">

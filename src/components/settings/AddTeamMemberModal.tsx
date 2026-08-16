@@ -22,6 +22,7 @@ import {
     Sparkles
 } from "lucide-react";
 import { addTeamMemberAction, updateTeamMemberAction } from "@/server/actions/team";
+import { UpgradeModal } from "@/components/billing/UpgradeModal";
 
 interface AddTeamMemberModalProps {
     isOpen: boolean;
@@ -57,6 +58,7 @@ export function AddTeamMemberModal({
     const [avatarUrl, setAvatarUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     useEffect(() => {
         if (memberToEdit) {
@@ -111,6 +113,9 @@ export function AddTeamMemberModal({
                 if (res.success) {
                     if (onSuccess) onSuccess();
                     onClose();
+                } else if ((res as any).requiresUpgrade) {
+                    onClose();
+                    setShowUpgradeModal(true);
                 } else {
                     setError(res.error || "Failed to add team member");
                 }
@@ -134,7 +139,20 @@ export function AddTeamMemberModal({
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <>
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title="Team Member Limit Reached"
+                description="Your current plan allows 1 seat. Upgrade to Studio Plan to invite up to 5 team members with role-based permissions."
+                targetTier="studio"
+                limitName="Team Seats"
+                currentCount={1}
+                maxAllowed={1}
+                workspaceId={workspaceId}
+            />
+
+            <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl">
                 {/* Header (Fixed) */}
                 <DialogHeader className="p-5 pb-3 border-b border-zinc-100 dark:border-zinc-800/80 shrink-0 text-left">
@@ -301,6 +319,7 @@ export function AddTeamMemberModal({
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+            </Dialog>
+        </>
     );
 }

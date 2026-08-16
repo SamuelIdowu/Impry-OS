@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { withAuth } from '@/lib/auth-guard';
+import { canInviteTeamMember } from '@/lib/payments/guards';
 import { getUser } from '@/lib/auth';
 import { db } from '@/server/db';
 import { workspaces, workspaceMembers, users, workspaceInvitations } from '@/server/db/schema';
@@ -47,6 +48,16 @@ export async function inviteMemberAction(data: {
 }) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canInviteTeamMember(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Workspace team limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} seats). Upgrade to Studio plan for up to 5 team seats.`,
+                    requiresUpgrade: true,
+                    targetTier: 'studio',
+                };
+            }
+
             const validated = inviteSchema.parse({
                 email: data.email,
                 role: data.role || 'member',

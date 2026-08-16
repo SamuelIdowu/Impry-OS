@@ -2,6 +2,7 @@
 import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
 
 import { getUser, auth } from '@/lib/auth';
+import { canUseCustomBranding } from '@/lib/payments/guards';
 import { db } from '@/server/db';
 import { users, sessions } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -49,12 +50,24 @@ export async function getProfileAction() {
     }
 }
 
-export async function updateBrandingAction(data: { logo_url?: string; brand_color?: string }) {
+export async function updateBrandingAction(data: { logo_url?: string; brand_color?: string }, workspaceId?: string) {
     try {
         const user = await getUser();
 
         if (!user) {
             return { success: false, error: 'Not authenticated' };
+        }
+
+        if (workspaceId) {
+            const limitCheck = await canUseCustomBranding(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: 'Custom branding is a Pro & Studio plan feature. Upgrade to Pro to customize logo & accent colors.',
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
         }
 
         await db.update(users)

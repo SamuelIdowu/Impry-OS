@@ -41,6 +41,10 @@ export interface PlanConfig {
       monthly?: string;
       yearly?: string;
     };
+    creem?: {
+      monthly?: string;
+      yearly?: string;
+    };
     stripe?: {
       monthly?: string;
       yearly?: string;

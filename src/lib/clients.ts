@@ -62,13 +62,6 @@ export async function createClient(input: CreateClientInput): Promise<Client> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const existingClients = await db.select({ id: clients.id }).from(clients).where(eq(clients.userId, user.id));
-    
-    // Free plan check (assuming all users are free unless we add subscription_plan column)
-    if (existingClients.length >= 3) {
-        throw new Error('Free plan limit reached. Upgrade to Pro to add more clients.');
-    }
-
     const [newClient] = await db.insert(clients).values({
         ...input,
         userId: user.id,

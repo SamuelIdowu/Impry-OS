@@ -32,6 +32,8 @@ import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { RevenueChart } from "@/components/reports/RevenueChart"
 import { FunnelChart } from "@/components/reports/FunnelChart"
+import { ProFeatureLock } from "@/components/billing/ProFeatureLock"
+import { UpgradeModal } from "@/components/billing/UpgradeModal"
 import { convertToCSV, downloadCSV } from "@/lib/csv-export"
 import { addDays, isAfter, parse, format, subDays, isSameYear, parseISO, startOfYear } from "date-fns"
 import { Project } from "@/lib/types/project"
@@ -52,16 +54,37 @@ interface ReportsViewProps {
     projects: any[]; // Using any for now to facilitate mapping flexibility, ideally strict types 
     invoices: Payment[];
     userCreatedAt: string;
+    planTier?: string;
 }
 
-export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewProps) {
+export function ReportsView({ projects, invoices, userCreatedAt, planTier = "free" }: ReportsViewProps) {
     const [searchQuery, setSearchQuery] = React.useState("")
     const [statusFilter, setStatusFilter] = React.useState<string>("All")
     const [projectReportView, setProjectReportView] = React.useState<"list" | "grid">("list")
     const [dateRange, setDateRange] = React.useState<DateRange>("30days")
+    const [showUpgradeModal, setShowUpgradeModal] = React.useState(false)
     
     const params = useParams()
     const workspaceId = params.workspaceId as string || 'default'
+
+    const handleExportReport = () => {
+        if (planTier === "free") {
+            setShowUpgradeModal(true)
+            return
+        }
+
+        const exportData = filteredProjects.map(p => ({
+            "Project Name": p.name,
+            "Client": p.client?.name || "Unknown",
+            "Status": p.status,
+            "Progress (%)": p.progress || 0,
+            "Due Date": p.dueDate ? format(new Date(p.dueDate), "yyyy-MM-dd") : "-",
+            "Created Date": p.createdAt ? format(new Date(p.createdAt), "yyyy-MM-dd") : "-"
+        }))
+
+        const csv = convertToCSV(exportData)
+        downloadCSV(csv, `impry_project_report_${format(new Date(), "yyyyMMdd")}.csv`)
+    }
 
     // Helper to get start date based on range
     const getStartDate = (range: DateRange) => {
@@ -252,11 +275,22 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <button className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group">
+                    <button
+                        onClick={handleExportReport}
+                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group"
+                    >
                         <Download className="mr-2 h-[18px] w-[18px]" />
                         <span>Export Report</span>
                     </button>
                 </PageHeader>
+
+                <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                    title="CSV Data Export is a Pro Feature"
+                    description="Exporting financial reports and project status data to CSV/Excel is available on Freelancer Pro and Studio plans."
+                    workspaceId={workspaceId}
+                />
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
