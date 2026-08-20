@@ -7,9 +7,10 @@ interface DashboardHeaderProps {
     userName?: string | null
     reminderCount: number
     revenueChangePercent: number
+    monthlyRevenue?: number
 }
 
-export function DashboardHeader({ userName, reminderCount, revenueChangePercent }: DashboardHeaderProps) {
+export function DashboardHeader({ userName, reminderCount, revenueChangePercent, monthlyRevenue = 0 }: DashboardHeaderProps) {
     const [greeting, setGreeting] = useState("Good day")
 
     useEffect(() => {
@@ -33,7 +34,7 @@ export function DashboardHeader({ userName, reminderCount, revenueChangePercent 
                 </h1>
                 <p className="text-zinc-500 text-base">
                     You have <span className="font-bold text-zinc-900">{reminderCount} items</span> requiring attention today.
-                    {revenueChangePercent >= 0 ? ' Revenue looks stable.' : ' Revenue is slightly down.'}
+                    {monthlyRevenue > 0 && (revenueChangePercent >= 0 ? ' Revenue looks stable.' : ' Revenue is slightly down.')}
                 </p>
             </div>
             <div className="w-full lg:w-auto">

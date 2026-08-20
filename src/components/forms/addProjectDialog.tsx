@@ -55,7 +55,9 @@ export function AddProjectDialog({
         name: '',
         clientId: clientId || '',
         description: '',
-        status: 'planning', // Maps to 'lead'
+        status: 'planning',
+        budget: undefined,
+        deadline: '',
     });
 
     const validateForm = (): boolean => {
@@ -101,6 +103,8 @@ export function AddProjectDialog({
                 clientId: clientId || '',
                 description: '',
                 status: 'planning',
+                budget: undefined,
+                deadline: '',
             });
             setErrors({});
             onOpenChange(false);
@@ -219,6 +223,36 @@ export function AddProjectDialog({
                                     placeholder="Describe the project goals and deliverables..."
                                     rows={3}
                                 />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="budget">Budget ($)</Label>
+                                    <Input
+                                        id="budget"
+                                        type="number"
+                                        min="0"
+                                        step="100"
+                                        value={formData.budget ?? ''}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                budget: e.target.value ? Number(e.target.value) : undefined,
+                                            })
+                                        }
+                                        placeholder="e.g. 5000"
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="deadline">Due Date</Label>
+                                    <Input
+                                        id="deadline"
+                                        type="date"
+                                        value={formData.deadline ?? ''}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, deadline: e.target.value || undefined })
+                                        }
+                                    />
+                                </div>
                             </div>
                             {errors.submit && (
                                 <p className="text-sm text-destructive">{errors.submit}</p>

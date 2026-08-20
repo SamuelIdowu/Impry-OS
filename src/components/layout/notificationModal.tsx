@@ -93,31 +93,31 @@ export function NotificationModal({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
-                <button className="relative p-2 rounded-full hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2">
+                <button className="relative p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:ring-offset-2">
                     <Bell className="size-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute top-2 right-2 size-2 bg-red-500 ring-2 ring-white rounded-full"></span>
+                        <span className="absolute top-2 right-2 size-2 bg-red-500 ring-2 ring-white dark:ring-zinc-950 rounded-full"></span>
                     )}
                 </button>
             </DialogTrigger>
             <DialogContent showCloseButton={false} className="p-0 gap-0 sm:max-w-[420px] rounded-2xl overflow-hidden bg-white">
                 {/* Header */}
-                <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-white pt-6">
-                    <DialogTitle className="text-lg font-bold text-zinc-900">Notifications</DialogTitle>
-                    <button className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
+                <div className="p-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-white dark:bg-zinc-950 pt-6">
+                    <DialogTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Notifications</DialogTitle>
+                    <button disabled className="text-xs font-medium text-zinc-500 dark:text-zinc-400 transition-colors opacity-50 cursor-not-allowed" title="Coming soon">
                         Mark all as read
                     </button>
                 </div>
 
                 {/* Filter Chips */}
-                <div className="px-5 py-4 flex gap-2 bg-zinc-50/50 overflow-x-auto border-b border-zinc-100">
+                <div className="px-5 py-4 flex gap-2 bg-zinc-50/50 dark:bg-zinc-900/50 overflow-x-auto border-b border-zinc-100 dark:border-zinc-800">
                     <button
                         onClick={() => setFilter("all")}
                         className={cn(
                             "px-3 py-1.5 text-xs font-semibold rounded-full transition-all whitespace-nowrap",
                             filter === "all"
-                                ? "bg-zinc-900 text-white shadow-md ring-1 ring-zinc-900"
-                                : "bg-white text-zinc-600 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-md ring-1 ring-zinc-900 dark:ring-zinc-100"
+                                : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                         )}
                     >
                         All
@@ -127,8 +127,8 @@ export function NotificationModal({
                         className={cn(
                             "px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap",
                             filter === "unread"
-                                ? "bg-zinc-900 text-white shadow-md ring-1 ring-zinc-900"
-                                : "bg-white text-zinc-600 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-md ring-1 ring-zinc-900 dark:ring-zinc-100"
+                                : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                         )}
                     >
                         Unread <span className="ml-1 text-[10px] opacity-80 px-1 py-0.5 bg-zinc-800 rounded-full">{unreadCount}</span>
@@ -138,8 +138,8 @@ export function NotificationModal({
                         className={cn(
                             "px-3 py-1.5 text-xs font-medium rounded-full transition-all whitespace-nowrap",
                             filter === "urgent"
-                                ? "bg-zinc-900 text-white shadow-md ring-1 ring-zinc-900"
-                                : "bg-white text-zinc-600 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-md ring-1 ring-zinc-900 dark:ring-zinc-100"
+                                : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-700"
                         )}
                     >
                         Urgent
@@ -147,27 +147,27 @@ export function NotificationModal({
                 </div>
 
                 {/* Notifications List */}
-                <div className="max-h-[500px] overflow-y-auto bg-white p-2">
+                <div className="max-h-[500px] overflow-y-auto bg-white dark:bg-zinc-950 p-2">
                     {filteredNotifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="size-12 bg-zinc-50 rounded-full flex items-center justify-center mb-3">
-                                <Bell className="size-6 text-zinc-300" />
+                            <div className="size-12 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-3">
+                                <Bell className="size-6 text-zinc-300 dark:text-zinc-500" />
                             </div>
-                            <p className="text-sm font-medium text-zinc-900">No notifications</p>
-                            <p className="text-xs text-zinc-500 mt-1">You're all caught up!</p>
+                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">No notifications</p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">You're all caught up!</p>
                         </div>
                     ) : (
                         filteredNotifications.map((notification, index) => (
                             <div
                                 key={notification.id}
-                                className={cn(
-                                    "group relative flex gap-4 p-4 hover:bg-zinc-50 transition-colors cursor-pointer rounded-xl border border-transparent mx-2",
-                                    "hover:border-zinc-200 hover:shadow-sm"
+                                    className={cn(
+                                        "group relative flex gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer rounded-xl border border-transparent mx-2",
+                                        "hover:border-zinc-200 dark:hover:border-zinc-700 hover:shadow-sm"
                                 )}
                             >
                                 {/* Unread Indicator */}
                                 {!notification.read && (
-                                    <div className="absolute right-4 top-4 size-2 rounded-full bg-zinc-900 shadow-sm ring-2 ring-white"></div>
+                                    <div className="absolute right-4 top-4 size-2 rounded-full bg-zinc-900 dark:bg-zinc-100 shadow-sm ring-2 ring-white dark:ring-zinc-950"></div>
                                 )}
 
                                 {/* Icon */}
@@ -185,14 +185,14 @@ export function NotificationModal({
                                 {/* Content */}
                                 <div className="flex flex-col gap-1.5 pr-4">
                                     <div className="flex flex-col">
-                                        <p className="text-sm font-bold text-zinc-900 leading-tight">
+                                        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
                                             {notification.title}
                                         </p>
-                                        <p className="text-xs text-zinc-500 leading-relaxed mt-1">
+                                        <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mt-1">
                                             {notification.message}
                                         </p>
                                     </div>
-                                    <span className="text-[11px] font-medium text-zinc-400">
+                                    <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
                                         {notification.time}
                                     </span>
                                 </div>
@@ -202,8 +202,8 @@ export function NotificationModal({
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 bg-zinc-50 border-t border-zinc-100 text-center">
-                    <button className="text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition-colors flex items-center justify-center gap-1.5 w-full py-2 rounded-lg hover:bg-zinc-200/50">
+                <div className="p-3 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 text-center">
+                    <button className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex items-center justify-center gap-1.5 w-full py-2 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50">
                         View all notifications
                         <ChevronRight className="size-3" />
                     </button>

@@ -165,7 +165,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                 >
                     <Link
                         href={`/${workspaceId}/invoices/new`}
-                        className="flex items-center justify-center rounded-lg h-10 px-6 bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group"
+                        className="flex items-center justify-center rounded-lg h-10 px-6 bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:shadow-md hover:bg-zinc-800 transition-colors shadow duration-150 group"
                     >
                         <Plus className="mr-2 h-5 w-5" />
                         <span>Create New Invoice</span>
@@ -246,12 +246,14 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                             value: `$${invoices.filter(i => i.status === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0).toLocaleString()}`,
                             icon: FileText,
                             trend: `${statusCounts.pending} pending`,
-                            trendLabel: "pending",
+                            trendLabel: "invoices",
                             trendDirection: "neutral" as const,
                             iconColor: "bg-zinc-100 text-zinc-600"
                         }
                     ].map((stat, i) => (
-                        <StatsCard key={i} {...stat} />
+                        <div key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` }}>
+                            <StatsCard {...stat} />
+                        </div>
                     ))}
                 </div>
 
@@ -263,7 +265,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 <Search className="h-4 w-4" />
                             </div>
                             <input
-                                className="w-full h-10 rounded-lg bg-white border border-zinc-200 text-zinc-900 text-sm placeholder-zinc-500 pl-10 pr-4 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-all shadow-sm"
+                                className="w-full h-10 rounded-lg bg-white border border-zinc-200 text-zinc-900 text-sm placeholder-zinc-500 pl-10 pr-4 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-colors duration-150 shadow-sm"
                                 placeholder="Search invoices..."
                                 type="text"
                                 value={searchTerm}
@@ -305,7 +307,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 <button
                                     onClick={() => setViewMode("list")}
                                     className={cn(
-                                        "p-1.5 rounded-md transition-all",
+                                        "p-1.5 rounded-md transition-colors duration-150",
                                         viewMode === "list"
                                             ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
                                             : "text-zinc-500 hover:bg-zinc-100"
@@ -317,7 +319,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 <button
                                     onClick={() => setViewMode("grid")}
                                     className={cn(
-                                        "p-1.5 rounded-md transition-all",
+                                        "p-1.5 rounded-md transition-colors duration-150",
                                         viewMode === "grid"
                                             ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
                                             : "text-zinc-500 hover:bg-zinc-100"
@@ -351,7 +353,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
 
                     {/* Expanded Filter Panel */}
                     {isFilterOpen && (
-                        <div className="p-4 bg-zinc-50/50 border border-zinc-200 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="p-4 bg-zinc-50/50 border border-zinc-200 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-top-2 data-[state=closed]:duration-150">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-semibold text-zinc-500 uppercase">From Date</label>
                                 <input
@@ -390,11 +392,12 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                 {/* Invoices Content */}
                 {viewMode === "grid" ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredInvoices.map((inv) => (
+                        {filteredInvoices.map((inv, index) => (
                             <div
                                 key={inv.id}
                                 onClick={() => router.push(`/${workspaceId}/invoices/${inv.invoiceNumber}`)}
-                                className="p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-sm"
+                                className="animate-fade-in-up p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-colors shadow duration-200 cursor-pointer flex flex-col justify-between space-y-4 shadow-sm"
+                                style={{ animationDelay: `${index * 50}ms` }}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -432,7 +435,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                 ) : (
                     <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
                         <div className="overflow-x-auto hide-scrollbar">
-                        <div className="min-w-[800px]">
+                        <div className={cn(filteredInvoices.length > 0 && "min-w-[800px]")}>
                             <table className="w-full text-left border-collapse">
                                 <thead>
                             <tr className="bg-zinc-50/50 border-b border-zinc-200">
@@ -519,7 +522,10 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     {/* Pagination */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-zinc-200 bg-white">
                         <p className="text-sm text-zinc-500">
-                            Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredInvoices.length}</span> of <span className="font-medium">{invoices.length}</span> invoices
+                            {filteredInvoices.length === 0
+                                ? `No invoices found`
+                                : <>Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredInvoices.length}</span> of <span className="font-medium">{filteredInvoices.length}</span> invoices</>
+                            }
                         </p>
                         <div className="flex items-center gap-2">
                             <button className="px-3 py-1 rounded-md border border-zinc-200 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">

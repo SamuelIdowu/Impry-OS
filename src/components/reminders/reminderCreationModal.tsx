@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -27,6 +27,7 @@ interface ReminderCreationModalProps {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     onSuccess?: () => void;
+    defaultDate?: string;
 }
 
 export function ReminderCreationModal({
@@ -37,6 +38,7 @@ export function ReminderCreationModal({
     open: controlledOpen,
     onOpenChange: setControlledOpen,
     onSuccess,
+    defaultDate,
 }: ReminderCreationModalProps) {
     const [internalOpen, setInternalOpen] = useState(false);
     const isControlled = controlledOpen !== undefined;
@@ -50,6 +52,13 @@ export function ReminderCreationModal({
     const [type, setType] = useState<ReminderType>('follow_up');
     const [date, setDate] = useState('');
     const [note, setNote] = useState('');
+
+    // Pre-fill date when defaultDate prop changes
+    useEffect(() => {
+        if (defaultDate && open) {
+            setDate(defaultDate);
+        }
+    }, [defaultDate, open]);
 
     const handleSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();

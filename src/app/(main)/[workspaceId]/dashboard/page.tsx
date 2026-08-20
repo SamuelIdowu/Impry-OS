@@ -79,6 +79,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ work
                     userName={user?.name}
                     reminderCount={reminders.length}
                     revenueChangePercent={metrics.totalRevenueChange}
+                    monthlyRevenue={metrics.totalRevenue}
                 />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

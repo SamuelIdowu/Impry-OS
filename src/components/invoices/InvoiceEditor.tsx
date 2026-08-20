@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ImageUpload } from "@/components/shared/ImageUpload"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { InvoiceDocument } from "@/components/invoices/InvoiceDocument"
@@ -54,6 +55,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     const [issueDate, setIssueDate] = useState(initialData?.issueDate || new Date().toISOString().split('T')[0])
     const [dueDate, setDueDate] = useState(initialData?.dueDate || "")
     const [notes, setNotes] = useState(initialData?.notes || "")
+    const [paymentInstructions, setPaymentInstructions] = useState(initialData?.paymentInstructions || "")
 
     // New Feature State
     const [currency, setCurrency] = useState(initialData?.currency || "USD")
@@ -147,6 +149,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                 status: status, // This will be 'pending' as 'draft' is not yet supported in DB
                 lineItems: items,
                 notes: notes,
+                paymentInstructions: paymentInstructions,
                 taxRate: taxRate,
                 discountRate: discountRate
             }
@@ -286,6 +289,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         currency,
         taxRate: taxRate,
         discountRate: discountRate,
+        paymentInstructions: paymentInstructions,
         // Enriched data for preview
         clientName: clients.find(c => c.id === clientId)?.name,
         projectName: projects.find(p => p.id === projectId)?.name,
@@ -337,7 +341,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             {/* Main Content */}
             <div className="flex flex-1 overflow-hidden bg-zinc-50">
                 {/* Editor Pane */}
-                <div className={`flex-1 overflow-y-auto p-8 transition-all duration-300 ${showPreview ? 'lg:max-w-[50%]' : 'w-full mx-auto'}`}>
+                <div className={`flex-1 overflow-y-auto p-8 transition-[max-width] duration-300 ease-out ${showPreview ? 'lg:max-w-[50%]' : 'w-full mx-auto'}`}>
                     <div className="space-y-8 pb-20">
                         {/* Invoice Details Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
@@ -410,10 +414,11 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
 
                         {/* Settings / Branding Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-                            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
                                 <Settings className="h-5 w-5 text-zinc-400" />
                                 Branding & Settings
                             </h2>
+                            <p className="text-xs text-zinc-400 mb-6">Temporary — will pull from your business profile in a future update.</p>
                             <div className="grid gap-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -430,8 +435,12 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Logo URL</Label>
-                                        <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." />
+                                        <Label>Logo</Label>
+                                        <ImageUpload
+                                            value={logoUrl}
+                                            onChange={setLogoUrl}
+                                            variant="logo"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Discount (%)</Label>
@@ -441,12 +450,33 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                             </div>
                         </div>
 
+                        {/* Payment Instructions Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
+                            <h2 className="text-lg font-semibold mb-6">Payment Instructions</h2>
+                            <div className="grid gap-4">
+                                <div className="space-y-2">
+                                    <Label>How to Pay</Label>
+                                    <Textarea
+                                        value={paymentInstructions}
+                                        onChange={(e) => setPaymentInstructions(e.target.value)}
+                                        placeholder={"Bank Transfer:\nAccount Name: ...\nAccount Number: ...\nBank: ...\n\nOr pay via PayPal: your@email.com"}
+                                        rows={5}
+                                    />
+                                    <p className="text-xs text-zinc-400">Shown at the bottom of the invoice so clients know how to pay you.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Items Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-                            <h2 className="text-lg font-semibold mb-6">Items Details</h2>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-lg font-semibold">Line Items</h2>
+                                <span className="text-xs text-zinc-400 font-medium">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+                            </div>
                             <div className="space-y-4">
                                 <div className="hidden md:grid grid-cols-12 gap-4 text-xs font-semibold text-zinc-500 uppercase px-2">
-                                    <div className="col-span-6">Item</div>
+                                    <div className="col-span-1">#</div>
+                                    <div className="col-span-5">Item</div>
                                     <div className="col-span-2 text-right">Qty</div>
                                     <div className="col-span-2 text-right">Rate</div>
                                     <div className="col-span-2 text-right">Total</div>
@@ -455,7 +485,10 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                 <div className="space-y-3">
                                     {items.map((item, index) => (
                                         <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-2 hover:bg-zinc-50 rounded-lg group transition-colors border border-transparent hover:border-zinc-100">
-                                            <div className="col-span-6 space-y-2">
+                                            <div className="col-span-1 flex items-center justify-center">
+                                                <span className="text-xs font-bold text-zinc-300 group-hover:text-zinc-500 transition-colors">{index + 1}</span>
+                                            </div>
+                                            <div className="col-span-5 space-y-2">
                                                 <Input
                                                     placeholder="Item name"
                                                     value={item.description}
@@ -488,21 +521,26 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                                 <div className="flex-1 text-right font-medium py-2">
                                                     {formatCurrency(item.amount, currency)}
                                                 </div>
-                                                <button
-                                                    onClick={() => removeItem(index)}
-                                                    className="text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
+                                                {items.length > 1 && (
+                                                    <button
+                                                        onClick={() => removeItem(index)}
+                                                        className="text-zinc-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
 
-                                <Button variant="outline" className="w-full mt-4 border-dashed" onClick={addItem}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Item
-                                </Button>
+                                <button
+                                    onClick={addItem}
+                                    className="w-full mt-4 py-3 border-2 border-dashed border-zinc-200 rounded-lg text-sm font-medium text-zinc-500 hover:text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Add Line Item
+                                </button>
                             </div>
                         </div>
                     </div>

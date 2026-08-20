@@ -98,7 +98,7 @@ function LoginForm() {
             </div>
 
             {/* Form Card */}
-            <div className="bg-card rounded-2xl p-8 shadow-lg border border-border/60">
+            <div className="bg-card rounded-xl p-8 shadow-lg border border-border/60">
                 <div className="flex flex-col gap-5">
                     {/* Error Message */}
                     {error && (
@@ -181,7 +181,7 @@ function LoginForm() {
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full h-12 rounded-xl text-sm font-semibold"
+                            className="w-full h-12 rounded-lg text-sm font-semibold"
                         >
                             {isLoading ? (
                                 <div className="flex items-center gap-2">

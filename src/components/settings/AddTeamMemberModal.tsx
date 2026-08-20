@@ -16,11 +16,10 @@ import {
     User,
     Mail,
     Briefcase,
-    Image,
     Loader2,
     AlertCircle,
-    Sparkles
 } from "lucide-react";
+import { ImageUpload } from "@/components/shared/ImageUpload";
 import { addTeamMemberAction, updateTeamMemberAction } from "@/server/actions/team";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 
@@ -167,19 +166,12 @@ export function AddTeamMemberModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                {/* Form (Scrollable Body) */}
+                    {/* Form (Scrollable Body) */}
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                    <div className="p-5 space-y-4 overflow-y-auto flex-1">
-                        {error && (
-                            <div className="flex items-center gap-2 p-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs rounded-lg">
-                                <AlertCircle className="h-4 w-4 shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        {/* Live Avatar & Info Banner */}
-                        <div className="flex items-center gap-3 p-2.5 bg-zinc-50 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
-                            <div className="size-10 rounded-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 flex items-center justify-center font-bold text-xs text-zinc-700 dark:text-zinc-300 shrink-0 overflow-hidden shadow-inner">
+                    {/* Live Preview — fixed at top */}
+                    <div className="px-5 pt-5 pb-3 border-b border-zinc-100 dark:border-zinc-800/80 shrink-0">
+                        <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
+                            <div className="size-12 rounded-full bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 flex items-center justify-center font-bold text-sm text-zinc-700 dark:text-zinc-300 shrink-0 overflow-hidden shadow-inner">
                                 {avatarUrl ? (
                                     <img
                                         src={avatarUrl}
@@ -194,14 +186,26 @@ export function AddTeamMemberModal({
                                 )}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                                    {name || "Member Name"}
+                                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {name || <span className="text-zinc-400">Member Name</span>}
                                 </p>
-                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                                    {role || "Role / Specialization"} {email ? `• ${email}` : ""}
+                                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                                    {role || <span className="text-zinc-400">Role / Specialization</span>}
+                                    {email && <span className="text-zinc-300 dark:text-zinc-600"> · </span>}
+                                    {email && <span>{email}</span>}
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Scrollable Form Fields */}
+                    <div className="p-5 space-y-4 overflow-y-auto flex-1">
+                        {error && (
+                            <div className="flex items-center gap-2 p-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-xs rounded-lg">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                <span>{error}</span>
+                            </div>
+                        )}
 
                         {/* Name Input */}
                         <div className="space-y-1.5">
@@ -225,7 +229,7 @@ export function AddTeamMemberModal({
                         {/* Role Input & Presets */}
                         <div className="space-y-1.5">
                             <Label htmlFor="member-role" className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
-                                Role / Specialization
+                                Role / Specialization <span className="text-zinc-400 font-normal normal-case">(optional)</span>
                             </Label>
                             <div className="relative">
                                 <Briefcase className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
@@ -246,7 +250,7 @@ export function AddTeamMemberModal({
                                         key={preset}
                                         type="button"
                                         onClick={() => setRole(preset)}
-                                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${
+                                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors duration-150 ${
                                             role === preset
                                                 ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 font-medium"
                                                 : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700"
@@ -276,22 +280,16 @@ export function AddTeamMemberModal({
                             </div>
                         </div>
 
-                        {/* Avatar URL Input */}
+                        {/* Avatar Upload */}
                         <div className="space-y-1.5">
-                            <Label htmlFor="member-avatar" className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
-                                Avatar URL <span className="text-zinc-400 font-normal normal-case">(optional)</span>
+                            <Label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                                Avatar <span className="text-zinc-400 font-normal normal-case">(optional)</span>
                             </Label>
-                            <div className="relative">
-                                <Image className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
-                                <Input
-                                    id="member-avatar"
-                                    type="url"
-                                    placeholder="https://images.unsplash.com/photo-..."
-                                    value={avatarUrl}
-                                    onChange={(e) => setAvatarUrl(e.target.value)}
-                                    className="pl-9 h-9 text-xs bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
-                                />
-                            </div>
+                            <ImageUpload
+                                value={avatarUrl}
+                                onChange={setAvatarUrl}
+                                variant="avatar"
+                            />
                         </div>
                     </div>
 

@@ -10,18 +10,21 @@ import {
     addMonths,
     subMonths,
     isSameDay,
-    parseISO
+    parseISO,
+    format
 } from 'date-fns'
 import { CalendarHeader } from './CalendarHeader'
 import { CalendarDay } from './CalendarDay'
 import { EventDialog } from './EventDialog'
+import { ReminderCreationModal } from '@/components/reminders/reminderCreationModal'
 import type { CalendarEvent, CalendarEventType } from '@/lib/calendar'
 
 interface CalendarViewProps {
     initialEvents: CalendarEvent[]
+    onRefresh?: () => void
 }
 
-export function CalendarView({ initialEvents }: CalendarViewProps) {
+export function CalendarView({ initialEvents, onRefresh }: CalendarViewProps) {
     const [currentDate, setCurrentDate] = React.useState(new Date())
     const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null)
     const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -32,6 +35,10 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
         'reminder',
         'note'
     ])
+
+    // Add event state
+    const [addEventDate, setAddEventDate] = React.useState<Date | null>(null)
+    const [isAddEventOpen, setIsAddEventOpen] = React.useState(false)
 
     // Navigation handlers
     const prevMonth = () => setCurrentDate(subMonths(currentDate, 1))
@@ -59,6 +66,11 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
     const handleEventClick = (event: CalendarEvent) => {
         setSelectedEvent(event)
         setIsDialogOpen(true)
+    }
+
+    const handleAddEvent = (date: Date) => {
+        setAddEventDate(date)
+        setIsAddEventOpen(true)
     }
 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -90,6 +102,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
                         currentMonth={currentDate}
                         events={getEventsForDay(day)}
                         onEventClick={handleEventClick}
+                        onAddEvent={handleAddEvent}
                     />
                 ))}
             </div>
@@ -98,6 +111,16 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
                 event={selectedEvent}
                 isOpen={isDialogOpen}
                 onClose={() => setIsDialogOpen(false)}
+            />
+
+            <ReminderCreationModal
+                open={isAddEventOpen}
+                onOpenChange={setIsAddEventOpen}
+                defaultDate={addEventDate ? format(addEventDate, 'yyyy-MM-dd') : undefined}
+                onSuccess={() => {
+                    setIsAddEventOpen(false)
+                    onRefresh?.()
+                }}
             />
         </div>
     )

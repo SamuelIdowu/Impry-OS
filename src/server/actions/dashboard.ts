@@ -17,7 +17,7 @@ import { withAuth } from '@/lib/auth-guard';
 export async function fetchDashboardReminders(workspaceId?: string) {
     return withAuth(async (user, resolvedWorkspaceId) => {
         try {
-            const reminders = await getDashboardReminders();
+            const reminders = await getDashboardReminders(user);
             return { success: true, data: reminders };
         } catch (error) {
             console.error('Error fetching dashboard reminders:', error);
@@ -35,7 +35,7 @@ export async function fetchDashboardReminders(workspaceId?: string) {
 export async function fetchAtRiskProjects(workspaceId?: string) {
     return withAuth(async (user, resolvedWorkspaceId) => {
         try {
-            const projects = await getAtRiskProjects();
+            const projects = await getAtRiskProjects(user);
             return { success: true, data: projects };
         } catch (error) {
             console.error('Error fetching at-risk projects:', error);
@@ -53,7 +53,7 @@ export async function fetchAtRiskProjects(workspaceId?: string) {
 export async function fetchDashboardMetrics(workspaceId?: string) {
     return withAuth(async (user, resolvedWorkspaceId) => {
         try {
-            const metrics = await getDashboardMetrics();
+            const metrics = await getDashboardMetrics(user);
             return { success: true, data: metrics };
         } catch (error) {
             console.error('Error fetching dashboard metrics:', error);
@@ -71,7 +71,7 @@ export async function fetchDashboardMetrics(workspaceId?: string) {
 export async function markReminderDoneAction(reminderId: string) {
     return withAuth(async (user, workspaceId) => {
         try {
-            await markReminderDone(reminderId);
+            await markReminderDone(reminderId, user);
             revalidatePath(`/${workspaceId}/dashboard`);
             return { success: true };
         } catch (error) {
@@ -90,7 +90,7 @@ export async function markReminderDoneAction(reminderId: string) {
 export async function snoozeReminderAction(reminderId: string, days: number = 1) {
     return withAuth(async (user, workspaceId) => {
         try {
-            await snoozeReminder(reminderId, days);
+            await snoozeReminder(reminderId, days, user);
             revalidatePath(`/${workspaceId}/dashboard`);
             return { success: true };
         } catch (error) {

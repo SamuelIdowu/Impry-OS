@@ -17,7 +17,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     const params = useParams()
     const workspaceId = (params?.workspaceId as string) || 'default'
     return (
-        <div className="group flex flex-col bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all h-full">
+        <div className="group flex flex-col bg-white border border-zinc-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 h-full">
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -33,7 +33,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 </div>
                 <div className="flex items-center gap-2">
                     <StatusBadge status={project.status} />
-                    <button className="text-zinc-400 hover:text-zinc-600 p-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button className="text-zinc-400 hover:text-zinc-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" aria-label="More options">
                         <MoreHorizontal className="w-4 h-4" />
                     </button>
                 </div>
@@ -53,7 +53,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                     </div>
                     <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
                         <div
-                            className={cn("h-full rounded-full transition-all duration-500",
+                            className={cn("h-full rounded-full transition-[width] duration-300",
                                 project.progress >= 90 ? "bg-green-500" :
                                     project.progress >= 50 ? "bg-blue-500" : "bg-orange-500"
                             )}

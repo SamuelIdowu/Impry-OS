@@ -18,8 +18,8 @@ export function AtRiskProjects({ projects }: AtRiskProjectsProps) {
         return (
             <section className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg text-zinc-900">At-Risk Projects</h3>
-                    <button className="text-zinc-500 cursor-help" title="Based on payment delays and communication gaps">
+                        <h3 className="font-semibold text-lg text-zinc-900">At-Risk Projects</h3>
+                    <button className="text-zinc-500 cursor-help" title="Based on payment delays and communication gaps" aria-label="Risk information">
                         <AlertCircle className="h-5 w-5" />
                     </button>
                 </div>
@@ -47,7 +47,7 @@ export function AtRiskProjects({ projects }: AtRiskProjectsProps) {
         <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
                 <h3 className="font-bold text-lg text-zinc-900">At-Risk Projects</h3>
-                <button className="text-zinc-500 cursor-help" title="Based on payment delays and communication gaps">
+                <button className="text-zinc-500 cursor-help" title="Based on payment delays and communication gaps" aria-label="Project details">
                     <AlertTriangle className="h-5 w-5" />
                 </button>
             </div>
@@ -55,7 +55,7 @@ export function AtRiskProjects({ projects }: AtRiskProjectsProps) {
                 {projects.map((project) => (
                     <Card
                         key={project.id}
-                        className="relative overflow-hidden border-zinc-200 hover:shadow-lg transition-all cursor-pointer group"
+                        className="relative overflow-hidden border-zinc-200 hover:shadow-md transition-shadow duration-200 cursor-pointer group"
                     >
                         <div
                             className={cn(
@@ -101,7 +101,7 @@ export function AtRiskProjects({ projects }: AtRiskProjectsProps) {
                                     </span>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button className="w-full bg-white border border-zinc-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-zinc-900 text-xs font-semibold py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm">
+                                    <button disabled className="w-full bg-white border border-zinc-200 text-zinc-900 text-xs font-semibold py-2.5 rounded-lg transition-colors duration-150 flex items-center justify-center gap-2 shadow-sm opacity-50 cursor-not-allowed" aria-label="Send follow-up">
                                         <Send className="h-4 w-4" />
                                         {project.actionLabel}
                                     </button>

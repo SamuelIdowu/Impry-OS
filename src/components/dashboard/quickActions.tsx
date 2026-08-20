@@ -9,12 +9,13 @@ export function QuickActions() {
     const workspaceId = params.workspaceId as string || 'default'
 
     return (
-        <section className="grid grid-cols-2 gap-4">
+        <section className="grid grid-cols-3 gap-4">
             <button
                 onClick={() => router.push(`/${workspaceId}/clients`)}
-                className="col-span-1 group flex flex-col items-start gap-3 p-5 rounded-2xl bg-black text-white shadow-lg hover:bg-zinc-800 transition-all"
+                className="animate-fade-in-up col-span-1 group flex flex-col items-start gap-3 p-5 rounded-2xl bg-white border border-zinc-200 hover:border-black/20 hover:shadow-md transition-colors shadow duration-200 text-zinc-900 shadow-sm"
+                style={{ animationDelay: '0ms' }}
             >
-                <div className="p-2 bg-white/20 rounded-lg group-hover:scale-110 transition-transform backdrop-blur-sm">
+                <div className="p-2 bg-zinc-100 rounded-lg group-hover:bg-black group-hover:text-white transition-colors">
                     <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                             strokeLinecap="round"
@@ -26,13 +27,14 @@ export function QuickActions() {
                 </div>
                 <div>
                     <span className="block font-bold text-sm">New Client</span>
-                    <span className="block text-xs opacity-70 mt-0.5">Onboard & Track</span>
+                    <span className="block text-xs text-zinc-500 mt-0.5">Onboard & Track</span>
                 </div>
             </button>
 
             <button
                 onClick={() => router.push(`/${workspaceId}/projects`)}
-                className="col-span-1 group flex flex-col items-start gap-3 p-5 rounded-2xl bg-white border border-zinc-200 hover:border-black/20 hover:shadow-md transition-all text-zinc-900 shadow-sm"
+                className="animate-fade-in-up col-span-1 group flex flex-col items-start gap-3 p-5 rounded-2xl bg-white border border-zinc-200 hover:border-black/20 hover:shadow-md transition-colors shadow duration-200 text-zinc-900 shadow-sm"
+                style={{ animationDelay: '60ms' }}
             >
                 <div className="p-2 bg-zinc-100 rounded-lg group-hover:bg-black group-hover:text-white transition-colors">
                     <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,6 +49,27 @@ export function QuickActions() {
                 <div>
                     <span className="block font-bold text-sm">New Project</span>
                     <span className="block text-xs text-zinc-500 mt-0.5">Setup Workspace</span>
+                </div>
+            </button>
+
+            <button
+                onClick={() => router.push(`/${workspaceId}/invoices/new`)}
+                className="animate-fade-in-up col-span-1 group flex flex-col items-start gap-3 p-5 rounded-2xl bg-white border border-zinc-200 hover:border-black/20 hover:shadow-md transition-colors shadow duration-200 text-zinc-900 shadow-sm"
+                style={{ animationDelay: '120ms' }}
+            >
+                <div className="p-2 bg-zinc-100 rounded-lg group-hover:bg-black group-hover:text-white transition-colors">
+                    <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                    </svg>
+                </div>
+                <div>
+                    <span className="block font-bold text-sm">Create Invoice</span>
+                    <span className="block text-xs text-zinc-500 mt-0.5">Bill & Get Paid</span>
                 </div>
             </button>
         </section>
