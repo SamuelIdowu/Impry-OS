@@ -580,7 +580,7 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
             {/* ------------------------------------------------------------- */}
             {/* SECTION 4: DEV SANDBOX SIMULATION BAR */}
             {/* ------------------------------------------------------------- */}
-            <div className="p-4 bg-zinc-50 dark:bg-zinc-900/40 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-zinc-600 dark:text-zinc-400">
+            {/* <div className="p-4 bg-zinc-50 dark:bg-zinc-900/40 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-zinc-600 dark:text-zinc-400">
                 <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono font-bold text-[10px] rounded">
                         DEV SANDBOX
@@ -610,7 +610,7 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
                         Simulate Studio
                     </button>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 }
