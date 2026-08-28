@@ -53,3 +53,5 @@ next-env.d.ts
 # temp config files (may contain credentials)
 drizzle.config.temp.ts
 *.temp.ts
+
+.commandcode

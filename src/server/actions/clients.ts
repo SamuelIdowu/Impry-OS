@@ -1,5 +1,5 @@
 'use server';
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 
 import {
     getClients,
@@ -16,7 +16,9 @@ import { db } from '@/server/db';
 import { clients, projects, payments } from '@/server/db/schema';
 import { eq, inArray, and } from 'drizzle-orm';
 import { withAuth } from '@/lib/auth-guard';
+import { canCreateClient } from '@/lib/payments/guards';
 import { z } from 'zod';
+import { sql, count as sqlCount } from 'drizzle-orm';
 
 const createClientSchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -34,34 +36,30 @@ const updateClientSchema = createClientSchema.partial();
 export async function fetchClientStats() {
     return withAuth(async (user, workspaceId) => {
         try {
-            // Total Clients
-            const userClients = await db.query.clients.findMany({
-                where: and(eq(clients.workspaceId, workspaceId), eq(clients.userId, user.id)),
-            });
-            const totalClients = userClients.length;
-
-            // Active Projects
-            const userProjects = await db.query.projects.findMany({
-                where: and(eq(projects.workspaceId, workspaceId), eq(projects.userId, user.id)),
-            });
-            const activeProjects = userProjects.filter(p => p.status === 'in_progress' || p.status === 'planning' || p.status === 'review').length;
-
-            // Revenue
-            const userPayments = await db.query.payments.findMany({
-                where: and(eq(payments.workspaceId, workspaceId), eq(payments.userId, user.id)),
-            });
-
-            // Convert string to number for arithmetic
-            const totalRevenue = userPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
-            const pendingRevenue = userPayments.filter(p => p.status !== 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
+            // Run all three aggregate queries in parallel using SQL aggregations
+            const [clientCountResult, activeProjectCountResult, revenueResult] = await Promise.all([
+                db.select({ count: sqlCount() }).from(clients)
+                    .where(and(eq(clients.workspaceId, workspaceId), eq(clients.userId, user.id))),
+                db.select({ count: sqlCount() }).from(projects)
+                    .where(and(
+                        eq(projects.workspaceId, workspaceId),
+                        eq(projects.userId, user.id),
+                        inArray(projects.status, ['in_progress', 'planning', 'review'])
+                    )),
+                db.select({
+                    totalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+                    pendingRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} != 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+                }).from(payments)
+                    .where(and(eq(payments.workspaceId, workspaceId), eq(payments.userId, user.id))),
+            ]);
 
             return {
                 success: true,
                 data: {
-                    totalClients,
-                    activeProjects,
-                    totalRevenue,
-                    pendingRevenue
+                    totalClients: clientCountResult[0]?.count || 0,
+                    activeProjects: activeProjectCountResult[0]?.count || 0,
+                    totalRevenue: Number(revenueResult[0]?.totalRevenue || 0),
+                    pendingRevenue: Number(revenueResult[0]?.pendingRevenue || 0),
                 }
             };
         } catch (error) {
@@ -87,6 +85,7 @@ export async function fetchClientPayments(clientId: string) {
 
             const data = await db.query.payments.findMany({
                 where: inArray(payments.projectId, projectIds),
+                limit: 100,
             });
 
             return { success: true, data };
@@ -135,6 +134,16 @@ export async function fetchClient(id: string) {
 export async function createClientAction(data: CreateClientInput) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canCreateClient(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Workspace plan limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} clients). Upgrade to Pro for unlimited clients.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+
             const validatedData = createClientSchema.parse(data);
             const newClient = await createClient(validatedData);
             revalidatePath(`/${workspaceId}/clients`);
@@ -212,6 +221,24 @@ export async function updateClientNotesAction(id: string, notes: string) {
 export async function importClientsAction(clientsList: CreateClientInput[]) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canCreateClient(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Workspace plan limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} clients). Upgrade to Pro to import clients.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+            if (typeof limitCheck.maxAllowed === 'number' && limitCheck.currentCount + clientsList.length > limitCheck.maxAllowed) {
+                return {
+                    success: false,
+                    error: `Importing ${clientsList.length} clients exceeds your plan capacity (${limitCheck.currentCount}/${limitCheck.maxAllowed}). Upgrade to Pro.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+
             // Prepare data with user_id and timestamps
             const clientsToInsert = clientsList.map(client => ({
                 ...client,

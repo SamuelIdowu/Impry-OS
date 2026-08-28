@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { CalendarView } from '@/components/calendar/CalendarView'
+import { CalendarViewWrapper } from '@/components/calendar/CalendarViewWrapper'
 import { fetchCalendarEventsAction } from '@/server/actions/calendar'
 
 export default async function CalendarPage() {
@@ -18,7 +18,7 @@ export default async function CalendarPage() {
 
             <div className="flex-1 min-h-0 bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
                 <Suspense fallback={<div className="p-8 text-center text-zinc-500">Loading calendar...</div>}>
-                    <CalendarView initialEvents={events || []} />
+                    <CalendarViewWrapper initialEvents={events || []} />
                 </Suspense>
             </div>
         </div>

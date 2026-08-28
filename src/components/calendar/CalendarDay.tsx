@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { format, isSameMonth, isToday } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { Plus } from 'lucide-react'
 import type { CalendarEvent } from '@/lib/calendar'
 
 interface CalendarDayProps {
@@ -11,9 +12,10 @@ interface CalendarDayProps {
     events: CalendarEvent[]
     onClick?: () => void
     onEventClick?: (event: CalendarEvent) => void
+    onAddEvent?: (date: Date) => void
 }
 
-export function CalendarDay({ date, currentMonth, events, onClick, onEventClick }: CalendarDayProps) {
+export function CalendarDay({ date, currentMonth, events, onClick, onEventClick, onAddEvent }: CalendarDayProps) {
     const isCurrentMonth = isSameMonth(date, currentMonth)
     const isDayToday = isToday(date)
 
@@ -69,6 +71,20 @@ export function CalendarDay({ date, currentMonth, events, onClick, onEventClick 
                 )}>
                     {format(date, 'd')}
                 </span>
+
+                {/* Add event button — visible on hover for current month days */}
+                {isCurrentMonth && onAddEvent && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onAddEvent(date)
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-opacity duration-150"
+                        title="Add event"
+                    >
+                        <Plus className="h-3 w-3" />
+                    </button>
+                )}
             </div>
 
             <div className="flex flex-col gap-1">

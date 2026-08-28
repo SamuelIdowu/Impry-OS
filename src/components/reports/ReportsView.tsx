@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 "use client"
 
 import React from "react"
@@ -32,10 +33,11 @@ import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { RevenueChart } from "@/components/reports/RevenueChart"
 import { FunnelChart } from "@/components/reports/FunnelChart"
+import { UpgradeModal } from "@/components/billing/UpgradeModal"
 import { convertToCSV, downloadCSV } from "@/lib/csv-export"
-import { addDays, isAfter, parse, format, subDays, isSameYear, parseISO, startOfYear } from "date-fns"
-import { Project } from "@/lib/types/project"
+import { format, isAfter } from "date-fns"
 import { Payment } from "@/lib/types/payment"
+import { useReportsData, getStartDate } from "@/hooks/useReportsData"
 
 type DateRange = "7days" | "30days" | "90days" | "year" | "all" | "creation"
 
@@ -49,177 +51,51 @@ const DATE_RANGES: { label: string; value: DateRange }[] = [
 ]
 
 interface ReportsViewProps {
-    projects: any[]; // Using any for now to facilitate mapping flexibility, ideally strict types 
+    projects: any[];
     invoices: Payment[];
     userCreatedAt: string;
+    planTier?: string;
 }
 
-export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewProps) {
+export function ReportsView({ projects, invoices, userCreatedAt, planTier = "free" }: ReportsViewProps) {
     const [searchQuery, setSearchQuery] = React.useState("")
     const [statusFilter, setStatusFilter] = React.useState<string>("All")
     const [projectReportView, setProjectReportView] = React.useState<"list" | "grid">("list")
     const [dateRange, setDateRange] = React.useState<DateRange>("30days")
-    
+    const [showUpgradeModal, setShowUpgradeModal] = React.useState(false)
+
     const params = useParams()
     const workspaceId = params.workspaceId as string || 'default'
 
-    // Helper to get start date based on range
-    const getStartDate = (range: DateRange) => {
-        const today = new Date()
-        switch (range) {
-            case "7days": return subDays(today, 7)
-            case "30days": return subDays(today, 30)
-            case "90days": return subDays(today, 90)
-            case "year": return startOfYear(today)
-            case "creation": return new Date(userCreatedAt)
-            case "all": return new Date(0) // Beginning of time
-            default: return subDays(today, 30)
-        }
-    }
+    const { filteredProjects: dateFilteredProjects, stats, revenueChartData } = useReportsData(projects, invoices, userCreatedAt, dateRange)
 
-    // Filter projects based on date range (using startDate)
     const filteredProjects = React.useMemo(() => {
-        const startDateLimit = getStartDate(dateRange)
-
-        return projects.filter(project => {
+        return dateFilteredProjects.filter(project => {
             const matchesSearch = (project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (project.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
-
             const matchesStatus = statusFilter === "All" || project.status === statusFilter.toLowerCase()
-
-            // Date filtering - assuming createdAt is the start date
-            const projectDate = new Date(project.createdAt)
-            const matchesDate = isAfter(projectDate, startDateLimit)
-
-            return matchesSearch && matchesStatus && matchesDate
+            return matchesSearch && matchesStatus
         })
-    }, [searchQuery, statusFilter, dateRange, projects, userCreatedAt])
+    }, [searchQuery, statusFilter, dateFilteredProjects])
 
-    // Calculate Stats based on Date Range
-    const stats = React.useMemo(() => {
-        const startDateLimit = getStartDate(dateRange)
-
-        // Filter invoices for revenue calculation
-        const filteredInvoices = invoices.filter(inv => {
-            if (!inv.createdAt) return false // Should not happen
-            const invDate = new Date(inv.createdAt)
-            return isAfter(invDate, startDateLimit)
-        })
-
-        const totalRevenue = filteredInvoices.reduce((sum, inv) => {
-            const paidVal = (inv.status === 'paid')
-                ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                : 0;
-            return sum + paidVal;
-        }, 0)
-        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? (Number(inv.amount) - Number(inv.amountPaid)) : 0), 0)
-        // Count unique clients with outstanding
-        const outstandingClients = new Set(filteredInvoices.filter(inv => inv.status !== 'paid').map(inv => inv.clientId)).size
-
-        // Calculate Project Success Rate
-        const relevantProjects = projects.filter(project => {
-            const projectDate = new Date(project.createdAt)
-            return isAfter(projectDate, startDateLimit)
-        })
-        const completedProjects = relevantProjects.filter(p => p.status === 'completed').length
-        const totalProjects = relevantProjects.length
-        const successRateVal = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0
-
-
-        return {
-            totalRevenue,
-            outstandingAmount,
-            outstandingClients,
-            successRate: successRateVal,
-            filteredInvoices, // Return these for export
-            relevantProjects  // Return these for export
+    const handleExportReport = () => {
+        if (planTier === "free") {
+            setShowUpgradeModal(true)
+            return
         }
-    }, [dateRange, invoices, projects, userCreatedAt])
 
-    // Prepare Chart Data
-    // Prepare Chart Data
-    const revenueChartData = React.useMemo(() => {
-        const startDateLimit = getStartDate(dateRange)
+        const exportData = filteredProjects.map(p => ({
+            "Project Name": p.name,
+            "Client": p.client?.name || "Unknown",
+            "Status": p.status,
+            "Progress (%)": p.progress || 0,
+            "Due Date": p.dueDate ? format(new Date(p.dueDate), "yyyy-MM-dd") : "-",
+            "Created Date": p.createdAt ? format(new Date(p.createdAt), "yyyy-MM-dd") : "-"
+        }))
 
-        if (dateRange === "7days" || dateRange === "30days") {
-            const days = dateRange === "7days" ? 7 : 30
-            const data = []
-            for (let i = days - 1; i >= 0; i--) {
-                const date = subDays(new Date(), i)
-                const dayStr = format(date, "MMM dd") // e.g. Oct 25
-
-                // Sum invoices for this day
-                const dayRevenue = invoices
-                    .filter(inv => inv.status === 'paid')
-                    .filter(inv => {
-                        if (!inv.createdAt) return false;
-                        const invDate = new Date(inv.createdAt)
-                        return format(invDate, "MMM dd") === dayStr && isSameYear(invDate, date)
-                    })
-                    .reduce((sum, inv) => {
-                        const paidVal = (inv.status === 'paid')
-                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                            : 0;
-                        return sum + paidVal;
-                    }, 0)
-
-                data.push({ month: dayStr, revenue: dayRevenue })
-            }
-            return data
-        } else if (dateRange === "creation" || dateRange === "all") {
-            // Monthly breakdown from creation date or very beginning
-            const start = dateRange === "creation" ? new Date(userCreatedAt) : new Date(invoices.length > 0 ? Math.min(...invoices.map(i => new Date(i.createdAt!).getTime())) : Date.now())
-            const end = new Date()
-            const data = []
-
-            let current = new Date(start)
-            // Normalize to start of month
-            current.setDate(1)
-
-            while (current <= end || format(current, "MMM yyyy") === format(end, "MMM yyyy")) {
-                const monthStr = format(current, "MMM yyyy")
-                const monthRevenue = invoices
-                    .filter(inv => inv.status === 'paid')
-                    .filter(inv => {
-                        if (!inv.createdAt) return false;
-                        const invDate = new Date(inv.createdAt)
-                        return format(invDate, "MMM yyyy") === monthStr
-                    })
-                    .reduce((sum, inv) => {
-                        const paidVal = (inv.status === 'paid')
-                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                            : 0;
-                        return sum + paidVal;
-                    }, 0)
-
-                data.push({ month: format(current, "MMM ''yy"), revenue: monthRevenue }) // MMM 'yy for compact display
-
-                // Next month
-                current.setMonth(current.getMonth() + 1)
-            }
-            return data
-        } else {
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-            const currentYear = new Date().getFullYear()
-
-            return months.map(month => {
-                const monthRevenue = invoices
-                    .filter(inv => inv.status === 'paid')
-                    .filter(inv => {
-                        if (!inv.createdAt) return false;
-                        const invDate = new Date(inv.createdAt)
-                        return format(invDate, "MMM") === month && invDate.getFullYear() === currentYear
-                    })
-                    .reduce((sum, inv) => {
-                        const paidVal = (inv.status === 'paid')
-                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                            : 0;
-                        return sum + paidVal;
-                    }, 0)
-                return { month, revenue: monthRevenue }
-            })
-        }
-    }, [dateRange, invoices, userCreatedAt])
+        const csv = convertToCSV(exportData)
+        downloadCSV(csv, `impry_project_report_${format(new Date(), "yyyyMMdd")}.csv`)
+    }
 
     // Status filtering
     const uniqueStatuses = ["All", "active", "completed", "pending"] // Simplified for now, could be dynamic
@@ -231,11 +107,11 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                 {/* Header */}
                 <PageHeader
                     title="Reports & Insights"
-                    description="Key metrics on revenue, project health, and client retention."
+                    description="Key metrics on revenue, project health, and outstanding invoices."
                 >
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-white border border-zinc-200 text-zinc-900 text-sm font-medium shadow-sm hover:bg-zinc-50 transition-all min-w-[140px]">
+                            <button className="flex items-center justify-center rounded-lg h-10 px-4 bg-white border border-zinc-200 text-zinc-900 text-sm font-medium shadow-sm hover:bg-zinc-50 transition-colors shadow duration-150 min-w-[140px]">
                                 <Calendar className="mr-2 h-[18px] w-[18px]" />
                                 <span>{DATE_RANGES.find(r => r.value === dateRange)?.label}</span>
                             </button>
@@ -252,11 +128,22 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <button className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group">
+                    <button
+                        onClick={handleExportReport}
+                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-colors shadow duration-150 group"
+                    >
                         <Download className="mr-2 h-[18px] w-[18px]" />
                         <span>Export Report</span>
                     </button>
                 </PageHeader>
+
+                <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                    title="CSV Data Export is a Pro Feature"
+                    description="Exporting financial reports and project status data to CSV/Excel is available on Freelancer Pro and Studio plans."
+                    workspaceId={workspaceId}
+                />
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -295,7 +182,11 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
 
                 {/* Middle Section (Charts) */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <RevenueChart data={revenueChartData} />
+                    <RevenueChart
+                        data={revenueChartData}
+                        range={dateRange === "7days" ? "7d" : dateRange === "30days" ? "30d" : dateRange === "90days" ? "90d" : "12m"}
+                        onRangeChange={(r) => setDateRange(r === "7d" ? "7days" : r === "30d" ? "30days" : r === "90d" ? "90days" : "year")}
+                    />
                     <FunnelChart />
                 </div>
 
@@ -312,7 +203,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                     <Search className="h-[18px] w-[18px]" />
                                 </span>
                                 <input
-                                    className="h-9 w-48 pl-9 pr-3 rounded-lg border border-zinc-200 bg-white text-sm focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-all placeholder:text-zinc-500"
+                                    className="h-9 w-48 pl-9 pr-3 rounded-lg border border-zinc-200 bg-white text-sm focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-colors duration-150 placeholder:text-zinc-500"
                                     placeholder="Search projects..."
                                     type="text"
                                     value={searchQuery}
@@ -360,7 +251,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                 <button
                                     onClick={() => setProjectReportView("list")}
                                     className={cn(
-                                        "p-1.5 rounded-md transition-all",
+                                        "p-1.5 rounded-md transition-colors duration-150",
                                         projectReportView === "list"
                                             ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
                                             : "text-zinc-500 hover:bg-zinc-100"
@@ -372,7 +263,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                 <button
                                     onClick={() => setProjectReportView("grid")}
                                     className={cn(
-                                        "p-1.5 rounded-md transition-all",
+                                        "p-1.5 rounded-md transition-colors duration-150",
                                         projectReportView === "grid"
                                             ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
                                             : "text-zinc-500 hover:bg-zinc-100"
@@ -391,7 +282,7 @@ export function ReportsView({ projects, invoices, userCreatedAt }: ReportsViewPr
                                     <Link
                                         key={project.id}
                                         href={`/${workspaceId}/projects/${project.id}`}
-                                        className="p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-all flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md group"
+                                        className="p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-colors shadow duration-200 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md group"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-3">

@@ -110,7 +110,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                         <div className="bg-zinc-100 p-1.5 rounded-md text-zinc-900 flex items-center justify-center">
                             <Bell className="h-5 w-5" />
                         </div>
-                        <h3 className="font-bold text-lg text-zinc-900">Follow-Up Inbox</h3>
+                        <h3 className="font-semibold text-lg text-zinc-900">Follow-Up Inbox</h3>
                     </div>
                 </div>
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -197,7 +197,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                                 <TableCell className="px-6 py-5 text-right">
                                     <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                         <button
-                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-green-500 hover:text-green-600 text-zinc-500 shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-green-500 hover:text-green-600 text-zinc-500 shadow-sm flex items-center justify-center transition-colors duration-150 disabled:opacity-50"
                                             title="Mark Done"
                                             onClick={() => handleMarkDone(reminder.id)}
                                             disabled={actionLoading === reminder.id}
@@ -205,7 +205,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                                             <Check className="h-4 w-4" />
                                         </button>
                                         <button
-                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-zinc-400 hover:text-zinc-900 text-zinc-500 shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-zinc-400 hover:text-zinc-900 text-zinc-500 shadow-sm flex items-center justify-center transition-colors duration-150 disabled:opacity-50"
                                             title="Snooze"
                                             onClick={() => handleSnooze(reminder.id)}
                                             disabled={actionLoading === reminder.id}
@@ -213,7 +213,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                                             <Clock className="h-4 w-4" />
                                         </button>
                                         <button
-                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-zinc-400 hover:text-zinc-900 text-zinc-500 shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-zinc-400 hover:text-zinc-900 text-zinc-500 shadow-sm flex items-center justify-center transition-colors duration-150 disabled:opacity-50"
                                             title="Open Project"
                                             onClick={() => handleOpenProject(reminder.projectId)}
                                             disabled={!reminder.projectId || actionLoading === reminder.id}
@@ -225,7 +225,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                                             <a
                                                 href={`mailto:${reminder.clientEmail}`}
                                                 className={cn(
-                                                    "size-8 rounded-lg bg-white border border-zinc-200 hover:border-blue-400 hover:text-blue-600 text-zinc-500 shadow-sm flex items-center justify-center transition-all",
+                                                    "size-8 rounded-lg bg-white border border-zinc-200 hover:border-blue-400 hover:text-blue-600 text-zinc-500 shadow-sm flex items-center justify-center transition-colors duration-150",
                                                     actionLoading === reminder.id && "opacity-50 pointer-events-none"
                                                 )}
                                                 title={`Email ${reminder.clientName}`}
@@ -235,7 +235,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                                         )}
 
                                         <button
-                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-red-400 hover:text-red-600 text-zinc-500 shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                                            className="size-8 rounded-lg bg-white border border-zinc-200 hover:border-red-400 hover:text-red-600 text-zinc-500 shadow-sm flex items-center justify-center transition-colors duration-150 disabled:opacity-50"
                                             title="Delete"
                                             onClick={() => handleDelete(reminder.id)}
                                             disabled={actionLoading === reminder.id}

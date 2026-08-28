@@ -1,7 +1,7 @@
 import React from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { getInvoice, getInvoiceByNumber } from "@/server/actions/payments"
+import { getInvoice, getInvoiceByNumber } from "@/server/actions/invoices"
 import { InvoiceDetailView } from "@/components/invoices/InvoiceDetailView"
 
 // Use standard PageProps type for Next.js App Router

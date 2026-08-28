@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/server/db";
-import { workspaces } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+import { workspaces, teamMembers, projects, clients } from "@/server/db/schema";
+import { eq, count } from "drizzle-orm";
 import { getUser } from "@/lib/auth";
 import { verifyWorkspaceAccess } from "@/server/actions/workspaces";
 import { getPaymentProvider, getPlanConfig, PlanTier, BillingCycle } from "@/lib/payments";
@@ -13,42 +13,54 @@ export async function getWorkspaceBillingInfo(workspaceId: string) {
     throw new Error("Unauthorized: Please sign in.");
   }
 
-  const hasAccess = await verifyWorkspaceAccess(workspaceId);
+  const hasAccess = await verifyWorkspaceAccess(workspaceId, user);
   if (!hasAccess) {
     throw new Error("Access denied: You do not have access to this workspace.");
   }
 
-  const [workspace] = await db
-    .select({
-      id: workspaces.id,
-      name: workspaces.name,
-      planTier: workspaces.planTier,
-      subscriptionStatus: workspaces.subscriptionStatus,
-      paymentProvider: workspaces.paymentProvider,
-      subscriptionId: workspaces.subscriptionId,
-      customerId: workspaces.customerId,
-      currentPeriodEnd: workspaces.currentPeriodEnd,
-    })
-    .from(workspaces)
-    .where(eq(workspaces.id, workspaceId))
-    .limit(1);
+  // Run workspace + all usage counts in parallel
+  const [workspace, teamMembersCount, projectsCount, clientsCount] = await Promise.all([
+    db
+      .select({
+        id: workspaces.id,
+        name: workspaces.name,
+        planTier: workspaces.planTier,
+        subscriptionStatus: workspaces.subscriptionStatus,
+        paymentProvider: workspaces.paymentProvider,
+        subscriptionId: workspaces.subscriptionId,
+        customerId: workspaces.customerId,
+        currentPeriodEnd: workspaces.currentPeriodEnd,
+      })
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
+      .limit(1),
+    db.select({ count: count() }).from(teamMembers).where(eq(teamMembers.workspaceId, workspaceId)),
+    db.select({ count: count() }).from(projects).where(eq(projects.workspaceId, workspaceId)),
+    db.select({ count: count() }).from(clients).where(eq(clients.workspaceId, workspaceId)),
+  ]);
 
-  if (!workspace) {
+  const ws = workspace[0];
+  if (!ws) {
     throw new Error("Workspace not found.");
   }
 
-  const currentTier = (workspace.planTier as PlanTier) || "free";
+  const currentTier = (ws.planTier as PlanTier) || "free";
   const planConfig = getPlanConfig(currentTier);
 
   return {
-    workspaceId: workspace.id,
+    workspaceId: ws.id,
     planTier: currentTier,
-    subscriptionStatus: workspace.subscriptionStatus || "active",
-    paymentProvider: workspace.paymentProvider || "none",
-    subscriptionId: workspace.subscriptionId,
-    customerId: workspace.customerId,
-    currentPeriodEnd: workspace.currentPeriodEnd,
+    subscriptionStatus: ws.subscriptionStatus || "active",
+    paymentProvider: ws.paymentProvider || "none",
+    subscriptionId: ws.subscriptionId,
+    customerId: ws.customerId,
+    currentPeriodEnd: ws.currentPeriodEnd,
     planConfig,
+    usage: {
+      teamMembers: teamMembersCount[0]?.count || 0,
+      projects: projectsCount[0]?.count || 0,
+      clients: clientsCount[0]?.count || 0,
+    }
   };
 }
 
@@ -135,6 +147,10 @@ export async function getBillingPortalUrl(workspaceId: string) {
  * Development & Testing helper: instantly activates a plan tier for the workspace
  */
 export async function simulatePlanUpgrade(workspaceId: string, planTier: PlanTier) {
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("This action is only available in development mode.");
+  }
+
   const user = await getUser();
   if (!user) {
     throw new Error("Unauthorized");

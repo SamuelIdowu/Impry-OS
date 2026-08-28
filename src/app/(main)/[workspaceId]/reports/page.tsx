@@ -1,19 +1,24 @@
 import React from "react"
 import { ReportsView } from "@/components/reports/ReportsView"
 import { fetchProjects } from "@/server/actions/projects"
-import { getInvoices } from "@/server/actions/payments"
+import { getInvoices } from "@/server/actions/invoices"
 import { getUser } from "@/lib/auth"
+import { getCurrentWorkspaceId } from "@/lib/workspace"
+import { getWorkspacePlan } from "@/lib/payments/guards"
 
 export default async function ReportsPage() {
-    const [projects, invoices, user] = await Promise.all([
+    const workspaceId = await getCurrentWorkspaceId()
+    const [projects, invoices, user, planTier] = await Promise.all([
         fetchProjects(),
         getInvoices(),
-        getUser()
+        getUser(),
+        workspaceId ? getWorkspacePlan(workspaceId) : Promise.resolve("free")
     ])
 
     return <ReportsView
         projects={projects.success && projects.data ? projects.data : []}
         invoices={invoices}
-        userCreatedAt={user?.createdAt.toISOString() || new Date().toISOString()} // Fallback to now if no user (shouldn't happen in auth'd app)
+        userCreatedAt={user?.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString()}
+        planTier={planTier}
     />
 }

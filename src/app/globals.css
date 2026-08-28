@@ -118,12 +118,12 @@
 
 @layer base {
   html {
-    font-size: 14px; /* Scale down by 12.5% on mobile */
+    font-size: 12px; /* Scale down by 12.5% on mobile */
   }
 
   @media (min-width: 768px) {
     html {
-      font-size: 16px; /* Default 1rem = 16px on md+ */
+      font-size: 14px; /* Default 1rem = 14px on md+ */
     }
   }
 
@@ -134,4 +134,49 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Reduced motion: disable all non-essential animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Touch device hover gating — utility class */
+@media (hover: none) and (pointer: coarse) {
+  .touch-no-hover:hover {
+    all: unset;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 300ms ease-out forwards;
+  opacity: 0;
 }

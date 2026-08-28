@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { withAuth } from '@/lib/auth-guard';
+import { canInviteTeamMember } from '@/lib/payments/guards';
 import { getUser } from '@/lib/auth';
 import { db } from '@/server/db';
 import { workspaces, workspaceMembers, users, workspaceInvitations } from '@/server/db/schema';
@@ -47,6 +48,16 @@ export async function inviteMemberAction(data: {
 }) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canInviteTeamMember(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Workspace team limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} seats). Upgrade to Studio plan for up to 5 team seats.`,
+                    requiresUpgrade: true,
+                    targetTier: 'studio',
+                };
+            }
+
             const validated = inviteSchema.parse({
                 email: data.email,
                 role: data.role || 'member',
@@ -89,16 +100,17 @@ export async function inviteMemberAction(data: {
                 role: validated.role,
             });
 
-            // 4. Fetch Workspace info & Inviter name for the email
-            const workspace = await db.query.workspaces.findFirst({
-                where: eq(workspaces.id, workspaceId),
-                columns: { name: true }
-            });
-
-            const inviterProfile = await db.query.users.findFirst({
-                where: eq(users.id, user.id),
-                columns: { name: true }
-            });
+            // 4. Fetch workspace + inviter profile in parallel for email
+            const [workspace, inviterProfile] = await Promise.all([
+                db.query.workspaces.findFirst({
+                    where: eq(workspaces.id, workspaceId),
+                    columns: { name: true }
+                }),
+                db.query.users.findFirst({
+                    where: eq(users.id, user.id),
+                    columns: { name: true }
+                }),
+            ]);
 
             const workspaceName = workspace?.name || 'Workspace';
             const inviterName = inviterProfile?.name || user.name || 'A team member';
@@ -144,15 +156,16 @@ export async function resendInvitationAction(invitationId: string, providedWorks
                 return { success: false, error: 'Invitation not found' };
             }
 
-            const workspace = await db.query.workspaces.findFirst({
-                where: eq(workspaces.id, workspaceId),
-                columns: { name: true }
-            });
-
-            const inviterProfile = await db.query.users.findFirst({
-                where: eq(users.id, user.id),
-                columns: { name: true }
-            });
+            const [workspace, inviterProfile] = await Promise.all([
+                db.query.workspaces.findFirst({
+                    where: eq(workspaces.id, workspaceId),
+                    columns: { name: true }
+                }),
+                db.query.users.findFirst({
+                    where: eq(users.id, user.id),
+                    columns: { name: true }
+                }),
+            ]);
 
             try {
                 await sendWorkspaceInvitationEmail({

@@ -11,6 +11,7 @@ import {
     removeWorkspaceMember
 } from '@/lib/team';
 import { withAuth } from '@/lib/auth-guard';
+import { canInviteTeamMember } from '@/lib/payments/guards';
 import { db } from '@/server/db';
 import { workspaceMembers } from '@/server/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -46,6 +47,16 @@ export async function addTeamMemberAction(data: {
 }) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canInviteTeamMember(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Your current workspace plan allows up to ${limitCheck.maxAllowed} team seat(s). Upgrade to Studio Plan for up to 5 team members.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+
             const validatedData = createTeamMemberSchema.parse(data);
             
             const newMember = await createTeamMember({

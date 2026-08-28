@@ -77,10 +77,12 @@ export function NextReminderCard({ projectId, reminders, clientEmail }: NextRemi
     };
 
     return (
-        <Card className="bg-zinc-900 rounded-2xl p-6 flex flex-col text-white h-full relative overflow-hidden border-none shadow-none">
+        <Card className="bg-zinc-900 rounded-xl p-6 flex flex-col text-white h-full relative overflow-hidden border-none shadow-none">
             <div className="flex justify-between items-start mb-6 z-10 transition-colors">
                 <h3 className="text-lg font-bold text-white">Next Reminder</h3>
-                <MoreVertical className="h-5 w-5 text-zinc-500 cursor-pointer" />
+                <button disabled className="text-zinc-500 opacity-50 cursor-not-allowed" aria-label="More options" title="Coming soon">
+                    <MoreVertical className="h-5 w-5" />
+                </button>
             </div>
 
             <div className="flex-1 z-10">
@@ -123,10 +125,10 @@ export function NextReminderCard({ projectId, reminders, clientEmail }: NextRemi
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button className="h-8 w-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors">
+                    <button disabled className="h-8 w-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors opacity-50 cursor-not-allowed" aria-label="Snooze reminder" title="Coming soon">
                         <Clock className="h-4 w-4 text-zinc-400" />
                     </button>
-                    <button className="h-8 w-8 rounded-full bg-white text-zinc-900 hover:bg-zinc-200 flex items-center justify-center transition-colors">
+                    <button disabled className="h-8 w-8 rounded-full bg-white text-zinc-900 hover:bg-zinc-200 flex items-center justify-center transition-colors opacity-50 cursor-not-allowed" aria-label="Mark complete" title="Coming soon">
                         <Check className="h-4 w-4" />
                     </button>
                 </div>

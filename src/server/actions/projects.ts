@@ -14,6 +14,7 @@ import {
 import { CreateProjectInput, UpdateProjectInput, ProjectStatus } from '@/lib/types/project';
 import { revalidatePath } from 'next/cache';
 import { withAuth } from '@/lib/auth-guard';
+import { canCreateProject } from '@/lib/payments/guards';
 import { z } from 'zod';
 
 const createProjectSchema = z.object({
@@ -87,6 +88,16 @@ export async function fetchClientProjects(clientId: string) {
 export async function createProjectAction(data: CreateProjectInput) {
     return withAuth(async (user, workspaceId) => {
         try {
+            const limitCheck = await canCreateProject(workspaceId);
+            if (!limitCheck.allowed) {
+                return {
+                    success: false,
+                    error: `Workspace project limit reached (${limitCheck.currentCount}/${limitCheck.maxAllowed} projects). Upgrade to Pro for unlimited projects.`,
+                    requiresUpgrade: true,
+                    planTier: limitCheck.planTier,
+                };
+            }
+
             const validatedData = createProjectSchema.parse(data);
             const newProject = await createProject(validatedData);
             revalidatePath(`/${workspaceId}/projects`);

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Client } from "@/lib/types"
 import { createClientAction } from "@/server/actions/clients"
+import { UpgradeModal } from "@/components/billing/UpgradeModal"
 
 interface NewClientDialogProps {
     open: boolean
@@ -25,6 +26,7 @@ interface NewClientDialogProps {
 export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDialogProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false)
     const [formData, setFormData] = useState({
         name: "",
         companyName: "",
@@ -44,10 +46,6 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
                 company: formData.companyName,
                 email: formData.email,
                 notes: formData.description
-                // location is not in CreateClientInput yet, need to check if schema supports it or put in notes
-                // Looking at schema/types, Client table has user_id, name, email, company, notes, last_contact_date.
-                // Location is likely not in DB or part of notes. I'll append to notes if needed or ignore.
-                // For now, I'll ignore location or append it to notes.
             });
 
             if (res.success && res.data) {
@@ -61,7 +59,7 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
                     totalRevenue: 0,
                     projectCount: 0,
                     lastActive: 'Just now',
-                    location: formData.location, // preserving form input for UI if needed, but it won't persist if not in DB
+                    location: formData.location, 
                     description: res.data.notes || undefined,
                     joinedDate: res.data.createdAt ? new Date(res.data.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
                     avatar: res.data.name.substring(0, 2).toUpperCase()
@@ -78,6 +76,9 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
                     location: "",
                     description: ""
                 })
+            } else if ((res as any).requiresUpgrade) {
+                onOpenChange(false)
+                setShowUpgradeModal(true)
             } else {
                 setError(res.error || "Failed to create client")
             }
@@ -90,86 +91,98 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle>Add New Client</DialogTitle>
-                    <DialogDescription>
-                        Enter the details for your new client. They will be added to your active list.
-                    </DialogDescription>
-                </DialogHeader>
+        <>
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title="Client Limit Reached"
+                description="Your Free Starter workspace plan is capped at 3 active clients. Upgrade to Pro for unlimited clients."
+                limitName="Active Clients"
+                currentCount={3}
+                maxAllowed={3}
+            />
 
-                <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                    {error && (
-                        <div className="bg-red-50 text-red-600 text-sm p-3 rounded-md">
-                            {error}
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>Add New Client</DialogTitle>
+                        <DialogDescription>
+                            Enter the details for your new client. They will be added to your active list.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                        {error && (
+                            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-md">
+                                {error}
+                            </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Client Name</Label>
+                                <Input
+                                    id="name"
+                                    placeholder="e.g. John Doe"
+                                    required
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="company">Company</Label>
+                                <Input
+                                    id="company"
+                                    placeholder="e.g. Acme Inc"
+                                    value={formData.companyName}
+                                    onChange={e => setFormData({ ...formData, companyName: e.target.value })}
+                                />
+                            </div>
                         </div>
-                    )}
-                    <div className="grid grid-cols-2 gap-4">
+
                         <div className="space-y-2">
-                            <Label htmlFor="name">Client Name</Label>
+                            <Label htmlFor="email">Email Address</Label>
                             <Input
-                                id="name"
-                                placeholder="e.g. John Doe"
+                                id="email"
+                                type="email"
+                                placeholder="john@example.com"
                                 required
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
                             />
                         </div>
+
                         <div className="space-y-2">
-                            <Label htmlFor="company">Company</Label>
+                            <Label htmlFor="location">Location</Label>
                             <Input
-                                id="company"
-                                placeholder="e.g. Acme Inc"
-                                value={formData.companyName}
-                                onChange={e => setFormData({ ...formData, companyName: e.target.value })}
+                                id="location"
+                                placeholder="e.g. San Francisco, CA"
+                                value={formData.location}
+                                onChange={e => setFormData({ ...formData, location: e.target.value })}
                             />
                         </div>
-                    </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="john@example.com"
-                            required
-                            value={formData.email}
-                            onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        />
-                    </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description / Notes</Label>
+                            <Textarea
+                                id="description"
+                                placeholder="Brief description of the client or relationship..."
+                                className="resize-none h-24"
+                                value={formData.description}
+                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            />
+                        </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="location">Location</Label>
-                        <Input
-                            id="location"
-                            placeholder="e.g. San Francisco, CA"
-                            value={formData.location}
-                            onChange={e => setFormData({ ...formData, location: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Description / Notes</Label>
-                        <Textarea
-                            id="description"
-                            placeholder="Brief description of the client or relationship..."
-                            className="resize-none h-24"
-                            value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        />
-                    </div>
-
-                    <DialogFooter className="pt-2">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-zinc-900 text-white hover:bg-zinc-800">
-                            {isLoading ? "Adding..." : "Add Client"}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                        <DialogFooter className="pt-2">
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isLoading} className="bg-zinc-900 text-white hover:bg-zinc-800">
+                                {isLoading ? "Adding..." : "Add Client"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }

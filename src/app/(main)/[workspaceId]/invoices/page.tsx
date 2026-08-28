@@ -1,6 +1,6 @@
 import React from "react"
 import { InvoiceList } from "@/components/invoices/InvoiceList"
-import { getInvoices } from "@/server/actions/payments"
+import { getInvoices } from "@/server/actions/invoices"
 import { fetchClients } from "@/server/actions/clients"
 import { fetchProjects } from "@/server/actions/projects"
 

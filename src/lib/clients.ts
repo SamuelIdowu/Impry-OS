@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { clients, projects, users, payments } from '@/server/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
@@ -12,6 +12,7 @@ export async function getClients(): Promise<ClientWithProjects[]> {
     const result = await db.query.clients.findMany({
         where: and(eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
         orderBy: [desc(clients.createdAt)],
+        limit: 100,
         with: {
             projects: {
                 columns: { id: true, name: true, status: true }
@@ -61,13 +62,6 @@ export async function getClientById(id: string): Promise<ClientWithProjects | nu
 export async function createClient(input: CreateClientInput): Promise<Client> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
-
-    const existingClients = await db.select({ id: clients.id }).from(clients).where(eq(clients.userId, user.id));
-    
-    // Free plan check (assuming all users are free unless we add subscription_plan column)
-    if (existingClients.length >= 3) {
-        throw new Error('Free plan limit reached. Upgrade to Pro to add more clients.');
-    }
 
     const [newClient] = await db.insert(clients).values({
         ...input,

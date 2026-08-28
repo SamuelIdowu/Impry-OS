@@ -2,7 +2,7 @@ import React from "react"
 import { SettingsForm } from "@/components/settings/SettingsForm"
 import { getUser } from "@/lib/auth"
 import { db } from "@/server/db"
-import { users } from "@/server/db/schema"
+import { users, workspaces } from "@/server/db/schema"
 import { eq } from "drizzle-orm"
 
 export default async function SettingsPage({
@@ -25,5 +25,14 @@ export default async function SettingsPage({
 
     const profile = profileArray[0]
 
-    return <SettingsForm user={user} profile={profile} workspaceId={workspaceId} />
+    const [workspace] = await db
+        .select({
+            planTier: workspaces.planTier,
+            subscriptionStatus: workspaces.subscriptionStatus,
+        })
+        .from(workspaces)
+        .where(eq(workspaces.id, workspaceId))
+        .limit(1)
+
+    return <SettingsForm user={user} profile={profile} workspaceId={workspaceId} workspacePlan={workspace?.planTier || "free"} workspaceStatus={workspace?.subscriptionStatus || "active"} />
 }

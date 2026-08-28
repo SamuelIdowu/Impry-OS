@@ -1,9 +1,8 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { eq, and, lte, lt, gte, inArray, sql, desc, asc } from 'drizzle-orm';
 import { reminders, payments, projects, timelineEvents } from '@/server/db/schema';
 import { logTimelineEvent } from './timeline';
-import { getUser } from './auth';
 
 export interface DashboardReminder {
     id: string;
@@ -47,9 +46,7 @@ export interface DashboardMetrics {
 /**
  * Get due and overdue reminders for the dashboard
  */
-export async function getDashboardReminders(): Promise<DashboardReminder[]> {
-    const user = await getUser();
-
+export async function getDashboardReminders(user: any): Promise<DashboardReminder[]> {
     if (!user) {
         throw new Error('User not authenticated');
     }
@@ -62,6 +59,7 @@ export async function getDashboardReminders(): Promise<DashboardReminder[]> {
             lte(reminders.reminderDate, new Date(Date.now() + 24 * 60 * 60 * 1000))
         ),
         orderBy: [asc(reminders.reminderDate)],
+        limit: 50,
         with: {
             project: {
                 columns: { name: true },
@@ -94,9 +92,7 @@ export async function getDashboardReminders(): Promise<DashboardReminder[]> {
 /**
  * Get projects at risk due to overdue payments
  */
-export async function getPaymentRiskProjects(): Promise<AtRiskProject[]> {
-    const user = await getUser();
-
+export async function getPaymentRiskProjects(user: any): Promise<AtRiskProject[]> {
     if (!user) {
         throw new Error('User not authenticated');
     }
@@ -110,6 +106,7 @@ export async function getPaymentRiskProjects(): Promise<AtRiskProject[]> {
             inArray(payments.status, ['pending', 'overdue']),
             lt(payments.dueDate, nowStr)
         ),
+        limit: 50,
         with: {
             project: {
                 with: {
@@ -158,9 +155,7 @@ export async function getPaymentRiskProjects(): Promise<AtRiskProject[]> {
 /**
  * Get projects at risk due to lack of communication (ghosting)
  */
-export async function getGhostingRiskProjects(): Promise<AtRiskProject[]> {
-    const user = await getUser();
-
+export async function getGhostingRiskProjects(user: any): Promise<AtRiskProject[]> {
     if (!user) {
         throw new Error('User not authenticated');
     }
@@ -173,6 +168,7 @@ export async function getGhostingRiskProjects(): Promise<AtRiskProject[]> {
             eq(projects.userId, user.id),
             inArray(projects.status, ['planning', 'in_progress'])
         ),
+        limit: 50,
         with: {
             client: {
                 columns: { name: true }
@@ -182,18 +178,28 @@ export async function getGhostingRiskProjects(): Promise<AtRiskProject[]> {
 
     const atRiskProjects: AtRiskProject[] = [];
 
-    for (const project of data) {
-        // Get latest timeline event for this project
-        const events = await db.query.timelineEvents.findMany({
-            where: eq(timelineEvents.projectId, project.id),
+    // Batch fetch latest timeline event for ALL active projects in one query (fixes N+1)
+    const projectIds = data.map(p => p.id);
+    const allLatestEvents = projectIds.length > 0
+        ? await db.query.timelineEvents.findMany({
+            where: inArray(timelineEvents.projectId, projectIds),
             orderBy: [desc(timelineEvents.eventDate)],
-            limit: 1,
-            columns: { eventDate: true }
-        });
+            limit: projectIds.length * 3,
+            columns: { projectId: true, eventDate: true }
+        })
+        : [];
 
-        const lastActivity = events && events.length > 0 && events[0].eventDate
-            ? events[0].eventDate
-            : project.createdAt || new Date();
+    const lastEventMap = new Map<string, Date>();
+    for (const event of allLatestEvents) {
+        if (event.projectId && event.eventDate && !lastEventMap.has(event.projectId)) {
+            lastEventMap.set(event.projectId, event.eventDate);
+        }
+    }
+
+    for (const project of data) {
+        const lastActivity = lastEventMap.get(project.id)
+            || project.createdAt
+            || new Date();
 
         if (lastActivity < sevenDaysAgo) {
             const daysInactive = Math.floor(
@@ -219,10 +225,10 @@ export async function getGhostingRiskProjects(): Promise<AtRiskProject[]> {
 /**
  * Get all at-risk projects (payment + ghosting)
  */
-export async function getAtRiskProjects(): Promise<AtRiskProject[]> {
+export async function getAtRiskProjects(user: any): Promise<AtRiskProject[]> {
     const [paymentRisk, ghostingRisk] = await Promise.all([
-        getPaymentRiskProjects(),
-        getGhostingRiskProjects(),
+        getPaymentRiskProjects(user),
+        getGhostingRiskProjects(user),
     ]);
 
     // Combine and deduplicate (payment risk takes priority)
@@ -241,9 +247,7 @@ export async function getAtRiskProjects(): Promise<AtRiskProject[]> {
 /**
  * Get dashboard metrics including revenue and pending invoices
  */
-export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-    const user = await getUser();
-
+export async function getDashboardMetrics(user: any): Promise<DashboardMetrics> {
     if (!user) {
         throw new Error('User not authenticated');
     }
@@ -261,48 +265,42 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     
     const previousMonthStart = `${previousYear}-${String(previousMonth).padStart(2, '0')}-01`;
 
-    // Get current month revenue
-    const currentRevenue = await db.query.payments.findMany({
-        where: and(
-            eq(payments.userId, user.id),
-            eq(payments.status, 'paid'),
-            gte(payments.paidDate, currentMonthStart),
-            lt(payments.paidDate, nextMonthStart)
-        ),
-        columns: { amount: true }
-    });
+    // Use SQL aggregations instead of fetching all rows
+    const [currentRevenueResult, prevRevenueResult, pendingResult] = await Promise.all([
+        db.select({ total: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)` }).from(payments)
+            .where(and(
+                eq(payments.userId, user.id),
+                eq(payments.status, 'paid'),
+                gte(payments.paidDate, currentMonthStart),
+                lt(payments.paidDate, nextMonthStart)
+            )),
+        db.select({ total: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)` }).from(payments)
+            .where(and(
+                eq(payments.userId, user.id),
+                eq(payments.status, 'paid'),
+                gte(payments.paidDate, previousMonthStart),
+                lt(payments.paidDate, currentMonthStart)
+            )),
+        db.select({
+            total: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+            count: sql<string>`COUNT(*)::int`
+        }).from(payments)
+            .where(and(
+                eq(payments.userId, user.id),
+                eq(payments.status, 'pending')
+            )),
+    ]);
 
-    const monthlyRevenue = currentRevenue.reduce((sum, p) => sum + Number(p.amount), 0);
-
-    // Get previous month revenue
-    const prevRevenue = await db.query.payments.findMany({
-        where: and(
-            eq(payments.userId, user.id),
-            eq(payments.status, 'paid'),
-            gte(payments.paidDate, previousMonthStart),
-            lt(payments.paidDate, currentMonthStart)
-        ),
-        columns: { amount: true }
-    });
-
-    const previousMonthRevenue = prevRevenue.reduce((sum, p) => sum + Number(p.amount), 0);
+    const monthlyRevenue = Number(currentRevenueResult[0]?.total || 0);
+    const previousMonthRevenue = Number(prevRevenueResult[0]?.total || 0);
 
     // Calculate percentage change
     const revenueChangePercent = previousMonthRevenue > 0
         ? ((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
         : 0;
 
-    // Get pending invoices
-    const pending = await db.query.payments.findMany({
-        where: and(
-            eq(payments.userId, user.id),
-            eq(payments.status, 'pending')
-        ),
-        columns: { amount: true }
-    });
-
-    const pendingInvoicesTotal = pending.reduce((sum, p) => sum + Number(p.amount), 0);
-    const pendingInvoicesCount = pending.length;
+    const pendingInvoicesTotal = Number(pendingResult[0]?.total || 0);
+    const pendingInvoicesCount = Number(pendingResult[0]?.count || 0);
 
     // Revenue goal (hardcoded to $11,000 for now)
     const revenueGoal = 11000;
@@ -322,9 +320,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
 /**
  * Mark a reminder as done
  */
-export async function markReminderDone(reminderId: string): Promise<void> {
-    const user = await getUser();
-
+export async function markReminderDone(reminderId: string, user: any): Promise<void> {
     if (!user) {
         throw new Error('User not authenticated');
     }
@@ -363,9 +359,7 @@ export async function markReminderDone(reminderId: string): Promise<void> {
 /**
  * Snooze a reminder by updating its date
  */
-export async function snoozeReminder(reminderId: string, days: number): Promise<void> {
-    const user = await getUser();
-
+export async function snoozeReminder(reminderId: string, days: number, user: any): Promise<void> {
     if (!user) {
         throw new Error('User not authenticated');
     }

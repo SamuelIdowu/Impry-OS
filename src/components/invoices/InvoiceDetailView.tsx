@@ -225,7 +225,7 @@ export function InvoiceDetailView({ invoice, brandColor, logoUrl }: InvoiceDetai
                         <Send className="h-4 w-4" />
                         {isSending ? "Sending..." : "Send to Client"}
                     </button>
-                    <button className="p-2 bg-white border border-zinc-200 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors shadow-sm">
+                    <button className="p-2 bg-white border border-zinc-200 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 transition-colors shadow-sm" aria-label="More options">
                         <MoreVertical className="h-4 w-4" />
                     </button>
                 </div>

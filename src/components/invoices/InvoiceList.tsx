@@ -21,10 +21,9 @@ import { PageHeader } from "@/components/shared/PageHeader"
 import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils"
-// import { Invoice } from "@/lib/types" // We will use Payment type now or Invoice type mapped
 import { useRouter, useParams } from "next/navigation"
 import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment"
-import { createStandaloneInvoice, deletePayment, updatePaymentStatus } from "@/server/actions/payments"
+import { deletePayment, updatePaymentStatus } from "@/server/actions/payments"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,11 +32,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator
 } from "@/components/ui/dropdownMenu"
+import { useInvoiceStats } from "@/hooks/useInvoiceStats"
 
 interface InvoiceListProps {
-    invoices: PaymentWithClient[]; // Pass real data
+    invoices: PaymentWithClient[];
     clients: { id: string; name: string }[];
-    projects: { id: string; name: string; clientId: string }[]; // Need project list for dialog
+    projects: { id: string; name: string; clientId: string }[];
 }
 
 export function InvoiceList({ invoices: initialInvoices, clients, projects }: InvoiceListProps) {
@@ -46,21 +46,20 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
     const workspaceId = params.workspaceId as string || 'default'
     const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState("All Invoices")
-    // const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false) // Unused
     const [invoices, setInvoices] = useState<PaymentWithClient[]>(initialInvoices)
     const [viewMode, setViewMode] = useState<"list" | "grid">("list")
 
-    // Filter states
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [dateRange, setDateRange] = useState<{ start: string, end: string }>({ start: "", end: "" })
     const [selectedClientId, setSelectedClientId] = useState<string>("all")
 
-    // Calculate status counts
+    const invoiceStats = useInvoiceStats(invoices)
+
     const statusCounts = {
         all: invoices.length,
-        pending: invoices.filter(i => i.status === 'pending').length,
-        paid: invoices.filter(i => i.status === 'paid').length,
-        overdue: invoices.filter(i => i.status === 'overdue').length
+        pending: invoiceStats.pendingCount,
+        paid: invoiceStats.paidCount,
+        overdue: invoiceStats.overdueCount,
     }
 
     const filteredInvoices = invoices.filter(inv => {
@@ -165,7 +164,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                 >
                     <Link
                         href={`/${workspaceId}/invoices/new`}
-                        className="flex items-center justify-center rounded-lg h-10 px-6 bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group"
+                        className="flex items-center justify-center rounded-lg h-10 px-6 bg-zinc-900 text-white text-sm font-semibold shadow-sm hover:shadow-md hover:bg-zinc-800 transition-colors shadow duration-150 group"
                     >
                         <Plus className="mr-2 h-5 w-5" />
                         <span>Create New Invoice</span>
@@ -179,79 +178,35 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     {[
                         {
                             title: "Outstanding",
-                            value: `$${invoices.filter(i => i.status !== 'paid').reduce((acc, curr) => acc + (Number(curr.amount) - Number(curr.amountPaid)), 0).toLocaleString()}`,
+                            value: `$${invoiceStats.outstanding.toLocaleString()}`,
                             icon: Clock,
-                            trend: `${statusCounts.overdue} overdue`,
+                            trend: `${invoiceStats.overdueCount} overdue`,
                             trendLabel: "invoices",
                             trendDirection: "down" as const,
                             iconColor: "bg-yellow-50 text-yellow-600"
                         },
                         {
                             title: "Total Paid",
-                            value: `$${invoices.filter(i => i.status === 'paid' || i.status === 'partial').reduce((acc, curr) => {
-                                // Fallback for legacy data: if paid but amountPaid is 0, use full amount
-                                const paidAmount = (Number(curr.amountPaid) === 0 && curr.status === 'paid') ? Number(curr.amount) : Number(curr.amountPaid);
-                                return acc + paidAmount;
-                            }, 0).toLocaleString()}`,
+                            value: `$${invoiceStats.totalPaid.toLocaleString()}`,
                             icon: CheckCircle2,
-                            trend: (() => {
-                                const currentMonth = new Date().getMonth();
-                                const currentYear = new Date().getFullYear();
-                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
-                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
-                                
-                                const getValidDate = (d: any) => new Date(d || new Date());
-                                
-                                const currentMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === currentMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === currentYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-                                    
-                                const prevMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === prevMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-
-                                if (prevMonthPaid === 0) return currentMonthPaid > 0 ? "+100%" : "0%";
-                                const percentage = Math.round(((currentMonthPaid - prevMonthPaid) / prevMonthPaid) * 100);
-                                return percentage > 0 ? `+${percentage}%` : `${percentage}%`;
-                            })(),
+                            trend: invoiceStats.paidTrend,
                             trendLabel: "vs last month",
-                            trendDirection: (() => {
-                                const currentMonth = new Date().getMonth();
-                                const currentYear = new Date().getFullYear();
-                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
-                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
-                                
-                                const getValidDate = (d: any) => new Date(d || new Date());
-                                
-                                const currentMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === currentMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === currentYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-                                    
-                                const prevMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === prevMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-
-                                return currentMonthPaid >= prevMonthPaid ? "up" as const : "down" as const;
-                            })(),
+                            trendDirection: invoiceStats.paidDirection,
                             iconColor: "bg-green-50 text-green-600"
                         },
                         {
                             title: "Pending Amount",
-                            value: `$${invoices.filter(i => i.status === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0).toLocaleString()}`,
+                            value: `$${invoiceStats.pendingAmount.toLocaleString()}`,
                             icon: FileText,
-                            trend: `${statusCounts.pending} pending`,
-                            trendLabel: "pending",
+                            trend: `${invoiceStats.pendingCount} pending`,
+                            trendLabel: "invoices",
                             trendDirection: "neutral" as const,
                             iconColor: "bg-zinc-100 text-zinc-600"
                         }
                     ].map((stat, i) => (
-                        <StatsCard key={i} {...stat} />
+                        <div key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` }}>
+                            <StatsCard {...stat} />
+                        </div>
                     ))}
                 </div>
 
@@ -263,7 +218,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 <Search className="h-4 w-4" />
                             </div>
                             <input
-                                className="w-full h-10 rounded-lg bg-white border border-zinc-200 text-zinc-900 text-sm placeholder-zinc-500 pl-10 pr-4 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-all shadow-sm"
+                                className="w-full h-10 rounded-lg bg-white border border-zinc-200 text-zinc-900 text-sm placeholder-zinc-500 pl-10 pr-4 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-colors duration-150 shadow-sm"
                                 placeholder="Search invoices..."
                                 type="text"
                                 value={searchTerm}
@@ -305,7 +260,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 <button
                                     onClick={() => setViewMode("list")}
                                     className={cn(
-                                        "p-1.5 rounded-md transition-all",
+                                        "p-1.5 rounded-md transition-colors duration-150",
                                         viewMode === "list"
                                             ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
                                             : "text-zinc-500 hover:bg-zinc-100"
@@ -317,7 +272,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                                 <button
                                     onClick={() => setViewMode("grid")}
                                     className={cn(
-                                        "p-1.5 rounded-md transition-all",
+                                        "p-1.5 rounded-md transition-colors duration-150",
                                         viewMode === "grid"
                                             ? "bg-white border border-zinc-200 text-zinc-900 shadow-sm"
                                             : "text-zinc-500 hover:bg-zinc-100"
@@ -351,7 +306,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
 
                     {/* Expanded Filter Panel */}
                     {isFilterOpen && (
-                        <div className="p-4 bg-zinc-50/50 border border-zinc-200 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="p-4 bg-zinc-50/50 border border-zinc-200 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-top-2 data-[state=closed]:duration-150">
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-semibold text-zinc-500 uppercase">From Date</label>
                                 <input
@@ -390,11 +345,12 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                 {/* Invoices Content */}
                 {viewMode === "grid" ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filteredInvoices.map((inv) => (
+                        {filteredInvoices.map((inv, index) => (
                             <div
                                 key={inv.id}
                                 onClick={() => router.push(`/${workspaceId}/invoices/${inv.invoiceNumber}`)}
-                                className="p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-all cursor-pointer flex flex-col justify-between space-y-4 shadow-sm"
+                                className="animate-fade-in-up p-5 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-colors shadow duration-200 cursor-pointer flex flex-col justify-between space-y-4 shadow-sm"
+                                style={{ animationDelay: `${index * 50}ms` }}
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -432,7 +388,7 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                 ) : (
                     <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
                         <div className="overflow-x-auto hide-scrollbar">
-                        <div className="min-w-[800px]">
+                        <div className={cn(filteredInvoices.length > 0 && "min-w-[800px]")}>
                             <table className="w-full text-left border-collapse">
                                 <thead>
                             <tr className="bg-zinc-50/50 border-b border-zinc-200">
@@ -519,7 +475,10 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     {/* Pagination */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-zinc-200 bg-white">
                         <p className="text-sm text-zinc-500">
-                            Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredInvoices.length}</span> of <span className="font-medium">{invoices.length}</span> invoices
+                            {filteredInvoices.length === 0
+                                ? `No invoices found`
+                                : <>Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredInvoices.length}</span> of <span className="font-medium">{filteredInvoices.length}</span> invoices</>
+                            }
                         </p>
                         <div className="flex items-center gap-2">
                             <button className="px-3 py-1 rounded-md border border-zinc-200 text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">

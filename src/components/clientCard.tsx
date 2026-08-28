@@ -35,7 +35,7 @@ export function ClientCard({ client }: ClientCardProps) {
 
     return (
         <Card className={cn(
-            "transition-all duration-200 border shadow-sm h-full flex flex-col",
+            "transition-shadow duration-200 border shadow-sm h-full flex flex-col",
             isDark ? "bg-zinc-950 border-zinc-800 text-white" : "bg-white border-zinc-200 hover:shadow-md"
         )}>
             <div className="p-5 flex flex-col h-full">
@@ -72,7 +72,7 @@ export function ClientCard({ client }: ClientCardProps) {
                     <button className={cn(
                         "p-1 rounded-md transition-colors",
                         isDark ? "hover:bg-zinc-800 text-zinc-500" : "hover:bg-zinc-100 text-zinc-400"
-                    )}>
+                    )} aria-label="More options">
                         <MoreVertical className="h-4 w-4" />
                     </button>
                 </div>
@@ -94,24 +94,33 @@ export function ClientCard({ client }: ClientCardProps) {
                             "flex items-center gap-2 text-xs",
                             isDark ? "text-zinc-400" : "text-zinc-500"
                         )}>
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span>{client.joinedDate || "Oct 24, 2023"}</span>
+                            <Calendar className="h-3.5 w-3.5 shrink-0" />
+                            <span>Client since {client.joinedDate || "Unknown"}</span>
                         </div>
                         <div className={cn(
                             "flex items-center gap-2 text-xs",
                             isDark ? "text-zinc-400" : "text-zinc-500"
                         )}>
-                            <MessageSquare className="h-3.5 w-3.5" />
+                            <MessageSquare className="h-3.5 w-3.5 shrink-0" />
                             <span>
                                 {client.status === 'Pending' ? 'Lead Stage' :
                                     `${client.projectCount} active project${client.projectCount !== 1 ? 's' : ''}`}
                             </span>
                         </div>
+                        {client.totalRevenue > 0 && (
+                            <div className={cn(
+                                "flex items-center gap-2 text-xs",
+                                isDark ? "text-zinc-400" : "text-zinc-500"
+                            )}>
+                                <span className="h-3.5 w-3.5 shrink-0 font-bold text-center text-[10px]">$</span>
+                                <span>${client.totalRevenue.toLocaleString()} total revenue</span>
+                            </div>
+                        )}
                     </div>
 
                     <Link href={`/${workspaceId}/clients/${client.id}`} className="block w-full">
                         <button className={cn(
-                            "w-full py-2 px-4 rounded-full text-xs font-semibold transition-all border",
+                            "w-full py-2 px-4 rounded-full text-xs font-semibold transition-colors duration-150 border",
                             isDark
                                 ? "bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700 hover:text-white"
                                 : "bg-white text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300"

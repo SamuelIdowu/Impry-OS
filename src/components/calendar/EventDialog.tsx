@@ -27,15 +27,15 @@ export function EventDialog({ event, isOpen, onClose }: EventDialogProps) {
         switch (status?.toLowerCase()) {
             case 'paid':
             case 'completed':
-                return 'bg-emerald-100 text-emerald-800'
+                return 'bg-emerald-50 text-emerald-700'
             case 'pending':
             case 'in_progress':
-                return 'bg-blue-100 text-blue-800'
+                return 'bg-amber-50 text-amber-700'
             case 'overdue':
             case 'cancelled':
-                return 'bg-rose-100 text-rose-800'
+                return 'bg-red-50 text-red-700'
             default:
-                return 'bg-zinc-100 text-zinc-800'
+                return 'bg-zinc-100 text-zinc-700'
         }
     }
 

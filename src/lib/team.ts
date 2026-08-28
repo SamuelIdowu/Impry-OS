@@ -12,7 +12,8 @@ export async function getTeamMembers(workspaceId: string) {
 
     return await db.query.teamMembers.findMany({
         where: eq(teamMembers.workspaceId, workspaceId),
-        orderBy: [desc(teamMembers.createdAt)]
+        orderBy: [desc(teamMembers.createdAt)],
+        limit: 50,
     });
 }
 
@@ -59,6 +60,7 @@ export async function getWorkspaceMembers(workspaceId: string) {
 
     return await db.query.workspaceMembers.findMany({
         where: eq(workspaceMembers.workspaceId, workspaceId),
+        limit: 50,
         with: {
             user: {
                 columns: {

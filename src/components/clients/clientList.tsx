@@ -172,48 +172,57 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsImportOpen(true)}
-                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-white border border-zinc-200 text-zinc-700 text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-50 transition-all"
+                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-white border border-zinc-200 text-zinc-700 text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-50 transition-colors shadow duration-150"
                     >
                         <Upload className="mr-2 h-4 w-4" />
                         <span>Import</span>
                     </button>
                     <button
                         onClick={() => setIsAddClientOpen(true)}
-                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-all group"
+                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-colors shadow duration-150 group"
                     >
                         <UserPlus className="mr-2 h-4 w-4" />
-                        <span>Add Customer</span>
+                        <span>Add Client</span>
                     </button>
                 </div>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard
-                    title="Total Clients"
-                    value={stats.totalClients}
-                    icon={Users}
-                    trend="+0"
-                    trendLabel="this month"
-                    trendDirection="neutral"
-                    iconColor="bg-green-50 text-green-600"
-                />
-                <StatsCard
-                    title="Active Projects"
-                    value={stats.activeProjects}
-                    icon={Layers}
-                    trendLabel={`Across ${stats.totalClients} clients`}
-                    iconColor="bg-blue-50 text-blue-600"
-                />
-                <StatsCard
-                    title="Revenue Pending"
-                    value={`$${stats.pendingRevenue.toLocaleString()}`}
-                    icon={Wallet}
-                    trend={`$${stats.totalRevenue.toLocaleString()} collected`}
-                    trendLabel="lifetime"
-                    trendDirection="up"
-                    iconColor="bg-orange-50 text-orange-600"
-                />
+                {[
+                    <StatsCard
+                        key={0}
+                        title="Total Clients"
+                        value={stats.totalClients}
+                        icon={Users}
+                        trend="+0"
+                        trendLabel="this month"
+                        trendDirection="neutral"
+                        iconColor="bg-green-50 text-green-600"
+                    />,
+                    <StatsCard
+                        key={1}
+                        title="Active Projects"
+                        value={stats.activeProjects}
+                        icon={Layers}
+                        trendLabel={`Across ${stats.totalClients} clients`}
+                        iconColor="bg-blue-50 text-blue-600"
+                    />,
+                    <StatsCard
+                        key={2}
+                        title="Revenue Pending"
+                        value={`$${stats.pendingRevenue.toLocaleString()}`}
+                        icon={Wallet}
+                        trend={`$${stats.totalRevenue.toLocaleString()} collected`}
+                        trendLabel="lifetime"
+                        trendDirection="up"
+                        iconColor="bg-orange-50 text-orange-600"
+                    />
+                ].map((card, i) => (
+                    <div key={i} className="animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` }}>
+                        {card}
+                    </div>
+                ))}
             </div>
 
             {/* Controls */}
@@ -224,8 +233,8 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                         <Search className="h-4 w-4" />
                     </div>
                     <input
-                        className="w-full h-10 rounded-full bg-white border border-zinc-200 text-zinc-900 text-sm placeholder-zinc-400 pl-10 pr-4 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-all shadow-sm"
-                        placeholder="Search customers..."
+                        className="w-full h-10 rounded-full bg-white border border-zinc-200 text-zinc-900 text-sm placeholder-zinc-400 pl-10 pr-4 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900/10 focus:outline-none transition-colors duration-150 shadow-sm"
+                        placeholder="Search clients..."
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -233,7 +242,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex items-center gap-6 overflow-x-auto w-full md:w-auto hide-scrollbar">
+                <div className="flex items-center gap-6 w-full md:w-auto shrink-0 overflow-x-auto hide-scrollbar md:overflow-visible">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
@@ -255,12 +264,14 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                     <button
                         onClick={() => setViewMode('grid')}
                         className={cn("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600")}
+                        aria-label="Grid view"
                     >
                         <LayoutGrid className="h-4 w-4" />
                     </button>
                     <button
                         onClick={() => setViewMode('list')}
                         className={cn("p-2 rounded-md transition-all", viewMode === 'list' ? "bg-zinc-100 text-zinc-900" : "text-zinc-400 hover:text-zinc-600")}
+                        aria-label="List view"
                     >
                         <List className="h-4 w-4" />
                     </button>
@@ -270,23 +281,11 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
             {/* Client Grid / List */}
             {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {paginatedClients.map(client => (
-                        <ClientCard key={client.id} client={client} />
+                    {paginatedClients.map((client, index) => (
+                        <div key={client.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
+                            <ClientCard client={client} />
+                        </div>
                     ))}
-
-                    {/* Add New Client Card */}
-                    <button
-                        onClick={() => setIsAddClientOpen(true)}
-                        className="h-full min-h-[280px] rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50/50 hover:bg-zinc-50 hover:border-zinc-300 transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer text-center p-6"
-                    >
-                        <div className="h-12 w-12 rounded-full bg-white border border-zinc-200 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-                            <Plus className="h-6 w-6 text-zinc-400 group-hover:text-zinc-600" />
-                        </div>
-                        <div className="space-y-1">
-                            <h3 className="font-semibold text-zinc-900">Add New Client</h3>
-                            <p className="text-xs text-zinc-500">Onboard a new client</p>
-                        </div>
-                    </button>
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
@@ -315,6 +314,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
                             className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            aria-label="Previous page"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </button>
@@ -338,6 +338,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
                             className="h-8 w-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            aria-label="Next page"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </button>

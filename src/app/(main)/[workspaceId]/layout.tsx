@@ -20,7 +20,7 @@ export default async function MainLayout({
     const workspaceId = resolvedParams.workspaceId
 
     // Verify user has access to this workspace
-    const hasAccess = await verifyWorkspaceAccess(workspaceId)
+    const hasAccess = await verifyWorkspaceAccess(workspaceId, user)
     if (!hasAccess) {
         // Redirect to workspaces router to find valid active workspace
         redirect("/workspaces")
