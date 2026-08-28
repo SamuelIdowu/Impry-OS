@@ -1,5 +1,5 @@
 import { getUser } from "@/lib/auth";
-import { getCurrentWorkspaceId } from "@/server/actions/workspaces";
+import { getCurrentWorkspaceId } from "@/lib/workspace";
 
 /**
  * A higher-order function to wrap server actions with authentication and workspace validation.

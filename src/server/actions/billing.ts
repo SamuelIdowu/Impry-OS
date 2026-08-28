@@ -147,6 +147,10 @@ export async function getBillingPortalUrl(workspaceId: string) {
  * Development & Testing helper: instantly activates a plan tier for the workspace
  */
 export async function simulatePlanUpgrade(workspaceId: string, planTier: PlanTier) {
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("This action is only available in development mode.");
+  }
+
   const user = await getUser();
   if (!user) {
     throw new Error("Unauthorized");

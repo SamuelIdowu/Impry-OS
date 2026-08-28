@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { projects, clients, scopes, payments, reminders } from '@/server/db/schema';
 import { eq, desc, and, gte } from 'drizzle-orm';
@@ -24,6 +24,7 @@ export async function getProjects(): Promise<ProjectWithClient[]> {
     const result = await db.query.projects.findMany({
         where: and(eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         orderBy: [desc(projects.createdAt)],
+        limit: 100,
         with: {
             client: {
                 columns: { id: true, name: true, email: true, company: true }
@@ -44,6 +45,7 @@ export async function getProjectsByClient(clientId: string): Promise<Project[]> 
     const result = await db.query.projects.findMany({
         where: and(eq(projects.clientId, clientId), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
         orderBy: [desc(projects.createdAt)],
+        limit: 100,
     });
 
     return result as Project[];

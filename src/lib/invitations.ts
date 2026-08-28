@@ -19,6 +19,7 @@ export async function getWorkspaceInvitations(workspaceId: string) {
             eq(workspaceInvitations.status, 'pending'),
             gt(workspaceInvitations.expiresAt, new Date())
         ),
+        limit: 50,
         with: {
             inviter: {
                 columns: {

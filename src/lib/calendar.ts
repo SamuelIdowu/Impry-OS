@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { eq, and } from 'drizzle-orm';
 import { getUser } from '@/lib/auth';
@@ -22,60 +22,42 @@ export async function fetchCalendarEvents(date?: string): Promise<CalendarEvent[
     const user = await getUser()
     if (!user) throw new Error('Unauthorized')
 
-    // 1. Fetch Projects (Deadlines and Start Dates)
-    const userProjects = await db.query.projects.findMany({
-        where: and(eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
-        columns: {
-            id: true,
-            name: true,
-            startDate: true,
-            deadline: true,
-            status: true,
-            description: true
-        }
-    })
+    const workspaceId = await getCurrentWorkspaceId()
 
-    // 2. Fetch Payments (Due Dates)
-    const userPayments = await db.query.payments.findMany({
-        where: and(eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
-        columns: {
-            id: true,
-            description: true,
-            amount: true,
-            currency: true,
-            dueDate: true,
-            status: true,
-            milestoneName: true
-        }
-    })
-
-    // 3. Fetch Reminders
-    const userReminders = await db.query.reminders.findMany({
-        where: and(eq(reminders.workspaceId, await getCurrentWorkspaceId()), eq(reminders.userId, user.id)),
-        columns: {
-            id: true,
-            title: true,
-            description: true,
-            reminderDate: true,
-            isSent: true,
-            reminderType: true
-        }
-    })
-
-    // 4. Fetch Timeline Events
-    const userTimelineEvents = await db.query.timelineEvents.findMany({
-        where: (events, { and, eq }) => and(
-            eq(events.userId, user.id),
-            eq(events.eventType, 'note')
-        ),
-        columns: {
-            id: true,
-            title: true,
-            description: true,
-            eventDate: true,
-            eventType: true
-        }
-    })
+    // Run all four queries in parallel
+    const [userProjects, userPayments, userReminders, userTimelineEvents] = await Promise.all([
+        db.query.projects.findMany({
+            where: and(eq(projects.workspaceId, workspaceId), eq(projects.userId, user.id)),
+            limit: 200,
+            columns: {
+                id: true, name: true, startDate: true, deadline: true, status: true, description: true
+            }
+        }),
+        db.query.payments.findMany({
+            where: and(eq(payments.workspaceId, workspaceId), eq(payments.userId, user.id)),
+            limit: 200,
+            columns: {
+                id: true, description: true, amount: true, currency: true, dueDate: true, status: true, milestoneName: true
+            }
+        }),
+        db.query.reminders.findMany({
+            where: and(eq(reminders.workspaceId, workspaceId), eq(reminders.userId, user.id)),
+            limit: 200,
+            columns: {
+                id: true, title: true, description: true, reminderDate: true, isSent: true, reminderType: true
+            }
+        }),
+        db.query.timelineEvents.findMany({
+            where: (events, { and, eq }) => and(
+                eq(events.userId, user.id),
+                eq(events.eventType, 'note')
+            ),
+            limit: 200,
+            columns: {
+                id: true, title: true, description: true, eventDate: true, eventType: true
+            }
+        }),
+    ])
 
     const events: CalendarEvent[] = []
 

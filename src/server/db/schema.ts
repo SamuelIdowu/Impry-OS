@@ -73,7 +73,10 @@ export const workspaceMembers = pgTable('workspace_members', {
   role: text('role').default('owner'), // 'owner', 'admin', 'member'
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  workspaceIdx: index('workspace_members_workspace_idx').on(table.workspaceId),
+  userIdx: index('workspace_members_user_idx').on(table.userId),
+}));
 
 export const clients = pgTable('clients', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -89,7 +92,9 @@ export const clients = pgTable('clients', {
   status: text('status').default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  workspaceUserIdx: index('clients_workspace_user_idx').on(table.workspaceId, table.userId),
+}));
 
 export const projects = pgTable('projects', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -106,7 +111,10 @@ export const projects = pgTable('projects', {
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  workspaceUserIdx: index('projects_workspace_user_idx').on(table.workspaceId, table.userId),
+  clientIdx: index('projects_client_idx').on(table.clientId),
+}));
 
 export const scopes = pgTable('scopes', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -162,7 +170,14 @@ export const payments = pgTable('payments', {
   shareToken: uuid('share_token').defaultRandom().unique(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  workspaceUserIdx: index('payments_workspace_user_idx').on(table.workspaceId, table.userId),
+  projectIdx: index('payments_project_idx').on(table.projectId),
+  statusIdx: index('payments_status_idx').on(table.status),
+  dueDateIdx: index('payments_due_date_idx').on(table.dueDate),
+  invoiceNumberIdx: index('payments_invoice_number_idx').on(table.invoiceNumber),
+  createdAtIdx: index('payments_created_at_idx').on(table.createdAt),
+}));
 
 export const reminders = pgTable('reminders', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -179,7 +194,11 @@ export const reminders = pgTable('reminders', {
   reminderType: text('reminder_type').default('general'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  workspaceUserIdx: index('reminders_workspace_user_idx').on(table.workspaceId, table.userId),
+  isSentDateIdx: index('reminders_is_sent_date_idx').on(table.isSent, table.reminderDate),
+  projectIdx: index('reminders_project_idx').on(table.projectId),
+}));
 
 export const timelineEvents = pgTable('timeline_events', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -194,7 +213,12 @@ export const timelineEvents = pgTable('timeline_events', {
   metadata: jsonb('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  workspaceUserIdx: index('timeline_workspace_user_idx').on(table.workspaceId, table.userId),
+  projectIdx: index('timeline_project_idx').on(table.projectId),
+  eventTypeIdx: index('timeline_event_type_idx').on(table.eventType),
+  eventDateIdx: index('timeline_event_date_idx').on(table.eventDate),
+}));
 
 export const teamMembers = pgTable('team_members', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -206,7 +230,9 @@ export const teamMembers = pgTable('team_members', {
   avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => ({
+  workspaceIdx: index('team_members_workspace_idx').on(table.workspaceId),
+}));
 
 export const billingWebhookEvents = pgTable('billing_webhook_events', {
   id: uuid('id').defaultRandom().primaryKey(),

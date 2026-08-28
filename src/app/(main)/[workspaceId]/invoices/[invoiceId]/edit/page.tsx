@@ -1,7 +1,7 @@
 import { InvoiceEditor } from "@/components/invoices/InvoiceEditor"
 import { fetchClients } from "@/server/actions/clients"
 import { fetchProjects } from "@/server/actions/projects"
-import { getInvoice } from "@/server/actions/payments"
+import { getInvoice } from "@/server/actions/invoices"
 
 interface EditInvoicePageProps {
     params: Promise<{ invoiceId: string }>

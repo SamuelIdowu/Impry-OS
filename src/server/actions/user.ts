@@ -1,5 +1,5 @@
 'use server';
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 
 import { getUser, auth } from '@/lib/auth';
 import { canUseCustomBranding } from '@/lib/payments/guards';
@@ -86,15 +86,6 @@ export async function updateBrandingAction(data: { logo_url?: string; brand_colo
     }
 }
 
-export async function updatePasswordAction(password: string) {
-    try {
-        return { success: false, error: 'Use Better Auth client to update password' };
-    } catch (error) {
-        console.error('Error in updatePasswordAction:', error);
-        return { success: false, error: 'Failed to update password' };
-    }
-}
-
 export async function signOutAllSessionsAction() {
     try {
         const user = await getUser();
@@ -136,15 +127,20 @@ export async function deleteAccountAction() {
     }
 }
 
-export async function enrollMfaAction(): Promise<{ success: boolean, data?: any, error?: string }> {
+// Stubs for features not yet implemented
+export async function updatePasswordAction(_password: string): Promise<{ success: boolean; error?: string; data?: any }> {
+    return { success: false, error: 'Use Better Auth client to update password' };
+}
+
+export async function enrollMfaAction(): Promise<{ success: boolean; error?: string; data?: any }> {
     return { success: false, error: 'MFA not supported in this version yet' };
 }
 
-export async function verifyMfaAction(factorId: string, code: string) {
+export async function verifyMfaAction(_factorId: string, _code: string): Promise<{ success: boolean; error?: string; data?: any }> {
     return { success: false, error: 'MFA not supported in this version yet' };
 }
 
-export async function unenrollMfaAction(factorId: string) {
+export async function unenrollMfaAction(_factorId: string): Promise<{ success: boolean; error?: string; data?: any }> {
     return { success: false, error: 'MFA not supported in this version yet' };
 }
 

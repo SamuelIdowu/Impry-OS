@@ -3,6 +3,7 @@ import { DodoPaymentsProvider } from './providers/dodo';
 import { PolarPaymentsProvider } from './providers/polar';
 import { PaystackPaymentProvider } from './providers/paystack';
 import { CreemPaymentsProvider } from './providers/creem';
+import { PaddlePaymentsProvider } from './providers/paddle';
 import { MockPaymentProvider } from './providers/mock';
 
 export * from './types';
@@ -13,7 +14,7 @@ const providers: Partial<Record<string, PaymentProvider>> = {};
 
 /**
  * Returns the configured active PaymentProvider based on process.env.PAYMENT_PROVIDER.
- * Auto-detects keys: 'paystack' -> 'creem' -> 'dodo' -> 'polar' -> 'mock'.
+ * Auto-detects keys: 'paystack' -> 'paddle' -> 'creem' -> 'dodo' -> 'polar' -> 'mock'.
  */
 export function getPaymentProvider(providerOverride?: string): PaymentProvider {
   const providerName = (
@@ -21,10 +22,14 @@ export function getPaymentProvider(providerOverride?: string): PaymentProvider {
     process.env.PAYMENT_PROVIDER ||
     (process.env.PAYSTACK_SECRET_KEY
       ? 'paystack'
+      : process.env.PADDLE_API_KEY
+      ? 'paddle'
       : process.env.CREEM_API_KEY
       ? 'creem'
       : process.env.DODO_PAYMENTS_API_KEY
       ? 'dodo'
+      : process.env.POLAR_ACCESS_TOKEN
+      ? 'polar'
       : 'mock')
   ).toLowerCase();
 
@@ -37,6 +42,10 @@ export function getPaymentProvider(providerOverride?: string): PaymentProvider {
   switch (providerName) {
     case 'paystack':
       provider = new PaystackPaymentProvider();
+      break;
+    case 'paddle':
+    case 'paddle.com':
+      provider = new PaddlePaymentsProvider();
       break;
     case 'creem':
     case 'creem.io':

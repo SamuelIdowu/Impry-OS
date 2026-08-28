@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { eq, and, desc } from 'drizzle-orm';
 import { scopeVersions, projects, timelineEvents } from '@/server/db/schema';
@@ -24,7 +24,8 @@ export async function getScopeVersions(projectId: string): Promise<ScopeVersion[
             eq(scopeVersions.projectId, projectId),
             eq(scopeVersions.userId, user.id)
         ),
-        orderBy: [desc(scopeVersions.versionNumber)]
+        orderBy: [desc(scopeVersions.versionNumber)],
+        limit: 50,
     });
 
     return data as ScopeVersion[];

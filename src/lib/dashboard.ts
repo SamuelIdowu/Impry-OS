@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { eq, and, lte, lt, gte, inArray, sql, desc, asc } from 'drizzle-orm';
 import { reminders, payments, projects, timelineEvents } from '@/server/db/schema';
@@ -59,6 +59,7 @@ export async function getDashboardReminders(user: any): Promise<DashboardReminde
             lte(reminders.reminderDate, new Date(Date.now() + 24 * 60 * 60 * 1000))
         ),
         orderBy: [asc(reminders.reminderDate)],
+        limit: 50,
         with: {
             project: {
                 columns: { name: true },
@@ -105,6 +106,7 @@ export async function getPaymentRiskProjects(user: any): Promise<AtRiskProject[]
             inArray(payments.status, ['pending', 'overdue']),
             lt(payments.dueDate, nowStr)
         ),
+        limit: 50,
         with: {
             project: {
                 with: {
@@ -166,6 +168,7 @@ export async function getGhostingRiskProjects(user: any): Promise<AtRiskProject[
             eq(projects.userId, user.id),
             inArray(projects.status, ['planning', 'in_progress'])
         ),
+        limit: 50,
         with: {
             client: {
                 columns: { name: true }
@@ -181,6 +184,7 @@ export async function getGhostingRiskProjects(user: any): Promise<AtRiskProject[
         ? await db.query.timelineEvents.findMany({
             where: inArray(timelineEvents.projectId, projectIds),
             orderBy: [desc(timelineEvents.eventDate)],
+            limit: projectIds.length * 3,
             columns: { projectId: true, eventDate: true }
         })
         : [];
@@ -261,45 +265,42 @@ export async function getDashboardMetrics(user: any): Promise<DashboardMetrics> 
     
     const previousMonthStart = `${previousYear}-${String(previousMonth).padStart(2, '0')}-01`;
 
-    // Run all 3 payment queries in parallel instead of sequentially
-    const [currentRevenue, prevRevenue, pending] = await Promise.all([
-        db.query.payments.findMany({
-            where: and(
+    // Use SQL aggregations instead of fetching all rows
+    const [currentRevenueResult, prevRevenueResult, pendingResult] = await Promise.all([
+        db.select({ total: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)` }).from(payments)
+            .where(and(
                 eq(payments.userId, user.id),
                 eq(payments.status, 'paid'),
                 gte(payments.paidDate, currentMonthStart),
                 lt(payments.paidDate, nextMonthStart)
-            ),
-            columns: { amount: true }
-        }),
-        db.query.payments.findMany({
-            where: and(
+            )),
+        db.select({ total: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)` }).from(payments)
+            .where(and(
                 eq(payments.userId, user.id),
                 eq(payments.status, 'paid'),
                 gte(payments.paidDate, previousMonthStart),
                 lt(payments.paidDate, currentMonthStart)
-            ),
-            columns: { amount: true }
-        }),
-        db.query.payments.findMany({
-            where: and(
+            )),
+        db.select({
+            total: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+            count: sql<string>`COUNT(*)::int`
+        }).from(payments)
+            .where(and(
                 eq(payments.userId, user.id),
                 eq(payments.status, 'pending')
-            ),
-            columns: { amount: true }
-        })
+            )),
     ]);
 
-    const monthlyRevenue = currentRevenue.reduce((sum, p) => sum + Number(p.amount), 0);
-    const previousMonthRevenue = prevRevenue.reduce((sum, p) => sum + Number(p.amount), 0);
+    const monthlyRevenue = Number(currentRevenueResult[0]?.total || 0);
+    const previousMonthRevenue = Number(prevRevenueResult[0]?.total || 0);
 
     // Calculate percentage change
     const revenueChangePercent = previousMonthRevenue > 0
         ? ((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
         : 0;
 
-    const pendingInvoicesTotal = pending.reduce((sum, p) => sum + Number(p.amount), 0);
-    const pendingInvoicesCount = pending.length;
+    const pendingInvoicesTotal = Number(pendingResult[0]?.total || 0);
+    const pendingInvoicesCount = Number(pendingResult[0]?.count || 0);
 
     // Revenue goal (hardcoded to $11,000 for now)
     const revenueGoal = 11000;

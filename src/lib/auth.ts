@@ -5,6 +5,7 @@ import * as schema from "@/server/db/schema";
 import { headers } from "next/headers";
 import { dash } from "@better-auth/infra";
 import { nextCookies } from "better-auth/next-js";
+import { cache } from "react";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -59,7 +60,7 @@ export const auth = betterAuth({
 
 import { eq } from "drizzle-orm";
 
-export async function getSession() {
+export const getSession = cache(async () => {
   try {
     const headersList = await headers();
     return await auth.api.getSession({
@@ -72,9 +73,9 @@ export async function getSession() {
     );
     return null;
   }
-}
+});
 
-export async function getUser() {
+export const getUser = cache(async () => {
   const session = await getSession();
   if (!session?.user) return null;
 
@@ -99,4 +100,4 @@ export async function getUser() {
   }
 
   return session.user;
-}
+});

@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { timelineEvents, projects } from '@/server/db/schema';
 import { eq, inArray, and, desc } from 'drizzle-orm';
@@ -92,6 +92,7 @@ export async function getProjectActivities(projectId: string, filters?: { type?:
 
     const data = await db.query.timelineEvents.findMany({
         where: and(...conditions),
+        limit: 100,
         with: {
             user: {
                 columns: {

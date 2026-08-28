@@ -1,6 +1,6 @@
 import React from "react"
 import { notFound } from "next/navigation"
-import { getPublicInvoice } from "@/server/actions/payments"
+import { getPublicInvoice } from "@/server/actions/invoices"
 import { PublicInvoiceViewer } from "@/components/invoices/PublicInvoiceViewer"
 import type { Metadata } from "next"
 

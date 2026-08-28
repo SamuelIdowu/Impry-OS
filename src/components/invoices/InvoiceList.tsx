@@ -21,10 +21,9 @@ import { PageHeader } from "@/components/shared/PageHeader"
 import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils"
-// import { Invoice } from "@/lib/types" // We will use Payment type now or Invoice type mapped
 import { useRouter, useParams } from "next/navigation"
 import { Payment, PaymentStatus, PaymentWithClient } from "@/lib/types/payment"
-import { createStandaloneInvoice, deletePayment, updatePaymentStatus } from "@/server/actions/payments"
+import { deletePayment, updatePaymentStatus } from "@/server/actions/payments"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,11 +32,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator
 } from "@/components/ui/dropdownMenu"
+import { useInvoiceStats } from "@/hooks/useInvoiceStats"
 
 interface InvoiceListProps {
-    invoices: PaymentWithClient[]; // Pass real data
+    invoices: PaymentWithClient[];
     clients: { id: string; name: string }[];
-    projects: { id: string; name: string; clientId: string }[]; // Need project list for dialog
+    projects: { id: string; name: string; clientId: string }[];
 }
 
 export function InvoiceList({ invoices: initialInvoices, clients, projects }: InvoiceListProps) {
@@ -46,21 +46,20 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
     const workspaceId = params.workspaceId as string || 'default'
     const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState("All Invoices")
-    // const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false) // Unused
     const [invoices, setInvoices] = useState<PaymentWithClient[]>(initialInvoices)
     const [viewMode, setViewMode] = useState<"list" | "grid">("list")
 
-    // Filter states
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [dateRange, setDateRange] = useState<{ start: string, end: string }>({ start: "", end: "" })
     const [selectedClientId, setSelectedClientId] = useState<string>("all")
 
-    // Calculate status counts
+    const invoiceStats = useInvoiceStats(invoices)
+
     const statusCounts = {
         all: invoices.length,
-        pending: invoices.filter(i => i.status === 'pending').length,
-        paid: invoices.filter(i => i.status === 'paid').length,
-        overdue: invoices.filter(i => i.status === 'overdue').length
+        pending: invoiceStats.pendingCount,
+        paid: invoiceStats.paidCount,
+        overdue: invoiceStats.overdueCount,
     }
 
     const filteredInvoices = invoices.filter(inv => {
@@ -179,73 +178,27 @@ export function InvoiceList({ invoices: initialInvoices, clients, projects }: In
                     {[
                         {
                             title: "Outstanding",
-                            value: `$${invoices.filter(i => i.status !== 'paid').reduce((acc, curr) => acc + (Number(curr.amount) - Number(curr.amountPaid)), 0).toLocaleString()}`,
+                            value: `$${invoiceStats.outstanding.toLocaleString()}`,
                             icon: Clock,
-                            trend: `${statusCounts.overdue} overdue`,
+                            trend: `${invoiceStats.overdueCount} overdue`,
                             trendLabel: "invoices",
                             trendDirection: "down" as const,
                             iconColor: "bg-yellow-50 text-yellow-600"
                         },
                         {
                             title: "Total Paid",
-                            value: `$${invoices.filter(i => i.status === 'paid' || i.status === 'partial').reduce((acc, curr) => {
-                                // Fallback for legacy data: if paid but amountPaid is 0, use full amount
-                                const paidAmount = (Number(curr.amountPaid) === 0 && curr.status === 'paid') ? Number(curr.amount) : Number(curr.amountPaid);
-                                return acc + paidAmount;
-                            }, 0).toLocaleString()}`,
+                            value: `$${invoiceStats.totalPaid.toLocaleString()}`,
                             icon: CheckCircle2,
-                            trend: (() => {
-                                const currentMonth = new Date().getMonth();
-                                const currentYear = new Date().getFullYear();
-                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
-                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
-                                
-                                const getValidDate = (d: any) => new Date(d || new Date());
-                                
-                                const currentMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === currentMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === currentYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-                                    
-                                const prevMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === prevMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-
-                                if (prevMonthPaid === 0) return currentMonthPaid > 0 ? "+100%" : "0%";
-                                const percentage = Math.round(((currentMonthPaid - prevMonthPaid) / prevMonthPaid) * 100);
-                                return percentage > 0 ? `+${percentage}%` : `${percentage}%`;
-                            })(),
+                            trend: invoiceStats.paidTrend,
                             trendLabel: "vs last month",
-                            trendDirection: (() => {
-                                const currentMonth = new Date().getMonth();
-                                const currentYear = new Date().getFullYear();
-                                const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-                                const prevMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
-                                const paidInvoices = invoices.filter(i => i.status === 'paid' || i.status === 'partial');
-                                const getPaidAmount = (inv: any) => (Number(inv.amountPaid) === 0 && inv.status === 'paid') ? Number(inv.amount) : Number(inv.amountPaid);
-                                
-                                const getValidDate = (d: any) => new Date(d || new Date());
-                                
-                                const currentMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === currentMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === currentYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-                                    
-                                const prevMonthPaid = paidInvoices
-                                    .filter(i => getValidDate(i.paidDate || i.createdAt).getMonth() === prevMonth && getValidDate(i.paidDate || i.createdAt).getFullYear() === prevMonthYear)
-                                    .reduce((acc, curr) => acc + getPaidAmount(curr), 0);
-
-                                return currentMonthPaid >= prevMonthPaid ? "up" as const : "down" as const;
-                            })(),
+                            trendDirection: invoiceStats.paidDirection,
                             iconColor: "bg-green-50 text-green-600"
                         },
                         {
                             title: "Pending Amount",
-                            value: `$${invoices.filter(i => i.status === 'pending').reduce((acc, curr) => acc + Number(curr.amount), 0).toLocaleString()}`,
+                            value: `$${invoiceStats.pendingAmount.toLocaleString()}`,
                             icon: FileText,
-                            trend: `${statusCounts.pending} pending`,
+                            trend: `${invoiceStats.pendingCount} pending`,
                             trendLabel: "invoices",
                             trendDirection: "neutral" as const,
                             iconColor: "bg-zinc-100 text-zinc-600"

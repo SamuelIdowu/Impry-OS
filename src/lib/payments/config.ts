@@ -58,6 +58,10 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
         monthly: process.env.POLAR_PRO_MONTHLY_PRODUCT_ID,
         yearly: process.env.POLAR_PRO_YEARLY_PRODUCT_ID,
       },
+      paddle: {
+        monthly: process.env.PADDLE_PRO_MONTHLY_PRICE_ID,
+        yearly: process.env.PADDLE_PRO_YEARLY_PRICE_ID,
+      },
     },
   },
   studio: {
@@ -91,6 +95,10 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
       polar: {
         monthly: process.env.POLAR_STUDIO_MONTHLY_PRODUCT_ID,
         yearly: process.env.POLAR_STUDIO_YEARLY_PRODUCT_ID,
+      },
+      paddle: {
+        monthly: process.env.PADDLE_STUDIO_MONTHLY_PRICE_ID,
+        yearly: process.env.PADDLE_STUDIO_YEARLY_PRICE_ID,
       },
     },
   },

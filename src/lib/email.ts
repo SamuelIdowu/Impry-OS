@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { payments, users, clients } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -16,34 +16,23 @@ export async function sendInvoiceEmail(invoiceId: string, email?: string) {
     const user = await getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Fetch invoice details
-    const invoice = await db.query.payments.findFirst({
-        where: eq(payments.id, invoiceId),
-        with: {
-            client: {
-                columns: {
-                    name: true,
-                    email: true,
-                    company: true
-                }
+    // Fetch invoice and user branding in parallel
+    const [invoice, profile] = await Promise.all([
+        db.query.payments.findFirst({
+            where: eq(payments.id, invoiceId),
+            with: {
+                client: { columns: { name: true, email: true, company: true } }
             }
-        }
-    });
+        }),
+        db.query.users.findFirst({
+            where: eq(users.id, user.id),
+            columns: { brandColor: true, logoUrl: true, name: true, companyName: true }
+        }),
+    ]);
 
     if (!invoice) {
         throw new Error('Invoice not found');
     }
-
-    // Fetch User Branding
-    const profile = await db.query.users.findFirst({
-        where: eq(users.id, user.id),
-        columns: {
-            brandColor: true,
-            logoUrl: true,
-            name: true,
-            companyName: true
-        }
-    });
 
     const brandColor = profile?.brandColor || '#18181b';
     const companyName = profile?.companyName || profile?.name || 'Impry User';

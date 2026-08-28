@@ -100,16 +100,17 @@ export async function inviteMemberAction(data: {
                 role: validated.role,
             });
 
-            // 4. Fetch Workspace info & Inviter name for the email
-            const workspace = await db.query.workspaces.findFirst({
-                where: eq(workspaces.id, workspaceId),
-                columns: { name: true }
-            });
-
-            const inviterProfile = await db.query.users.findFirst({
-                where: eq(users.id, user.id),
-                columns: { name: true }
-            });
+            // 4. Fetch workspace + inviter profile in parallel for email
+            const [workspace, inviterProfile] = await Promise.all([
+                db.query.workspaces.findFirst({
+                    where: eq(workspaces.id, workspaceId),
+                    columns: { name: true }
+                }),
+                db.query.users.findFirst({
+                    where: eq(users.id, user.id),
+                    columns: { name: true }
+                }),
+            ]);
 
             const workspaceName = workspace?.name || 'Workspace';
             const inviterName = inviterProfile?.name || user.name || 'A team member';
@@ -155,15 +156,16 @@ export async function resendInvitationAction(invitationId: string, providedWorks
                 return { success: false, error: 'Invitation not found' };
             }
 
-            const workspace = await db.query.workspaces.findFirst({
-                where: eq(workspaces.id, workspaceId),
-                columns: { name: true }
-            });
-
-            const inviterProfile = await db.query.users.findFirst({
-                where: eq(users.id, user.id),
-                columns: { name: true }
-            });
+            const [workspace, inviterProfile] = await Promise.all([
+                db.query.workspaces.findFirst({
+                    where: eq(workspaces.id, workspaceId),
+                    columns: { name: true }
+                }),
+                db.query.users.findFirst({
+                    where: eq(users.id, user.id),
+                    columns: { name: true }
+                }),
+            ]);
 
             try {
                 await sendWorkspaceInvitationEmail({

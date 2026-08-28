@@ -33,12 +33,11 @@ import { StatsCard } from "@/components/shared/StatsCard"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { RevenueChart } from "@/components/reports/RevenueChart"
 import { FunnelChart } from "@/components/reports/FunnelChart"
-import { ProFeatureLock } from "@/components/billing/ProFeatureLock"
 import { UpgradeModal } from "@/components/billing/UpgradeModal"
 import { convertToCSV, downloadCSV } from "@/lib/csv-export"
-import { addDays, isAfter, parse, format, subDays, isSameYear, parseISO, startOfYear } from "date-fns"
-import { Project } from "@/lib/types/project"
+import { format, isAfter } from "date-fns"
 import { Payment } from "@/lib/types/payment"
+import { useReportsData, getStartDate } from "@/hooks/useReportsData"
 
 type DateRange = "7days" | "30days" | "90days" | "year" | "all" | "creation"
 
@@ -52,7 +51,7 @@ const DATE_RANGES: { label: string; value: DateRange }[] = [
 ]
 
 interface ReportsViewProps {
-    projects: any[]; // Using any for now to facilitate mapping flexibility, ideally strict types 
+    projects: any[];
     invoices: Payment[];
     userCreatedAt: string;
     planTier?: string;
@@ -64,9 +63,20 @@ export function ReportsView({ projects, invoices, userCreatedAt, planTier = "fre
     const [projectReportView, setProjectReportView] = React.useState<"list" | "grid">("list")
     const [dateRange, setDateRange] = React.useState<DateRange>("30days")
     const [showUpgradeModal, setShowUpgradeModal] = React.useState(false)
-    
+
     const params = useParams()
     const workspaceId = params.workspaceId as string || 'default'
+
+    const { filteredProjects: dateFilteredProjects, stats, revenueChartData } = useReportsData(projects, invoices, userCreatedAt, dateRange)
+
+    const filteredProjects = React.useMemo(() => {
+        return dateFilteredProjects.filter(project => {
+            const matchesSearch = (project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (project.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
+            const matchesStatus = statusFilter === "All" || project.status === statusFilter.toLowerCase()
+            return matchesSearch && matchesStatus
+        })
+    }, [searchQuery, statusFilter, dateFilteredProjects])
 
     const handleExportReport = () => {
         if (planTier === "free") {
@@ -86,188 +96,6 @@ export function ReportsView({ projects, invoices, userCreatedAt, planTier = "fre
         const csv = convertToCSV(exportData)
         downloadCSV(csv, `impry_project_report_${format(new Date(), "yyyyMMdd")}.csv`)
     }
-
-    // Helper to get start date based on range
-    const getStartDate = (range: DateRange) => {
-        const today = new Date()
-        switch (range) {
-            case "7days": return subDays(today, 7)
-            case "30days": return subDays(today, 30)
-            case "90days": return subDays(today, 90)
-            case "year": return startOfYear(today)
-            case "creation": return new Date(userCreatedAt)
-            case "all": return new Date(0) // Beginning of time
-            default: return subDays(today, 30)
-        }
-    }
-
-    // Filter projects based on date range (using startDate)
-    const filteredProjects = React.useMemo(() => {
-        const startDateLimit = getStartDate(dateRange)
-
-        return projects.filter(project => {
-            const matchesSearch = (project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (project.client?.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
-
-            const matchesStatus = statusFilter === "All" || project.status === statusFilter.toLowerCase()
-
-            // Date filtering - assuming createdAt is the start date
-            const projectDate = new Date(project.createdAt)
-            const matchesDate = isAfter(projectDate, startDateLimit)
-
-            return matchesSearch && matchesStatus && matchesDate
-        })
-    }, [searchQuery, statusFilter, dateRange, projects, userCreatedAt])
-
-    // Calculate Stats based on Date Range
-    const stats = React.useMemo(() => {
-        const startDateLimit = getStartDate(dateRange)
-
-        // Filter invoices for revenue calculation
-        const filteredInvoices = invoices.filter(inv => {
-            if (!inv.createdAt) return false // Should not happen
-            const invDate = new Date(inv.createdAt)
-            return isAfter(invDate, startDateLimit)
-        })
-
-        const totalRevenue = filteredInvoices.reduce((sum, inv) => {
-            const paidVal = (inv.status === 'paid')
-                ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                : 0;
-            return sum + paidVal;
-        }, 0)
-        const outstandingAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.status !== 'paid' ? (Number(inv.amount) - Number(inv.amountPaid)) : 0), 0)
-        // Count unique clients with outstanding
-        const outstandingClients = new Set(filteredInvoices.filter(inv => inv.status !== 'paid').map(inv => inv.clientId)).size
-
-        // Calculate Project Success Rate
-        const relevantProjects = projects.filter(project => {
-            const projectDate = new Date(project.createdAt)
-            return isAfter(projectDate, startDateLimit)
-        })
-        const completedProjects = relevantProjects.filter(p => p.status === 'completed').length
-        const totalProjects = relevantProjects.length
-        const successRateVal = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0
-
-
-        return {
-            totalRevenue,
-            outstandingAmount,
-            outstandingClients,
-            successRate: successRateVal,
-            filteredInvoices, // Return these for export
-            relevantProjects  // Return these for export
-        }
-    }, [dateRange, invoices, projects, userCreatedAt])
-
-    // Prepare Chart Data
-    // Prepare Chart Data
-    const revenueChartData = React.useMemo(() => {
-        const startDateLimit = getStartDate(dateRange)
-
-        if (dateRange === "7days") {
-            const data = []
-            for (let i = 6; i >= 0; i--) {
-                const date = subDays(new Date(), i)
-                const dayStr = format(date, "MMM dd")
-
-                const dayRevenue = invoices
-                    .filter(inv => inv.status === 'paid')
-                    .filter(inv => {
-                        if (!inv.createdAt) return false;
-                        const invDate = new Date(inv.createdAt)
-                        return format(invDate, "MMM dd") === dayStr && isSameYear(invDate, date)
-                    })
-                    .reduce((sum, inv) => {
-                        const paidVal = (inv.status === 'paid')
-                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                            : 0;
-                        return sum + paidVal;
-                    }, 0)
-
-                data.push({ month: dayStr, revenue: dayRevenue })
-            }
-            return data
-        } else if (dateRange === "30days") {
-            // Group by week for 30-day range
-            const data = []
-            const today = new Date()
-            for (let weekStart = 29; weekStart >= 0; weekStart -= 7) {
-                const endDate = subDays(today, weekStart)
-                const startDate = subDays(today, Math.min(weekStart + 6, 29))
-                const weekLabel = `${format(startDate, "MMM dd")} - ${format(endDate, "MMM dd")}`
-
-                const weekRevenue = invoices
-                    .filter(inv => inv.status === 'paid')
-                    .filter(inv => {
-                        if (!inv.createdAt) return false;
-                        const invDate = new Date(inv.createdAt)
-                        return isAfter(invDate, subDays(startDate, 1)) && !isAfter(invDate, endDate)
-                    })
-                    .reduce((sum, inv) => {
-                        const paidVal = (inv.status === 'paid')
-                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                            : 0;
-                        return sum + paidVal;
-                    }, 0)
-
-                data.push({ month: weekLabel, revenue: weekRevenue })
-            }
-            return data
-        } else if (dateRange === "creation" || dateRange === "all") {
-            // Monthly breakdown from creation date or very beginning
-            const start = dateRange === "creation" ? new Date(userCreatedAt) : new Date(invoices.length > 0 ? Math.min(...invoices.map(i => new Date(i.createdAt!).getTime())) : Date.now())
-            const end = new Date()
-            const data = []
-
-            const current = new Date(start)
-            // Normalize to start of month
-            current.setDate(1)
-
-            while (current <= end || format(current, "MMM yyyy") === format(end, "MMM yyyy")) {
-                const monthStr = format(current, "MMM yyyy")
-                const monthRevenue = invoices
-                    .filter(inv => inv.status === 'paid')
-                    .filter(inv => {
-                        if (!inv.createdAt) return false;
-                        const invDate = new Date(inv.createdAt)
-                        return format(invDate, "MMM yyyy") === monthStr
-                    })
-                    .reduce((sum, inv) => {
-                        const paidVal = (inv.status === 'paid')
-                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                            : 0;
-                        return sum + paidVal;
-                    }, 0)
-
-                data.push({ month: format(current, "MMM ''yy"), revenue: monthRevenue }) // MMM 'yy for compact display
-
-                // Next month
-                current.setMonth(current.getMonth() + 1)
-            }
-            return data
-        } else {
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-            const currentYear = new Date().getFullYear()
-
-            return months.map(month => {
-                const monthRevenue = invoices
-                    .filter(inv => inv.status === 'paid')
-                    .filter(inv => {
-                        if (!inv.createdAt) return false;
-                        const invDate = new Date(inv.createdAt)
-                        return format(invDate, "MMM") === month && invDate.getFullYear() === currentYear
-                    })
-                    .reduce((sum, inv) => {
-                        const paidVal = (inv.status === 'paid')
-                            ? (Number(inv.amountPaid) === 0 ? Number(inv.amount) : Number(inv.amountPaid))
-                            : 0;
-                        return sum + paidVal;
-                    }, 0)
-                return { month, revenue: monthRevenue }
-            })
-        }
-    }, [dateRange, invoices, userCreatedAt])
 
     // Status filtering
     const uniqueStatuses = ["All", "active", "completed", "pending"] // Simplified for now, could be dynamic

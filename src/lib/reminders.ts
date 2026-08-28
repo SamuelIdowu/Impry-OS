@@ -1,4 +1,4 @@
-import { getCurrentWorkspaceId } from '@/server/actions/workspaces';
+import { getCurrentWorkspaceId } from '@/lib/workspace';
 import { db } from '@/server/db';
 import { reminders } from '@/server/db/schema';
 import { eq, and, asc } from 'drizzle-orm';
@@ -37,7 +37,7 @@ export async function getReminders(filters?: {
     const result = await db.query.reminders.findMany({
         where: and(...conditions),
         orderBy: [asc(reminders.reminderDate)],
-        limit: filters?.limit,
+        limit: filters?.limit ?? 100,
         with: {
             project: { columns: { name: true } },
             client: { columns: { name: true, email: true } }
@@ -57,6 +57,7 @@ export async function getDueReminders(): Promise<Reminder[]> {
     const result = await db.query.reminders.findMany({
         where: and(eq(reminders.userId, user.id), eq(reminders.isSent, false)),
         orderBy: [asc(reminders.reminderDate)],
+        limit: 50,
         with: {
             project: { columns: { name: true } },
             client: { columns: { name: true, email: true } }

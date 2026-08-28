@@ -21,6 +21,11 @@ export async function middleware(request: NextRequest) {
     const isPublicRoute =
         pathname === "/" ||
         pathname.startsWith("/public") ||
+        pathname.startsWith("/legal") ||
+        pathname.startsWith("/privacy") ||
+        pathname.startsWith("/terms") ||
+        pathname.startsWith("/cookies") ||
+        pathname.startsWith("/security") ||
         pathname.startsWith("/scope/share") ||
         pathname.startsWith("/invite") ||
         pathname.startsWith("/forgot-password") ||

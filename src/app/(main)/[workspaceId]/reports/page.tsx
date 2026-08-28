@@ -1,9 +1,9 @@
 import React from "react"
 import { ReportsView } from "@/components/reports/ReportsView"
 import { fetchProjects } from "@/server/actions/projects"
-import { getInvoices } from "@/server/actions/payments"
+import { getInvoices } from "@/server/actions/invoices"
 import { getUser } from "@/lib/auth"
-import { getCurrentWorkspaceId } from "@/server/actions/workspaces"
+import { getCurrentWorkspaceId } from "@/lib/workspace"
 import { getWorkspacePlan } from "@/lib/payments/guards"
 
 export default async function ReportsPage() {
