@@ -81,9 +81,14 @@ export class PaddlePaymentsProvider implements PaymentProvider {
     const resJson = await response.json();
     const txnData = resJson.data || resJson;
 
-    const checkoutUrl = txnData.checkout?.url;
+    let checkoutUrl = txnData.checkout?.url;
     if (!checkoutUrl) {
       throw new Error(`Paddle transaction created (${txnData.id}) but no hosted checkout URL returned.`);
+    }
+
+    // Prevent ERR_SSL_PROTOCOL_ERROR on local development
+    if (checkoutUrl.startsWith('https://localhost:') || checkoutUrl.startsWith('https://127.0.0.1:')) {
+      checkoutUrl = checkoutUrl.replace('https://', 'http://');
     }
 
     return {
@@ -93,24 +98,15 @@ export class PaddlePaymentsProvider implements PaymentProvider {
   }
 
   async getPortalUrl(params: PortalParams): Promise<string | null> {
-    const apiKey = process.env.PADDLE_API_KEY;
-    if (!apiKey || !params.customerId) return null;
+    if (!params.customerId) return null;
 
     try {
-      const baseUrl = this.getBaseUrl();
-      const response = await fetch(`${baseUrl}/customers/${params.customerId}/portal-sessions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) return null;
-      const data = await response.json();
-      return data.data?.urls?.general?.overview || data.data?.url || null;
-    } catch {
+      const { getPaddleInstance } = await import('@/lib/paddle/get-paddle-instance');
+      const paddle = getPaddleInstance();
+      const portalSession = await paddle.customerPortalSessions.create(params.customerId, []);
+      return portalSession.urls?.general?.overview || null;
+    } catch (err) {
+      console.error('Paddle getPortalUrl error:', err);
       return null;
     }
   }

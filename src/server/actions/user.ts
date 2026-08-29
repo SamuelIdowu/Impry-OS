@@ -44,7 +44,21 @@ export async function getProfileAction() {
             return { success: false, error: 'Profile not found' };
         }
 
-        return { success: true, profile };
+        // Fetch user's active workspace plan tier
+        const { teamMembers, workspaces } = await import('@/server/db/schema');
+        const [ws] = await db
+            .select({ planTier: workspaces.planTier })
+            .from(teamMembers)
+            .innerJoin(workspaces, eq(teamMembers.workspaceId, workspaces.id))
+            .where(eq(teamMembers.userId, user.id))
+            .limit(1);
+
+        const enhancedProfile = {
+            ...profile,
+            subscription_plan: ws?.planTier || 'free',
+        };
+
+        return { success: true, profile: enhancedProfile };
     } catch (error) {
         return { success: false, error: 'Failed to fetch profile' };
     }

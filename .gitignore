@@ -55,3 +55,7 @@ drizzle.config.temp.ts
 *.temp.ts
 
 .commandcode
+.agents
+/scripts
+nul
+

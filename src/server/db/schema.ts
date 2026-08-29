@@ -244,6 +244,32 @@ export const billingWebhookEvents = pgTable('billing_webhook_events', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+// Paddle Mirrored Tables
+export const customers = pgTable('customers', {
+  customerId: text('customer_id').primaryKey(),
+  email: text('email').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  emailIdx: index('customers_email_idx').on(table.email),
+}));
+
+export const subscriptions = pgTable('subscriptions', {
+  subscriptionId: text('subscription_id').primaryKey(),
+  customerId: text('customer_id').notNull().references(() => customers.customerId, { onDelete: 'cascade' }),
+  status: text('status').notNull(),
+  priceId: text('price_id').notNull(),
+  productId: text('product_id').notNull(),
+  scheduledChangeAction: text('scheduled_change_action'),
+  scheduledChangeAt: timestamp('scheduled_change_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  customerIdIdx: index('subscriptions_customer_id_idx').on(table.customerId),
+  statusIdx: index('subscriptions_status_idx').on(table.status),
+}));
+
+
 export const workspaceInvitations = pgTable('workspace_invitations', {
   id: uuid('id').defaultRandom().primaryKey(),
   workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
@@ -325,4 +351,13 @@ export const remindersRelations = relations(reminders, ({ one }) => ({
   payment: one(payments, { fields: [reminders.paymentId], references: [payments.id] }),
   user: one(users, { fields: [reminders.userId], references: [users.id] }),
 }));
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  customer: one(customers, { fields: [subscriptions.customerId], references: [customers.customerId] }),
+}));
+
 

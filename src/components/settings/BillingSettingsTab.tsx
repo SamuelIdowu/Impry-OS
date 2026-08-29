@@ -14,11 +14,17 @@ import {
   FolderKanban,
   Briefcase,
   Receipt,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   getWorkspaceBillingInfo,
   createSubscriptionCheckout,
   getBillingPortalUrl,
+  getWorkspaceInvoices,
+  getInvoicePdfDownloadUrl,
+  type BillingInvoice,
 } from "@/server/actions/billing";
 import { PlanTier, BillingCycle } from "@/lib/payments";
 import { PlanCard } from "@/components/settings/PlanCard";
@@ -29,6 +35,10 @@ interface BillingSettingsTabProps {
 
 export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
   const [billingInfo, setBillingInfo] = useState<any>(null);
+  const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [isPending, startTransition] = useTransition();
@@ -38,12 +48,32 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
   const fetchBilling = async () => {
     try {
       setIsLoading(true);
-      const info = await getWorkspaceBillingInfo(workspaceId);
+      const [info, invoiceList] = await Promise.all([
+        getWorkspaceBillingInfo(workspaceId),
+        getWorkspaceInvoices(workspaceId),
+      ]);
       setBillingInfo(info);
+      setInvoices(invoiceList);
     } catch (err: any) {
       setActionError(err.message || "Failed to load billing information.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async (transactionId: string) => {
+    try {
+      setDownloadingInvoiceId(transactionId);
+      const url = await getInvoicePdfDownloadUrl(transactionId);
+      if (url) {
+        window.open(url, "_blank");
+      } else {
+        setActionError("PDF invoice could not be generated yet.");
+      }
+    } catch {
+      setActionError("Failed to download PDF invoice.");
+    } finally {
+      setDownloadingInvoiceId(null);
     }
   };
 
@@ -148,7 +178,7 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
                 <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Current Workspace Tier</p>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="default" className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-semibold text-xs capitalize py-1">
-                    {billingInfo?.planName || "Free Starter"}
+                    {billingInfo?.planConfig?.name || (currentTier === "free" ? "Free Starter" : currentTier === "pro" ? "Freelancer Pro" : "Studio & Agency")}
                   </Badge>
                   <Badge variant="outline" className="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 font-medium text-xs capitalize py-1">
                     {subscriptionStatus}
@@ -158,12 +188,18 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
                   <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100">
                     {currentTier === "free" ? "$0" : currentTier === "pro" ? "$19" : "$49"}
                   </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium"> / Month</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                    {currentTier === "free" ? " / Free forever" : " / month"}
+                  </span>
                 </div>
               </div>
               {currentTier !== "studio" && (
-                <Button onClick={() => handleUpgrade("pro")} disabled={isPending} className="bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-semibold rounded-xl shadow-sm gap-1.5 shrink-0">
-                  Upgrade Plan
+                <Button
+                  onClick={() => handleUpgrade(currentTier === "pro" ? "studio" : "pro")}
+                  disabled={isPending}
+                  className="bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-semibold rounded-xl shadow-sm gap-1.5 shrink-0"
+                >
+                  {currentTier === "pro" ? "Upgrade to Studio" : "Upgrade Plan"}
                 </Button>
               )}
             </div>
@@ -246,28 +282,121 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
           <div>
             <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Receipt className="h-4 w-4 text-zinc-500" />
-              Billing Receipts
+              Billing Receipts & Invoices
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Subscription invoices and payment records for this workspace.</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Official tax invoices and payment records for this workspace.</p>
           </div>
           {billingInfo?.customerId && (
-            <Button onClick={handleManagePortal} variant="ghost" size="sm" className="text-xs h-8 gap-1.5 text-zinc-600 dark:text-zinc-400">
-              <Download className="h-3.5 w-3.5" />
-              Download Official Receipts
+            <Button onClick={handleManagePortal} variant="outline" size="sm" className="text-xs h-8 gap-1.5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800">
+              <ExternalLink className="h-3.5 w-3.5" />
+              Customer Portal
             </Button>
           )}
         </div>
-        <div className="bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 text-center shadow-sm">
-          <Receipt className="h-8 w-8 text-zinc-400 mx-auto mb-2 opacity-60" />
-          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-            {billingInfo?.customerId ? "Subscription Invoices Ready" : "No Paid Billing Receipts Yet"}
-          </p>
-          <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
-            {billingInfo?.customerId
-              ? "Click above to view your official merchant portal receipts and download PDF invoices."
-              : "When you upgrade to a paid Pro or Studio plan, your subscription billing receipts will be recorded here."}
-          </p>
-        </div>
+
+        {invoices.length > 0 ? (
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/70 dark:bg-zinc-900/50 text-zinc-400 font-semibold uppercase tracking-wider">
+                    <th className="py-3 px-4">Invoice #</th>
+                    <th className="py-3 px-4">Plan / Description</th>
+                    <th className="py-3 px-4">Billing Date</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">PDF Invoice</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60 font-medium">
+                  {invoices
+                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    .map((inv) => (
+                      <tr key={inv.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/40 transition-colors">
+                        <td className="py-3.5 px-4 font-mono text-zinc-800 dark:text-zinc-200">
+                          {inv.invoiceNumber}
+                        </td>
+                        <td className="py-3.5 px-4 text-zinc-700 dark:text-zinc-300 font-medium">
+                          {inv.description}
+                        </td>
+                        <td className="py-3.5 px-4 text-zinc-500 dark:text-zinc-400">
+                          {inv.date}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-zinc-900 dark:text-zinc-100">
+                          {inv.amount}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-[10px] uppercase font-bold py-0.5 px-2">
+                            {inv.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <Button
+                            onClick={() => handleDownloadPdf(inv.id)}
+                            disabled={downloadingInvoiceId === inv.id}
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs gap-1.5 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                          >
+                            {downloadingInvoiceId === inv.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Download className="h-3.5 w-3.5" />
+                            )}
+                            <span>Download PDF</span>
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Controls */}
+            {invoices.length > itemsPerPage && (
+              <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/30">
+                <span>
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, invoices.length)} of {invoices.length} receipts
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs gap-1 border-zinc-200 dark:border-zinc-800"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    <span>Previous</span>
+                  </Button>
+                  <span className="px-2 font-medium text-zinc-700 dark:text-zinc-300">
+                    Page {currentPage} of {Math.ceil(invoices.length / itemsPerPage)}
+                  </span>
+                  <Button
+                    onClick={() => setCurrentPage((p) => Math.min(Math.ceil(invoices.length / itemsPerPage), p + 1))}
+                    disabled={currentPage >= Math.ceil(invoices.length / itemsPerPage)}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs gap-1 border-zinc-200 dark:border-zinc-800"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-8 text-center shadow-sm">
+            <Receipt className="h-8 w-8 text-zinc-400 mx-auto mb-2 opacity-60" />
+            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              No Paid Billing Receipts Yet
+            </p>
+            <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+              When you upgrade to a paid Pro or Studio plan, your subscription billing receipts and downloadable tax invoices will appear here.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
