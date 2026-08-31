@@ -7,22 +7,25 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-    DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createReminderAction } from '@/server/actions/reminders';
+import { fetchClients } from '@/server/actions/clients';
+import { fetchProjects } from '@/server/actions/projects';
 import { ReminderType } from '@/lib/types/reminder';
-import { Calendar as CalendarIcon, DollarSign, Loader2, X } from 'lucide-react';
+import { Calendar as CalendarIcon, DollarSign, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-// import { toast } from 'sonner';
 
 interface ReminderCreationModalProps {
     projectId?: string;
     clientId?: string;
     paymentId?: string;
+    clients?: { id: string; name: string }[];
+    projects?: { id: string; name: string; clientId: string }[];
     trigger?: React.ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -31,9 +34,11 @@ interface ReminderCreationModalProps {
 }
 
 export function ReminderCreationModal({
-    projectId,
-    clientId,
+    projectId: propProjectId,
+    clientId: propClientId,
     paymentId,
+    clients: propClients = [],
+    projects: propProjects = [],
     trigger,
     open: controlledOpen,
     onOpenChange: setControlledOpen,
@@ -52,6 +57,38 @@ export function ReminderCreationModal({
     const [type, setType] = useState<ReminderType>('follow_up');
     const [date, setDate] = useState('');
     const [note, setNote] = useState('');
+    const [selectedClientId, setSelectedClientId] = useState(propClientId || '');
+    const [selectedProjectId, setSelectedProjectId] = useState(propProjectId || '');
+
+    const [availableClients, setAvailableClients] = useState(propClients);
+    const [availableProjects, setAvailableProjects] = useState(propProjects);
+
+    // Sync props
+    useEffect(() => {
+        if (propClientId) setSelectedClientId(propClientId);
+        if (propProjectId) setSelectedProjectId(propProjectId);
+    }, [propClientId, propProjectId]);
+
+    useEffect(() => {
+        if (propClients.length > 0) setAvailableClients(propClients);
+        if (propProjects.length > 0) setAvailableProjects(propProjects);
+    }, [propClients, propProjects]);
+
+    // Fetch clients & projects if not provided and dialog is opened
+    useEffect(() => {
+        if (open && availableClients.length === 0) {
+            fetchClients().then(res => {
+                if (res.success && res.data) {
+                    setAvailableClients(res.data.map(c => ({ id: c.id, name: c.name })));
+                }
+            });
+            fetchProjects().then(res => {
+                if (res.success && res.data) {
+                    setAvailableProjects(res.data.map(p => ({ id: p.id, name: p.name, clientId: p.clientId || '' })));
+                }
+            });
+        }
+    }, [open, availableClients.length]);
 
     // Pre-fill date when defaultDate prop changes
     useEffect(() => {
@@ -59,6 +96,8 @@ export function ReminderCreationModal({
             setDate(defaultDate);
         }
     }, [defaultDate, open]);
+
+    const filteredProjects = availableProjects.filter(p => !selectedClientId || p.clientId === selectedClientId);
 
     const handleSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -70,9 +109,9 @@ export function ReminderCreationModal({
             const title = type === 'payment' ? 'Payment Reminder' : 'Follow-up';
 
             const result = await createReminderAction({
-                projectId: projectId,
-                clientId: clientId,
-                paymentId: paymentId,
+                projectId: selectedProjectId || propProjectId || undefined,
+                clientId: selectedClientId || propClientId || undefined,
+                paymentId: paymentId || undefined,
                 title,
                 reminderType: type,
                 reminderDate: new Date(date).toISOString(),
@@ -80,12 +119,12 @@ export function ReminderCreationModal({
             });
 
             if (result.success) {
-                // toast.success('Reminder created');
                 if (setOpen) setOpen(false);
-                // Reset form
                 setNote('');
                 setDate('');
                 setType('follow_up');
+                if (!propClientId) setSelectedClientId('');
+                if (!propProjectId) setSelectedProjectId('');
                 onSuccess?.();
             } else {
                 setError(result.error || 'Failed to create reminder');
@@ -101,27 +140,66 @@ export function ReminderCreationModal({
         <Dialog open={open} onOpenChange={setOpen}>
             {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 
-            <DialogContent className="p-0 gap-0 sm:max-w-[440px] rounded-xl overflow-hidden bg-white border-zinc-100 shadow-xl">
-                <div className="flex items-center justify-between p-6 pb-2">
-                    <div>
-                        <DialogTitle className="text-lg font-bold text-zinc-900">Create reminder</DialogTitle>
-                        <p className="text-xs text-zinc-500 mt-1">Set a notification for this client.</p>
-                    </div>
-                    <DialogClose className="rounded-full p-1 hover:bg-zinc-100 transition-colors">
-                        <X className="h-4 w-4 text-zinc-400" />
-                    </DialogClose>
+            <DialogContent className="p-0 gap-0 sm:max-w-[460px] rounded-xl overflow-hidden bg-white border-zinc-100 shadow-xl">
+                <div className="p-6 pb-3 border-b border-zinc-100">
+                    <DialogTitle className="text-lg font-bold text-zinc-900">Create reminder</DialogTitle>
+                    <p className="text-xs text-zinc-500 mt-1">Set a notification or follow-up deadline.</p>
                 </div>
 
-                <div className="px-6 py-4 space-y-6">
+                <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
                     {error && (
                         <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
                             {error}
                         </div>
                     )}
 
+                    {/* Client & Project Selectors if not preset */}
+                    {!propClientId && availableClients.length > 0 && (
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold text-zinc-700">Client</Label>
+                            <Select
+                                value={selectedClientId}
+                                onValueChange={(val) => {
+                                    setSelectedClientId(val);
+                                    setSelectedProjectId('');
+                                }}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select client " />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">No Client</SelectItem>
+                                    {availableClients.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    {!propProjectId && filteredProjects.length > 0 && (
+                        <div className="space-y-2">
+                            <Label className="text-xs font-semibold text-zinc-700">Project </Label>
+                            <Select
+                                value={selectedProjectId}
+                                onValueChange={setSelectedProjectId}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select project" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">No Project</SelectItem>
+                                    {filteredProjects.map(p => (
+                                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
                     {/* Reminder Type */}
-                    <div className="space-y-3">
-                        <Label className="text-xs font-semibold text-zinc-600">Reminder type</Label>
+                    <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-zinc-700">Reminder type</Label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 type="button"
@@ -166,8 +244,8 @@ export function ReminderCreationModal({
                     </div>
 
                     {/* Due Date */}
-                    <div className="space-y-3">
-                        <Label htmlFor="date" className="text-xs font-semibold text-zinc-600">Due date</Label>
+                    <div className="space-y-2">
+                        <Label htmlFor="date" className="text-xs font-semibold text-zinc-700">Due date</Label>
                         <div className="relative">
                             <Input
                                 id="date"
@@ -182,26 +260,26 @@ export function ReminderCreationModal({
                     </div>
 
                     {/* Optional Note */}
-                    <div className="space-y-3">
-                        <Label htmlFor="note" className="text-xs font-semibold text-zinc-600">Optional note</Label>
+                    <div className="space-y-2">
+                        <Label htmlFor="note" className="text-xs font-semibold text-zinc-700">Optional note</Label>
                         <Textarea
                             id="note"
                             placeholder="Add details about this reminder..."
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
-                            className="resize-none h-24 bg-zinc-50 border-zinc-200 text-sm focus-visible:ring-zinc-900"
+                            className="resize-none h-20 bg-zinc-50 border-zinc-200 text-sm focus-visible:ring-zinc-900"
                         />
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 bg-white flex justify-end gap-3 mt-2">
+                <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex justify-end gap-3">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={() => { if (setOpen) setOpen(false); }}
                         disabled={isPending}
-                        className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                        className="border-zinc-200 text-zinc-700 hover:bg-zinc-100"
                     >
                         Cancel
                     </Button>

@@ -72,17 +72,17 @@ export function CalendarDay({ date, currentMonth, events, onClick, onEventClick,
                     {format(date, 'd')}
                 </span>
 
-                {/* Add event button — visible on hover for current month days */}
+                {/* Add event button — clearly styled on hover */}
                 {isCurrentMonth && onAddEvent && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation()
                             onAddEvent(date)
                         }}
-                        className="w-5 h-5 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-opacity duration-150"
-                        title="Add event"
+                        className="w-6 h-6 flex items-center justify-center rounded-md opacity-40 hover:opacity-100 group-hover:opacity-100 text-zinc-500 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 transition-all duration-150 shadow-xs"
+                        title="Add event / reminder"
                     >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-3.5 w-3.5" />
                     </button>
                 )}
             </div>

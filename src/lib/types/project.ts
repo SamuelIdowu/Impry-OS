@@ -59,24 +59,24 @@ export interface ProjectWithDetails extends ProjectWithClient {
 export interface CreateProjectInput {
     name: string;
     clientId: string;
-    description?: string;
+    description?: string | null;
     status?: DatabaseProjectStatus;
-    startDate?: string;
-    deadline?: string;
+    startDate?: string | null;
+    deadline?: string | null;
     budget?: number;
     currency?: string;
-    notes?: string;
+    notes?: string | null;
 }
 
 export interface UpdateProjectInput {
     name?: string;
-    description?: string;
+    description?: string | null;
     status?: DatabaseProjectStatus;
-    startDate?: string;
-    deadline?: string;
+    startDate?: string | null;
+    deadline?: string | null;
     budget?: number;
     currency?: string;
-    notes?: string;
+    notes?: string | null;
     progress?: number;
     total_value?: number;
 }

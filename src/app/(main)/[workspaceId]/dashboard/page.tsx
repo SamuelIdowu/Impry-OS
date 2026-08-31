@@ -71,8 +71,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ work
     }));
 
     return (
-        <div className="flex flex-col items-center py-8 px-4 lg:px-8 w-full max-w-[1600px] mx-auto">
-            <div className="w-full flex flex-col gap-10">
+        <div className="flex flex-col items-center pt-2 pb-8 px-4 lg:px-8 w-full max-w-[1600px] mx-auto">
+            <div className="w-full flex flex-col gap-6">
 
                 {/* Custom Page Header */}
                 <DashboardHeader

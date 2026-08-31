@@ -93,16 +93,15 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
     const [newProject] = await db.insert(projects).values({
         name: input.name,
         clientId: input.clientId,
-        description: input.description,
+        description: input.description || null,
         status: input.status || 'planning',
-        startDate: input.startDate,
-        deadline: input.deadline,
-        budget: input.budget?.toString(),
+        startDate: input.startDate?.trim() || null,
+        deadline: input.deadline?.trim() || null,
+        budget: (input.budget !== undefined && input.budget !== null && !isNaN(Number(input.budget))) ? input.budget.toString() : null,
         currency: input.currency || 'USD',
-        notes: input.notes,
+        notes: input.notes || null,
         userId: user.id,
         workspaceId: await getCurrentWorkspaceId(),
-
     }).returning();
 
     return newProject as Project;
@@ -115,17 +114,22 @@ export async function updateProject(id: string, input: UpdateProjectInput): Prom
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const [updatedProject] = await db.update(projects).set({
-        name: input.name,
-        description: input.description,
-        status: input.status,
-        startDate: input.startDate,
-        deadline: input.deadline,
-        budget: input.budget?.toString(),
-        currency: input.currency,
-        notes: input.notes,
+    const updatePayload: Record<string, any> = {
         updatedAt: new Date(),
-    })
+    };
+
+    if (input.name !== undefined) updatePayload.name = input.name;
+    if (input.description !== undefined) updatePayload.description = input.description || null;
+    if (input.status !== undefined) updatePayload.status = input.status;
+    if (input.startDate !== undefined) updatePayload.startDate = input.startDate?.trim() || null;
+    if (input.deadline !== undefined) updatePayload.deadline = input.deadline?.trim() || null;
+    if (input.budget !== undefined) {
+        updatePayload.budget = (input.budget !== null && !isNaN(Number(input.budget))) ? input.budget.toString() : null;
+    }
+    if (input.currency !== undefined) updatePayload.currency = input.currency;
+    if (input.notes !== undefined) updatePayload.notes = input.notes || null;
+
+    const [updatedProject] = await db.update(projects).set(updatePayload)
     .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
     .returning();
 

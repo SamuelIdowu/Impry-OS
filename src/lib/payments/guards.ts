@@ -4,7 +4,31 @@ import { eq, count, and, gte } from "drizzle-orm";
 import { getPlanConfig } from "./config";
 import { PlanTier } from "./types";
 
+/**
+ * Toggle to enable or disable price/feature blockers across the entire application.
+ *
+ * Supported environment variables:
+ * - ENABLE_PRICE_BLOCKERS: "true" | "false"
+ * - FEATURE_BLOCKERS_ENABLED: "true" | "false"
+ * - DISABLE_PRICE_BLOCKERS: "true" | "false"
+ *
+ * Default: false (Blockers disabled for beta testers to use all features without restriction).
+ */
+export function arePriceBlockersEnabled(): boolean {
+  if (process.env.ENABLE_PRICE_BLOCKERS === "true") return true;
+  if (process.env.FEATURE_BLOCKERS_ENABLED === "true") return true;
+  if (process.env.DISABLE_PRICE_BLOCKERS === "false") return true;
+
+  // Defaults to false (Beta testing mode: unrestricted access)
+  return false;
+}
+
 export async function getWorkspacePlan(workspaceId: string): Promise<PlanTier> {
+  // If price blockers are disabled for beta testing, grant studio tier capabilities
+  if (!arePriceBlockersEnabled()) {
+    return "studio";
+  }
+
   const [ws] = await db
     .select({ planTier: workspaces.planTier })
     .from(workspaces)
@@ -16,6 +40,12 @@ export async function getWorkspacePlan(workspaceId: string): Promise<PlanTier> {
 
 export async function canCreateClient(workspaceId: string) {
   const planTier = await getWorkspacePlan(workspaceId);
+
+  // If price blockers are disabled for beta testing, allow unlimited creation
+  if (!arePriceBlockersEnabled()) {
+    return { allowed: true, currentCount: 0, maxAllowed: "unlimited" as const, planTier };
+  }
+
   const plan = getPlanConfig(planTier);
 
   if (plan.limits.clients === "unlimited") {
@@ -40,6 +70,12 @@ export async function canCreateClient(workspaceId: string) {
 
 export async function canCreateProject(workspaceId: string) {
   const planTier = await getWorkspacePlan(workspaceId);
+
+  // If price blockers are disabled for beta testing, allow unlimited creation
+  if (!arePriceBlockersEnabled()) {
+    return { allowed: true, currentCount: 0, maxAllowed: "unlimited" as const, planTier };
+  }
+
   const plan = getPlanConfig(planTier);
 
   if (plan.limits.projects === "unlimited") {
@@ -64,6 +100,12 @@ export async function canCreateProject(workspaceId: string) {
 
 export async function canCreateInvoice(workspaceId: string) {
   const planTier = await getWorkspacePlan(workspaceId);
+
+  // If price blockers are disabled for beta testing, allow unlimited creation
+  if (!arePriceBlockersEnabled()) {
+    return { allowed: true, currentCount: 0, maxAllowed: "unlimited" as const, planTier };
+  }
+
   const plan = getPlanConfig(planTier);
 
   if (plan.limits.invoicesPerMonth === "unlimited") {
@@ -98,6 +140,14 @@ export async function canCreateInvoice(workspaceId: string) {
 
 export async function canUseCustomBranding(workspaceId: string) {
   const planTier = await getWorkspacePlan(workspaceId);
+
+  if (!arePriceBlockersEnabled()) {
+    return {
+      allowed: true,
+      planTier,
+    };
+  }
+
   const plan = getPlanConfig(planTier);
 
   return {
@@ -108,6 +158,16 @@ export async function canUseCustomBranding(workspaceId: string) {
 
 export async function canInviteTeamMember(workspaceId: string) {
   const planTier = await getWorkspacePlan(workspaceId);
+
+  if (!arePriceBlockersEnabled()) {
+    return {
+      allowed: true,
+      currentCount: 0,
+      maxAllowed: "unlimited" as const,
+      planTier,
+    };
+  }
+
   const plan = getPlanConfig(planTier);
 
   const [{ value: rosterCount }] = await db
@@ -133,6 +193,14 @@ export async function canInviteTeamMember(workspaceId: string) {
 
 export async function canExportCsv(workspaceId: string) {
   const planTier = await getWorkspacePlan(workspaceId);
+
+  if (!arePriceBlockersEnabled()) {
+    return {
+      allowed: true,
+      planTier,
+    };
+  }
+
   const plan = getPlanConfig(planTier);
 
   return {
@@ -143,9 +211,16 @@ export async function canExportCsv(workspaceId: string) {
 
 export async function canAccessReports(workspaceId: string) {
   const planTier = await getWorkspacePlan(workspaceId);
+
+  if (!arePriceBlockersEnabled()) {
+    return {
+      allowed: true,
+      planTier,
+    };
+  }
+
   return {
     allowed: planTier === "pro" || planTier === "studio",
     planTier,
   };
 }
-

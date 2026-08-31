@@ -24,6 +24,7 @@ const createStandaloneInvoiceSchema = z.object({
     invoiceNumber: z.string().min(1, 'Invoice number is required'),
     dueDate: z.string(),
     notes: z.string().optional(),
+    paymentInstructions: z.string().optional(),
     taxRate: z.union([z.string(), z.number()]).optional(),
     discountRate: z.union([z.string(), z.number()]).optional(),
     lineItems: z.any().optional(),
@@ -131,7 +132,7 @@ export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInpu
                 );
             }
 
-            const validatedInput = createStandaloneInvoiceSchema.parse(input) as CreateStandaloneInvoiceInput;
+            const validatedInput = createStandaloneInvoiceSchema.parse(input) as CreateStandaloneInvoiceInput & { paymentInstructions?: string };
             const [newInvoice] = await db.insert(payments).values({
                 userId: user.id,
                 workspaceId,
@@ -144,7 +145,7 @@ export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInpu
                 invoiceNumber: validatedInput.invoiceNumber,
                 dueDate: validatedInput.dueDate,
                 lineItems: validatedInput.lineItems,
-                notes: validatedInput.notes,
+                notes: validatedInput.paymentInstructions || validatedInput.notes,
                 taxRate: validatedInput.taxRate?.toString() || "0",
                 discountRate: validatedInput.discountRate?.toString() || "0",
             }).returning();
@@ -156,7 +157,9 @@ export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInpu
                 });
             }
 
+            revalidatePath(`/${workspaceId}/invoices`);
             revalidatePath(`/${workspaceId}/payments`);
+            revalidatePath(`/${workspaceId}/dashboard`);
             return newInvoice as Payment;
         } catch (error: any) {
             console.error('Error creating standalone invoice:', error);
@@ -174,6 +177,7 @@ export async function createStandaloneInvoice(input: CreateStandaloneInvoiceInpu
 export async function updateStandaloneInvoice(id: string, input: CreateStandaloneInvoiceInput): Promise<Payment> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const [updatedInvoice] = await db.update(payments).set({
         clientId: input.clientId,
@@ -183,12 +187,12 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
         invoiceNumber: input.invoiceNumber,
         dueDate: input.dueDate,
         lineItems: input.lineItems,
-        notes: input.notes,
+        notes: (input as any).paymentInstructions || input.notes,
         taxRate: input.taxRate?.toString() || "0",
         discountRate: input.discountRate?.toString() || "0",
         updatedAt: new Date(),
     })
-        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, workspaceId), eq(payments.userId, user.id)))
         .returning();
 
     if (!updatedInvoice) throw new Error('Invoice not found');
@@ -199,6 +203,11 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
             amount: input.amount,
         });
     }
+
+    revalidatePath(`/${workspaceId}/invoices`);
+    revalidatePath(`/${workspaceId}/invoices/${id}`);
+    revalidatePath(`/${workspaceId}/payments`);
+    revalidatePath(`/${workspaceId}/dashboard`);
 
     return updatedInvoice as Payment;
 }

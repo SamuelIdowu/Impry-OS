@@ -64,6 +64,23 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
     const [selectedStatuses, setSelectedStatuses] = useState<Status[]>([])
 
+    // Restore view preference
+    React.useEffect(() => {
+        const savedView = localStorage.getItem('impry_projects_view_mode')
+        if (savedView === 'list' || savedView === 'grid') {
+            setView(savedView)
+        }
+    }, [])
+
+    const handleViewChange = (newView: "list" | "grid") => {
+        setView(newView)
+        try {
+            localStorage.setItem('impry_projects_view_mode', newView)
+        } catch {
+            // ignore localStorage quota errors
+        }
+    }
+
     // Empty State Check
     if (initialProjects.length === 0) {
         return (
@@ -184,7 +201,7 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                         </DropdownMenu>
                         <div className="h-10 border-l border-zinc-200 mx-2"></div>
                         <button
-                            onClick={() => setView("list")}
+                            onClick={() => handleViewChange("list")}
                             className={cn(
                                 "p-2 rounded-md transition-all",
                                 view === "list"
@@ -195,7 +212,7 @@ export function ProjectList({ initialProjects, clients }: ProjectListProps) {
                             <ListIcon className="h-5 w-5" />
                         </button>
                         <button
-                            onClick={() => setView("grid")}
+                            onClick={() => handleViewChange("grid")}
                             className={cn(
                                 "p-2 rounded-md transition-all",
                                 view === "grid"

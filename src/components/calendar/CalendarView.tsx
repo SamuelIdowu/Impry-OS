@@ -21,10 +21,12 @@ import type { CalendarEvent, CalendarEventType } from '@/lib/calendar'
 
 interface CalendarViewProps {
     initialEvents: CalendarEvent[]
+    clients?: { id: string; name: string }[]
+    projects?: { id: string; name: string; clientId: string }[]
     onRefresh?: () => void
 }
 
-export function CalendarView({ initialEvents, onRefresh }: CalendarViewProps) {
+export function CalendarView({ initialEvents, clients = [], projects = [], onRefresh }: CalendarViewProps) {
     const [currentDate, setCurrentDate] = React.useState(new Date())
     const [selectedEvent, setSelectedEvent] = React.useState<CalendarEvent | null>(null)
     const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -117,6 +119,8 @@ export function CalendarView({ initialEvents, onRefresh }: CalendarViewProps) {
                 open={isAddEventOpen}
                 onOpenChange={setIsAddEventOpen}
                 defaultDate={addEventDate ? format(addEventDate, 'yyyy-MM-dd') : undefined}
+                clients={clients}
+                projects={projects}
                 onSuccess={() => {
                     setIsAddEventOpen(false)
                     onRefresh?.()

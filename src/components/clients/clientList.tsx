@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState } from "react"
 import {
@@ -9,23 +9,20 @@ import {
     Wallet,
     LayoutGrid,
     List,
-    Plus,
     ChevronLeft,
     ChevronRight,
-    Loader2,
     Upload
 } from "lucide-react"
 import { StatsCard } from "@/components/shared/StatsCard"
 import { ClientCard } from "@/components/clientCard"
 import { ClientListRow } from "@/components/clientListRow"
 import { NewClientDialog } from "@/components/NewClientDialog"
-import { cn } from "@/lib/utils"
-// Import DB types
-import type { ClientWithProjects } from "@/lib/types/client"
-// Import UI types
-import { Client as UIClient, Status } from "@/lib/types"
+import { AddProjectDialog } from "@/components/forms/addProjectDialog"
 import { EmptyClients } from "@/components/emptyClients"
 import { ImportClientsDialog } from "@/components/clients/ImportClientsDialog"
+import { cn } from "@/lib/utils"
+import type { ClientWithProjects } from "@/lib/types/client"
+import { Client as UIClient, Status } from "@/lib/types"
 
 interface ClientListProps {
     initialClients: ClientWithProjects[];
@@ -37,17 +34,13 @@ interface ClientListProps {
     };
 }
 
-// Helper to map DB Client to UI Client
 function mapDbClientToUiClient(dbClient: ClientWithProjects): UIClient {
-    // Determine status based on projects or fields
     let status: Status = 'Active';
 
     if (dbClient.status === 'inactive') status = 'Inactive';
     if (dbClient.status === 'archived') status = 'Archived';
     if (dbClient.status === 'lead') status = 'Lead';
-    // if (dbClient.active_projects_count === 0) status = 'Inactive';
 
-    // Revenue mock calculation (since we don't have it in DB client yet)
     const totalRevenue = dbClient.totalRevenue || 0;
 
     return {
@@ -60,7 +53,7 @@ function mapDbClientToUiClient(dbClient: ClientWithProjects): UIClient {
         projectCount: dbClient.active_projects_count,
         lastActive: dbClient.lastContactDate ? new Date(dbClient.lastContactDate).toLocaleDateString() : 'Never',
         joinedDate: new Date(dbClient.createdAt || new Date()).toLocaleDateString(),
-        location: 'Remote', // Placeholder
+        location: 'Remote',
         description: dbClient.notes || undefined,
         avatar: dbClient.name.substring(0, 2).toUpperCase()
     };
@@ -72,25 +65,27 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
     const [activeTab, setActiveTab] = useState('All Clients')
     const [currentPage, setCurrentPage] = useState(1)
 
-    // Reset page when tab or search changes
     React.useEffect(() => {
         setCurrentPage(1)
     }, [activeTab, searchTerm])
 
-    // State for clients list
     const [dbClients, setDbClients] = useState<ClientWithProjects[]>(initialClients)
     const [isAddClientOpen, setIsAddClientOpen] = useState(false)
     const [isImportOpen, setIsImportOpen] = useState(false)
+    const [isAddProjectOpen, setIsAddProjectOpen] = useState(false)
+    const [projectClient, setProjectClient] = useState<{ id: string; name: string } | null>(null)
 
-    // Sync state with prop when it changes (e.g. after server action revalidate)
+    const handleCreateProjectForClient = (client: { id: string; name: string }) => {
+        setProjectClient(client)
+        setIsAddProjectOpen(true)
+    }
+
     React.useEffect(() => {
         setDbClients(initialClients);
     }, [initialClients]);
 
-    // Derived UI clients
     const clients = dbClients.map(mapDbClientToUiClient);
 
-    // Empty State Check
     if (initialClients.length === 0) {
         return (
             <div className="w-full max-w-[1600px] mx-auto py-8 px-4 lg:px-8">
@@ -99,20 +94,23 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                     onOpenChange={setIsAddClientOpen}
                     onClientAdd={(c) => {
                         console.log("Client added", c);
-                        // Refresh logic would ideally go here or via router.refresh() 
-                        // For now we assume optimistic update or page reload pattern usually handled by parent
                     }}
+                    onCreateProject={handleCreateProjectForClient}
                 />
                 <ImportClientsDialog
                     open={isImportOpen}
                     onOpenChange={setIsImportOpen}
-                    onSuccess={() => {
-                        // Trigger a router refresh to ensure client components get updated data
-                        // although revalidatePath should handle it, redundancy is safer here
-                        // router.refresh() 
-                        // Note: router is not imported yet, let's keep it simple for now as useEffect should handle prop updates
-                    }}
+                    onSuccess={() => { }}
                 />
+                {projectClient && (
+                    <AddProjectDialog
+                        open={isAddProjectOpen}
+                        onOpenChange={setIsAddProjectOpen}
+                        onSuccess={() => {}}
+                        clientId={projectClient.id}
+                        clientName={projectClient.name}
+                    />
+                )}
                 <EmptyClients
                     onAddClient={() => setIsAddClientOpen(true)}
                     onImport={() => setIsImportOpen(true)}
@@ -138,7 +136,7 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                 return client.status === 'Inactive';
             case 'Archived':
                 return client.status === 'Archived';
-            default: // 'All Clients'
+            default:
                 return true;
         }
     })
@@ -156,12 +154,23 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                 onClientAdd={(c) => {
                     console.log("Client added", c);
                 }}
+                onCreateProject={handleCreateProjectForClient}
             />
 
             <ImportClientsDialog
                 open={isImportOpen}
                 onOpenChange={setIsImportOpen}
             />
+
+            {projectClient && (
+                <AddProjectDialog
+                    open={isAddProjectOpen}
+                    onOpenChange={setIsAddProjectOpen}
+                    onSuccess={() => {}}
+                    clientId={projectClient.id}
+                    clientName={projectClient.name}
+                />
+            )}
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -172,14 +181,14 @@ export function ClientList({ initialClients, stats }: ClientListProps) {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsImportOpen(true)}
-                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-white border border-zinc-200 text-zinc-700 text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-50 transition-colors shadow duration-150"
+                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-white border border-zinc-200 text-zinc-700 text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-50 transition-colors duration-150"
                     >
                         <Upload className="mr-2 h-4 w-4" />
                         <span>Import</span>
                     </button>
                     <button
                         onClick={() => setIsAddClientOpen(true)}
-                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-colors shadow duration-150 group"
+                        className="flex items-center justify-center rounded-lg h-10 px-5 bg-zinc-900 text-white text-sm font-medium shadow-sm hover:shadow-md hover:bg-zinc-800 transition-colors duration-150 group"
                     >
                         <UserPlus className="mr-2 h-4 w-4" />
                         <span>Add Client</span>
