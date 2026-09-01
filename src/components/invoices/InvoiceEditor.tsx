@@ -11,6 +11,7 @@ import {
     Download,
     Settings,
     Mail,
+    Send,
     CreditCard,
     Building2,
     Link2,
@@ -168,6 +169,36 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         items.some(it => it.description && it.description.trim().length > 0)
     )
 
+    const saveInvoice = async (status: 'pending' = 'pending') => {
+        const invoiceData = {
+            clientId: clientId,
+            projectId: projectId === "none" || !projectId ? undefined : projectId,
+            invoiceNumber: invoiceNumber,
+            issueDate: issueDate,
+            dueDate: dueDate,
+            amount: calculateTotal(),
+            currency: currency,
+            status: status,
+            lineItems: items,
+            notes: notes,
+            paymentInstructions: JSON.stringify(compiledPaymentInstructions),
+            taxRate: taxRate,
+            discountRate: discountRate
+        }
+
+        let savedId = initialData?.id
+        if (savedId) {
+            await updateStandaloneInvoice(savedId, invoiceData)
+        } else {
+            const created = await createStandaloneInvoice(invoiceData)
+            savedId = created?.id
+        }
+
+        // Also update branding if changed
+        await updateBrandingAction({ brand_color: brandColor, logo_url: logoUrl })
+        return savedId
+    }
+
     const handleSave = async (status: 'pending') => {
         if (!clientId) {
             alert("Please select a client")
@@ -180,31 +211,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
 
         setIsLoading(true)
         try {
-            const invoiceData = {
-                clientId: clientId,
-                projectId: projectId === "none" || !projectId ? undefined : projectId,
-                invoiceNumber: invoiceNumber,
-                issueDate: issueDate,
-                dueDate: dueDate,
-                amount: calculateTotal(),
-                currency: currency,
-                status: status,
-                lineItems: items,
-                notes: notes,
-                paymentInstructions: JSON.stringify(compiledPaymentInstructions),
-                taxRate: taxRate,
-                discountRate: discountRate
-            }
-
-            if (initialData?.id) {
-                await updateStandaloneInvoice(initialData.id, invoiceData)
-            } else {
-                await createStandaloneInvoice(invoiceData)
-            }
-
-            // Also update branding if changed
-            await updateBrandingAction({ brand_color: brandColor, logo_url: logoUrl })
-
+            await saveInvoice(status)
             router.push(`/${workspaceId}/invoices`)
             router.refresh()
         } catch (error) {
@@ -265,8 +272,12 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     }
 
     const handleSendEmail = async () => {
-        if (!initialData?.id) {
-            alert("Please save the invoice first")
+        if (!clientId) {
+            alert("Please select a client")
+            return
+        }
+        if (!isFormValid) {
+            alert("Please ensure client, invoice number, due date, and at least one item description are filled.")
             return
         }
 
@@ -279,33 +290,58 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         if (!confirm(`Send invoice to ${clientEmail}?`)) return
 
         setIsSending(true)
-        const res = await sendInvoiceEmailAction(initialData.id, clientEmail)
-        setIsSending(false)
+        try {
+            const savedInvoiceId = await saveInvoice('pending')
+            if (!savedInvoiceId) {
+                throw new Error("Could not retrieve invoice ID")
+            }
+            const res = await sendInvoiceEmailAction(savedInvoiceId, clientEmail)
+            setIsSending(false)
 
-        if (res.success) {
-            alert("Email sent successfully!")
-        } else {
-            alert("Failed to send email: " + res.error)
+            if (res.success) {
+                alert("Email sent successfully!")
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            } else {
+                alert("Invoice saved, but failed to send email: " + res.error)
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            }
+        } catch (error) {
+            console.error(error)
+            alert("Failed to send invoice: " + (error instanceof Error ? error.message : String(error)))
+            setIsSending(false)
         }
     }
 
     const handleEmailConfirm = async (email: string, saveToProfile: boolean) => {
-        if (!initialData?.id) return
-
         setIsSending(true)
+        try {
+            if (saveToProfile && clientId) {
+                await updateClientAction(clientId, { email })
+            }
 
-        if (saveToProfile && clientId) {
-            await updateClientAction(clientId, { email })
-        }
+            const savedInvoiceId = await saveInvoice('pending')
+            if (!savedInvoiceId) {
+                throw new Error("Could not retrieve invoice ID")
+            }
 
-        const res = await sendInvoiceEmailAction(initialData.id, email)
-        setIsSending(false)
+            const res = await sendInvoiceEmailAction(savedInvoiceId, email)
+            setIsSending(false)
 
-        if (res.success) {
-            alert("Email sent successfully!")
-            router.refresh()
-        } else {
-            alert("Failed to send email: " + res.error)
+            if (res.success) {
+                alert("Email sent successfully!")
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            } else {
+                alert("Invoice saved, but failed to send email: " + res.error)
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            }
+        } catch (error) {
+            console.error(error)
+            alert("Failed to send invoice: " + (error instanceof Error ? error.message : String(error)))
+            setIsSending(false)
         }
     }
 
@@ -373,24 +409,13 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                     <div className="h-5 w-px bg-zinc-200 mx-1 hidden lg:block" />
                     <Button
                         size="sm"
-                        onClick={() => handleSave('pending')}
-                        disabled={isLoading || !isFormValid}
+                        onClick={handleSendEmail}
+                        disabled={isLoading || isSending || !isFormValid}
                         className="bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50"
                     >
-                        <Save className="h-4 w-4 mr-1.5" />
-                        {isLoading ? "Saving..." : "Save Invoice"}
+                        <Send className="h-4 w-4 mr-1.5" />
+                        {isSending ? "Sending..." : "Send"}
                     </Button>
-                    {initialData?.id && (
-                        <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={handleSendEmail}
-                            disabled={isLoading || isSending}
-                        >
-                            <Mail className="h-4 w-4 mr-1.5" />
-                            {isSending ? "Sending..." : "Send"}
-                        </Button>
-                    )}
                 </div>
             </div>
 

@@ -36,21 +36,20 @@ const updateClientSchema = createClientSchema.partial();
 export async function fetchClientStats() {
     return withAuth(async (user, workspaceId) => {
         try {
-            // Run all three aggregate queries in parallel using SQL aggregations
+            // Run all three aggregate queries in parallel using SQL aggregations scoped to workspace
             const [clientCountResult, activeProjectCountResult, revenueResult] = await Promise.all([
                 db.select({ count: sqlCount() }).from(clients)
-                    .where(and(eq(clients.workspaceId, workspaceId), eq(clients.userId, user.id))),
+                    .where(eq(clients.workspaceId, workspaceId)),
                 db.select({ count: sqlCount() }).from(projects)
                     .where(and(
                         eq(projects.workspaceId, workspaceId),
-                        eq(projects.userId, user.id),
                         inArray(projects.status, ['in_progress', 'planning', 'review'])
                     )),
                 db.select({
                     totalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
                     pendingRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} != 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
                 }).from(payments)
-                    .where(and(eq(payments.workspaceId, workspaceId), eq(payments.userId, user.id))),
+                    .where(eq(payments.workspaceId, workspaceId)),
             ]);
 
             return {

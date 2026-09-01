@@ -94,6 +94,8 @@ export const clients = pgTable('clients', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('clients_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('clients_workspace_idx').on(table.workspaceId),
+  workspaceStatusIdx: index('clients_workspace_status_idx').on(table.workspaceId, table.status),
 }));
 
 export const projects = pgTable('projects', {
@@ -113,6 +115,8 @@ export const projects = pgTable('projects', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('projects_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('projects_workspace_idx').on(table.workspaceId),
+  workspaceStatusIdx: index('projects_workspace_status_idx').on(table.workspaceId, table.status),
   clientIdx: index('projects_client_idx').on(table.clientId),
 }));
 
@@ -172,6 +176,8 @@ export const payments = pgTable('payments', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('payments_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('payments_workspace_idx').on(table.workspaceId),
+  workspaceStatusIdx: index('payments_workspace_status_idx').on(table.workspaceId, table.status),
   projectIdx: index('payments_project_idx').on(table.projectId),
   statusIdx: index('payments_status_idx').on(table.status),
   dueDateIdx: index('payments_due_date_idx').on(table.dueDate),
@@ -196,6 +202,7 @@ export const reminders = pgTable('reminders', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('reminders_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('reminders_workspace_idx').on(table.workspaceId),
   isSentDateIdx: index('reminders_is_sent_date_idx').on(table.isSent, table.reminderDate),
   projectIdx: index('reminders_project_idx').on(table.projectId),
 }));

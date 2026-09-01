@@ -4,6 +4,8 @@ import { CheckCircle2, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
 import { Logo } from '@/components/ui/logo';
 import { getSession } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export default async function WelcomePage() {
   const session = await getSession();
 

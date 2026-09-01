@@ -53,7 +53,7 @@ async function logPaymentTimeline(
 }
 
 /**
- * Get all invoices (payments with invoiceNumber)
+ * Get all invoices (payments with invoiceNumber) for the active workspace
  */
 export async function getInvoices(): Promise<Payment[]> {
     const user = await getUser();
@@ -62,7 +62,7 @@ export async function getInvoices(): Promise<Payment[]> {
     const workspaceId = await getCurrentWorkspaceId();
 
     const result = await db.query.payments.findMany({
-        where: and(isNotNull(payments.invoiceNumber), eq(payments.userId, user.id), eq(payments.workspaceId, workspaceId)),
+        where: and(isNotNull(payments.invoiceNumber), eq(payments.workspaceId, workspaceId)),
         orderBy: [desc(payments.createdAt)],
         limit: 100,
         with: {
@@ -81,8 +81,10 @@ export async function getInvoice(id: string): Promise<Payment> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
 
+    const workspaceId = await getCurrentWorkspaceId();
+
     const result = await db.query.payments.findFirst({
-        where: and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
+        where: and(eq(payments.id, id), eq(payments.workspaceId, workspaceId)),
         with: {
             project: { columns: { id: true, name: true } },
             client: { columns: { id: true, name: true, email: true, company: true, address: true, phone: true } },
@@ -102,8 +104,10 @@ export async function getInvoiceByNumber(invoiceNumber: string): Promise<Payment
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
 
+    const workspaceId = await getCurrentWorkspaceId();
+
     const result = await db.query.payments.findFirst({
-        where: and(eq(payments.invoiceNumber, invoiceNumber), eq(payments.userId, user.id)),
+        where: and(eq(payments.invoiceNumber, invoiceNumber), eq(payments.workspaceId, workspaceId)),
         with: {
             project: {
                 columns: { id: true, name: true, clientId: true },
@@ -192,7 +196,7 @@ export async function updateStandaloneInvoice(id: string, input: CreateStandalon
         discountRate: input.discountRate?.toString() || "0",
         updatedAt: new Date(),
     })
-        .where(and(eq(payments.id, id), eq(payments.workspaceId, workspaceId), eq(payments.userId, user.id)))
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, workspaceId)))
         .returning();
 
     if (!updatedInvoice) throw new Error('Invoice not found');

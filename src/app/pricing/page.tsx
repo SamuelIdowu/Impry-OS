@@ -5,6 +5,7 @@ import { Logo } from '@/components/ui/logo';
 import Link from 'next/link';
 import { Footer } from '@/components/landing/Footer';
 import { generatePageMetadata } from '@/lib/metadata-config';
+import { JsonLd, generateSoftwareApplicationSchema } from '@/components/shared/json-ld';
 
 export const metadata = generatePageMetadata({
   title: 'Pricing & Plans — Revenue Protection for Freelancers',
@@ -26,6 +27,7 @@ export default async function PricingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50/50 dark:bg-zinc-950">
+      <JsonLd data={generateSoftwareApplicationSchema()} />
       {/* Navigation Bar */}
       <header className="sticky top-6 z-50 mx-auto w-[95%] max-w-5xl rounded-full border border-white/40 bg-white/40 dark:bg-zinc-900/60 dark:border-zinc-800 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
         <div className="flex h-16 items-center justify-between px-6 lg:px-8">

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getUserWorkspaces } from "@/server/actions/workspaces";
 
+export const dynamic = 'force-dynamic';
+
 export default async function WorkspacesRedirectPage() {
     const workspaces = await getUserWorkspaces();
 

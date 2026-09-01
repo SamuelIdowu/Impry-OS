@@ -8,6 +8,7 @@ import { getSession } from "@/lib/auth";
 import { Logo } from "@/components/ui/logo";
 import { MobileNav } from "@/components/landing/MobileNav";
 import { generatePageMetadata } from "@/lib/metadata-config";
+import { JsonLd, generateSoftwareApplicationSchema, generateOrganizationSchema } from "@/components/shared/json-ld";
 
 export const metadata = generatePageMetadata({
   title: "Revenue Protection for Freelance Developers & Designers",
@@ -41,6 +42,8 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <JsonLd data={generateSoftwareApplicationSchema()} />
+      <JsonLd data={generateOrganizationSchema()} />
       <header className="sticky top-6 z-50 mx-auto w-[95%] max-w-5xl rounded-full border border-white/40 bg-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
         <div className="flex h-16 items-center justify-between px-6 lg:px-8">
           <div className="flex items-center gap-10">
