@@ -12,11 +12,27 @@ export type SearchResult = {
     url: string;
 };
 
-export async function searchGlobalData(query: string): Promise<SearchResult[]> {
+export async function searchGlobalData(query: string, workspaceId?: string): Promise<SearchResult[]> {
     if (!query || query.length < 2) return [];
 
     const user = await getUser();
     if (!user) return [];
+
+    let targetWorkspaceId = workspaceId;
+    if (!targetWorkspaceId) {
+        try {
+            targetWorkspaceId = await getCurrentWorkspaceId();
+        } catch {
+            // Fallback: look up user's primary workspace
+            const { teamMembers } = await import('@/server/db/schema');
+            const [membership] = await db
+                .select({ workspaceId: teamMembers.workspaceId })
+                .from(teamMembers)
+                .where(eq(teamMembers.userId, user.id))
+                .limit(1);
+            targetWorkspaceId = membership?.workspaceId || 'default';
+        }
+    }
 
     const searchQuery = `%${query}%`;
 
@@ -24,7 +40,9 @@ export async function searchGlobalData(query: string): Promise<SearchResult[]> {
     const [foundClients, foundProjects, foundInvoices] = await Promise.all([
         db.query.clients.findMany({
             where: (clients, { and, or, eq, ilike }) => and(
-                eq(clients.userId, user.id),
+                targetWorkspaceId && targetWorkspaceId !== 'default'
+                    ? eq(clients.workspaceId, targetWorkspaceId)
+                    : eq(clients.userId, user.id),
                 or(
                     ilike(clients.name, searchQuery),
                     ilike(clients.company, searchQuery)
@@ -35,7 +53,9 @@ export async function searchGlobalData(query: string): Promise<SearchResult[]> {
         }),
         db.query.projects.findMany({
             where: (projects, { and, eq, ilike }) => and(
-                eq(projects.userId, user.id),
+                targetWorkspaceId && targetWorkspaceId !== 'default'
+                    ? eq(projects.workspaceId, targetWorkspaceId)
+                    : eq(projects.userId, user.id),
                 ilike(projects.name, searchQuery)
             ),
             columns: { id: true, name: true, status: true },
@@ -55,13 +75,14 @@ export async function searchGlobalData(query: string): Promise<SearchResult[]> {
     ]);
 
     const results: SearchResult[] = [];
+    const wsPrefix = targetWorkspaceId ? `/${targetWorkspaceId}` : '';
 
     results.push(...foundClients.map(c => ({
         type: 'client' as const,
         id: c.id,
         title: c.name,
         subtitle: c.company || 'Client',
-        url: `/clients/${c.id}`
+        url: `${wsPrefix}/clients/${c.id}`
     })));
 
     results.push(...foundProjects.map(p => ({
@@ -69,7 +90,7 @@ export async function searchGlobalData(query: string): Promise<SearchResult[]> {
         id: p.id,
         title: p.name,
         subtitle: p.client?.name ? `Project for ${p.client.name}` : 'Project',
-        url: `/projects/${p.id}`
+        url: `${wsPrefix}/projects/${p.id}`
     })));
 
     results.push(...foundInvoices.map(i => ({
@@ -77,7 +98,7 @@ export async function searchGlobalData(query: string): Promise<SearchResult[]> {
         id: i.id,
         title: i.invoiceNumber!,
         subtitle: `$${i.amount} - ${i.client?.name || 'Unknown Client'}`,
-        url: `/invoices/${i.id}`
+        url: `${wsPrefix}/invoices/${i.id}`
     })));
 
     return results;

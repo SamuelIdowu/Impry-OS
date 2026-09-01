@@ -12,13 +12,15 @@ import { cn } from "@/lib/utils";
 
 import type { User } from "better-auth";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { searchGlobal } from "@/server/actions/search";
 import type { SearchResult } from "@/lib/search";
 import { Search, Loader2, FileText, User as UserIcon, Briefcase } from "lucide-react";
 
 export function AppHeader({ user }: { user: User }) {
   const router = useRouter();
+  const params = useParams();
+  const workspaceId = (params?.workspaceId as string) || undefined;
   const [notificationOpen, setNotificationOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -36,7 +38,7 @@ export function AppHeader({ user }: { user: User }) {
       if (query.trim().length >= 2) {
         setIsSearching(true);
         try {
-          const data = await searchGlobal(query.trim());
+          const data = await searchGlobal(query.trim(), workspaceId);
           setResults(data);
           setIsDropdownOpen(true);
         } catch (error) {
@@ -52,7 +54,7 @@ export function AppHeader({ user }: { user: User }) {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, workspaceId]);
 
   // Click outside to close dropdown
   React.useEffect(() => {

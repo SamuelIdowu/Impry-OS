@@ -3,6 +3,8 @@ import {
   CreateCheckoutParams,
   CheckoutResult,
   PortalParams,
+  CancelSubscriptionParams,
+  CancelSubscriptionResult,
   NormalizedWebhookEvent,
   PlanTier,
   SubscriptionStatus,
@@ -90,6 +92,37 @@ export class PolarPaymentsProvider implements PaymentProvider {
       return data.url || null;
     } catch {
       return null;
+    }
+  }
+
+  async cancelSubscription(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
+    const accessToken = process.env.POLAR_ACCESS_TOKEN;
+    if (!accessToken) {
+      throw new Error('POLAR_ACCESS_TOKEN is not configured.');
+    }
+
+    try {
+      const baseUrl = this.getBaseUrl();
+      const response = await fetch(`${baseUrl}/subscriptions/${params.subscriptionId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Polar subscription cancellation failed: ${errText}`);
+      }
+
+      return {
+        success: true,
+        effectiveFrom: params.immediately ? 'immediately' : 'next_billing_period',
+        message: 'Polar subscription cancellation requested.',
+      };
+    } catch (error: any) {
+      console.error('[PolarPayments] Error canceling subscription:', error);
+      throw new Error(error.message || 'Failed to cancel Polar subscription.');
     }
   }
 

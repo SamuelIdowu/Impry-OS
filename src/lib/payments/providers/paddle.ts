@@ -4,6 +4,8 @@ import {
   CreateCheckoutParams,
   CheckoutResult,
   PortalParams,
+  CancelSubscriptionParams,
+  CancelSubscriptionResult,
   NormalizedWebhookEvent,
   PlanTier,
   SubscriptionStatus,
@@ -108,6 +110,40 @@ export class PaddlePaymentsProvider implements PaymentProvider {
     } catch (err) {
       console.error('Paddle getPortalUrl error:', err);
       return null;
+    }
+  }
+
+  async cancelSubscription(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
+    if (!params.subscriptionId) {
+      throw new Error('Subscription ID is required to cancel a Paddle subscription.');
+    }
+
+    const effectiveFrom = params.immediately ? 'immediately' : 'next_billing_period';
+
+    try {
+      const { getPaddleInstance } = await import('@/lib/paddle/get-paddle-instance');
+      const paddle = getPaddleInstance();
+      const updatedSub = await paddle.subscriptions.cancel(params.subscriptionId, {
+        effectiveFrom,
+      });
+
+      const scheduledChangeAt = updatedSub.scheduledChange?.effectiveAt
+        ? new Date(updatedSub.scheduledChange.effectiveAt)
+        : updatedSub.currentBillingPeriod?.endsAt
+        ? new Date(updatedSub.currentBillingPeriod.endsAt)
+        : null;
+
+      return {
+        success: true,
+        effectiveFrom,
+        scheduledChangeAt,
+        message: params.immediately
+          ? 'Subscription has been canceled immediately.'
+          : `Subscription will remain active until the end of your billing cycle${scheduledChangeAt ? ` (${scheduledChangeAt.toLocaleDateString()})` : ''}.`,
+      };
+    } catch (err: any) {
+      console.error('Paddle cancelSubscription error:', err);
+      throw new Error(err.message || 'Failed to cancel Paddle subscription.');
     }
   }
 

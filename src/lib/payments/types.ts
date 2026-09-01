@@ -77,6 +77,20 @@ export interface PortalParams {
   returnUrl: string;
 }
 
+export interface CancelSubscriptionParams {
+  subscriptionId: string;
+  workspaceId?: string;
+  customerId?: string;
+  immediately?: boolean;
+}
+
+export interface CancelSubscriptionResult {
+  success: boolean;
+  effectiveFrom: 'immediately' | 'next_billing_period';
+  scheduledChangeAt?: Date | null;
+  message?: string;
+}
+
 export type WebhookEventType =
   | 'subscription.created'
   | 'subscription.updated'
@@ -103,5 +117,6 @@ export interface PaymentProvider {
   readonly name: string;
   createCheckout(params: CreateCheckoutParams): Promise<CheckoutResult>;
   getPortalUrl(params: PortalParams): Promise<string | null>;
+  cancelSubscription?(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult>;
   parseWebhook(rawBody: string, headers: Headers | Record<string, string | string[] | undefined>): Promise<NormalizedWebhookEvent>;
 }

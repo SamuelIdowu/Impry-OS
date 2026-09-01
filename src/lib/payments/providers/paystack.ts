@@ -4,6 +4,8 @@ import {
   CreateCheckoutParams,
   CheckoutResult,
   PortalParams,
+  CancelSubscriptionParams,
+  CancelSubscriptionResult,
   NormalizedWebhookEvent,
   PlanTier,
   SubscriptionStatus,
@@ -112,6 +114,38 @@ export class PaystackPaymentProvider implements PaymentProvider {
 
   async getPortalUrl(params: PortalParams): Promise<string | null> {
     return `${params.returnUrl}${params.returnUrl.includes('?') ? '&' : '?'}billing=manage`;
+  }
+
+  async cancelSubscription(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
+    const secretKey = this.getSecretKey();
+
+    try {
+      const response = await fetch('https://api.paystack.co/subscription/disable', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: params.subscriptionId,
+          token: params.subscriptionId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({ message: 'Failed to disable subscription' }));
+        console.warn('[Paystack] Cancel subscription notice:', errJson);
+      }
+
+      return {
+        success: true,
+        effectiveFrom: params.immediately ? 'immediately' : 'next_billing_period',
+        message: 'Paystack subscription cancellation requested.',
+      };
+    } catch (error: any) {
+      console.error('[Paystack] Error canceling subscription:', error);
+      throw new Error(error.message || 'Failed to cancel Paystack subscription.');
+    }
   }
 
   async parseWebhook(

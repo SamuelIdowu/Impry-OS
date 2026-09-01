@@ -120,7 +120,7 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                         </div>
                         <div className="space-y-1">
                             <h4 className="text-sm font-bold text-zinc-900">All caught up!</h4>
-                            <p className="text-xs text-zinc-500 leading-relaxed">Great job clearing your inbox. You have no pending follow-ups for today.</p>
+                            <p className="text-xs text-zinc-500 leading-relaxed"> You have no pending follow-ups for today.</p>
                         </div>
                     </div>
                 </CardContent>

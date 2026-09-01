@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Search, Loader2, FileText, User, Briefcase } from "lucide-react"
-import { useRouter } from "next/navigation" // Using next/navigation for App Router
+import { useRouter, useParams } from "next/navigation" // Using next/navigation for App Router
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog" // Assuming standard shadcn Dialog
 import { Input } from "@/components/ui/input"
 import { searchGlobal } from "@/server/actions/search"
@@ -16,6 +16,8 @@ interface SearchDialogProps {
 
 export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     const router = useRouter()
+    const params = useParams()
+    const workspaceId = params?.workspaceId as string | undefined
     const [query, setQuery] = React.useState("")
     const [results, setResults] = React.useState<SearchResult[]>([])
     const [loading, setLoading] = React.useState(false)
@@ -26,7 +28,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             if (query.length >= 2) {
                 setLoading(true)
                 try {
-                    const data = await searchGlobal(query)
+                    const data = await searchGlobal(query, workspaceId)
                     setResults(data)
                 } catch (error) {
                     console.error("Search failed", error)

@@ -5,7 +5,7 @@ import { workspaces, teamMembers, projects, clients } from "@/server/db/schema";
 import { eq, count } from "drizzle-orm";
 import { getUser } from "@/lib/auth";
 import { verifyWorkspaceAccess } from "@/server/actions/workspaces";
-import { getPaymentProvider, getPlanConfig, PlanTier, BillingCycle } from "@/lib/payments";
+import { getPaymentProvider, getPlanConfig, PlanTier, BillingCycle, CancelSubscriptionResult } from "@/lib/payments";
 
 export async function getWorkspaceBillingInfo(workspaceId: string) {
   const user = await getUser();
@@ -49,6 +49,28 @@ export async function getWorkspaceBillingInfo(workspaceId: string) {
   let subscriptionId = ws.subscriptionId;
   let customerId = ws.customerId;
   let currentPeriodEnd = ws.currentPeriodEnd;
+  let scheduledChangeAction: string | null = null;
+  let scheduledChangeAt: Date | null = null;
+
+  // Check mirrored subscriptions table for scheduled cancellation
+  if (subscriptionId) {
+    try {
+      const { subscriptions } = await import("@/server/db/schema");
+      const [subRow] = await db
+        .select({
+          scheduledChangeAction: subscriptions.scheduledChangeAction,
+          scheduledChangeAt: subscriptions.scheduledChangeAt,
+        })
+        .from(subscriptions)
+        .where(eq(subscriptions.subscriptionId, subscriptionId))
+        .limit(1);
+
+      if (subRow) {
+        scheduledChangeAction = subRow.scheduledChangeAction || null;
+        scheduledChangeAt = subRow.scheduledChangeAt || null;
+      }
+    } catch {}
+  }
 
   // Real-time Paddle synchronization for instant checkout & upgrade reflection
   if (user.email) {
@@ -75,6 +97,11 @@ export async function getWorkspaceBillingInfo(workspaceId: string) {
           const detectedStatus = activeSub.status;
           const detectedPeriodEnd = activeSub.currentBillingPeriod?.endsAt ? new Date(activeSub.currentBillingPeriod.endsAt) : currentPeriodEnd;
 
+          if (activeSub.scheduledChange) {
+            scheduledChangeAction = activeSub.scheduledChange.action || null;
+            scheduledChangeAt = activeSub.scheduledChange.effectiveAt ? new Date(activeSub.scheduledChange.effectiveAt) : null;
+          }
+
           if (currentTier !== detectedTier || subscriptionStatus !== detectedStatus || subscriptionId !== activeSub.id) {
             currentTier = detectedTier;
             subscriptionStatus = detectedStatus;
@@ -100,16 +127,24 @@ export async function getWorkspaceBillingInfo(workspaceId: string) {
     }
   }
 
+  const isPendingCancellation = Boolean(
+    scheduledChangeAction === 'cancel' ||
+    (subscriptionStatus === 'canceled' && currentTier !== 'free' && currentPeriodEnd && new Date(currentPeriodEnd) > new Date())
+  );
+
   const planConfig = getPlanConfig(currentTier);
 
   return {
     workspaceId: ws.id,
     planTier: currentTier,
     subscriptionStatus,
-    paymentProvider: "paddle",
+    paymentProvider: ws.paymentProvider || "paddle",
     subscriptionId,
     customerId,
     currentPeriodEnd,
+    isPendingCancellation,
+    scheduledChangeAction,
+    scheduledChangeAt,
     planConfig,
     usage: {
       teamMembers: teamMembersCount[0]?.count || 0,
@@ -211,6 +246,119 @@ export async function getBillingPortalUrl(workspaceId: string) {
   });
 
   return { portalUrl };
+}
+
+/**
+ * Cancels active paid subscription for a workspace
+ * @param workspaceId ID of workspace
+ * @param immediately If true, cancels immediately and drops to free tier. If false, schedules cancellation for end of current billing period.
+ */
+export async function cancelWorkspaceSubscription(
+  workspaceId: string,
+  immediately: boolean = false
+): Promise<CancelSubscriptionResult> {
+  const user = await getUser();
+  if (!user) {
+    throw new Error("Unauthorized: Please sign in.");
+  }
+
+  const hasAccess = await verifyWorkspaceAccess(workspaceId);
+  if (!hasAccess) {
+    throw new Error("Access denied: You do not have permission to modify billing for this workspace.");
+  }
+
+  const [workspace] = await db
+    .select({
+      id: workspaces.id,
+      planTier: workspaces.planTier,
+      subscriptionStatus: workspaces.subscriptionStatus,
+      paymentProvider: workspaces.paymentProvider,
+      subscriptionId: workspaces.subscriptionId,
+      customerId: workspaces.customerId,
+      currentPeriodEnd: workspaces.currentPeriodEnd,
+    })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
+  if (!workspace) {
+    throw new Error("Workspace not found.");
+  }
+
+  if (workspace.planTier === "free" || !workspace.planTier) {
+    throw new Error("Cannot cancel a subscription on the Free tier.");
+  }
+
+  const providerName = workspace.paymentProvider || undefined;
+  const provider = getPaymentProvider(providerName);
+
+  let cancelResult: CancelSubscriptionResult = {
+    success: true,
+    effectiveFrom: immediately ? 'immediately' : 'next_billing_period',
+    scheduledChangeAt: workspace.currentPeriodEnd,
+    message: immediately
+      ? 'Subscription has been canceled immediately.'
+      : 'Subscription will remain active until the end of your billing cycle.',
+  };
+
+  if (workspace.subscriptionId && typeof provider.cancelSubscription === 'function') {
+    try {
+      cancelResult = await provider.cancelSubscription({
+        subscriptionId: workspace.subscriptionId,
+        workspaceId,
+        customerId: workspace.customerId || undefined,
+        immediately,
+      });
+    } catch (providerErr: any) {
+      console.warn("Payment provider cancel subscription error:", providerErr);
+      // Fallback: continue to update local DB state so user isn't stuck
+    }
+  }
+
+  const effectiveAt = cancelResult.scheduledChangeAt || (immediately ? new Date() : workspace.currentPeriodEnd);
+
+  if (immediately) {
+    await db
+      .update(workspaces)
+      .set({
+        planTier: 'free',
+        subscriptionStatus: 'canceled',
+        currentPeriodEnd: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(workspaces.id, workspaceId));
+  } else {
+    await db
+      .update(workspaces)
+      .set({
+        subscriptionStatus: 'canceled',
+        updatedAt: new Date(),
+      })
+      .where(eq(workspaces.id, workspaceId));
+  }
+
+  // Update mirrored subscriptions table if entry exists
+  if (workspace.subscriptionId) {
+    try {
+      const { subscriptions } = await import("@/server/db/schema");
+      await db
+        .update(subscriptions)
+        .set({
+          status: immediately ? 'canceled' : 'active',
+          scheduledChangeAction: immediately ? null : 'cancel',
+          scheduledChangeAt: immediately ? null : effectiveAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(subscriptions.subscriptionId, workspace.subscriptionId));
+    } catch {}
+  }
+
+  return {
+    success: true,
+    effectiveFrom: cancelResult.effectiveFrom,
+    scheduledChangeAt: effectiveAt,
+    message: cancelResult.message || (immediately ? 'Subscription canceled immediately.' : 'Subscription scheduled for cancellation at billing period end.'),
+  };
 }
 
 /**

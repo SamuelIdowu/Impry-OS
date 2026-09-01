@@ -4,6 +4,8 @@ import {
   CreateCheckoutParams,
   CheckoutResult,
   PortalParams,
+  CancelSubscriptionParams,
+  CancelSubscriptionResult,
   NormalizedWebhookEvent,
   PlanTier,
   SubscriptionStatus,
@@ -99,6 +101,38 @@ export class CreemPaymentsProvider implements PaymentProvider {
       return data.url || null;
     } catch {
       return null;
+    }
+  }
+
+  async cancelSubscription(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
+    const apiKey = this.getApiKey();
+
+    try {
+      const baseUrl = this.getBaseUrl();
+      const response = await fetch(`${baseUrl}/subscriptions/${params.subscriptionId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          immediately: Boolean(params.immediately),
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Creem subscription cancellation failed: ${errText}`);
+      }
+
+      return {
+        success: true,
+        effectiveFrom: params.immediately ? 'immediately' : 'next_billing_period',
+        message: 'Creem subscription cancellation requested.',
+      };
+    } catch (error: any) {
+      console.error('[CreemPayments] Error canceling subscription:', error);
+      throw new Error(error.message || 'Failed to cancel Creem subscription.');
     }
   }
 

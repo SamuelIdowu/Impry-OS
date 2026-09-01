@@ -3,6 +3,8 @@ import {
   CreateCheckoutParams,
   CheckoutResult,
   PortalParams,
+  CancelSubscriptionParams,
+  CancelSubscriptionResult,
   NormalizedWebhookEvent,
 } from '../types';
 
@@ -25,6 +27,22 @@ export class MockPaymentProvider implements PaymentProvider {
     return `${params.returnUrl}${
       params.returnUrl.includes('?') ? '&' : '?'
     }mock_portal=active&customer_id=${params.customerId}`;
+  }
+
+  async cancelSubscription(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
+    const effectiveFrom = params.immediately ? 'immediately' : 'next_billing_period';
+    const scheduledChangeAt = params.immediately
+      ? null
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      success: true,
+      effectiveFrom,
+      scheduledChangeAt,
+      message: params.immediately
+        ? 'Mock subscription has been canceled immediately.'
+        : 'Mock subscription will cancel at the end of the current billing cycle.',
+    };
   }
 
   async parseWebhook(

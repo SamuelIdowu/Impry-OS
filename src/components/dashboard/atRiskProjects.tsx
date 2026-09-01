@@ -41,11 +41,9 @@ export function AtRiskProjects({ projects }: AtRiskProjectsProps) {
                         <div className="size-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
                             <CheckCircle2 className="size-5" />
                         </div>
-                        <div className="space-y-1">
+                        <div>
                             <h4 className="text-sm font-bold text-zinc-900">Zero Projects at Risk</h4>
-                            <p className="text-xs text-zinc-500 leading-relaxed">
-                                Great job! All your active projects are on track, and no payments are currently overdue.
-                            </p>
+                            
                         </div>
                     </div>
                 </CardContent>

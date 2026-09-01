@@ -28,6 +28,7 @@ import {
 } from "@/server/actions/billing";
 import { PlanTier, BillingCycle } from "@/lib/payments";
 import { PlanCard } from "@/components/settings/PlanCard";
+import { CancelSubscriptionDialog } from "@/components/settings/CancelSubscriptionDialog";
 
 interface BillingSettingsTabProps {
   workspaceId: string;
@@ -44,6 +45,7 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const fetchBilling = async () => {
     try {
@@ -168,6 +170,29 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
         </div>
       )}
 
+      {billingInfo?.isPendingCancellation && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-800 dark:text-amber-300 text-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div>
+              <p className="font-bold text-amber-900 dark:text-amber-200">Subscription Cancellation Scheduled</p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                Your workspace will retain all <strong>{billingInfo?.planConfig?.name || "paid"}</strong> features until{" "}
+                <strong>{renewalDate ?? "the end of your current billing period"}</strong>. No further recurring payments will be charged.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => handleUpgrade(currentTier === "studio" ? "studio" : "pro")}
+            disabled={isPending}
+            size="sm"
+            className="h-8 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white shrink-0 font-semibold rounded-lg shadow-xs self-start sm:self-auto"
+          >
+            Resume / Renew Plan
+          </Button>
+        </div>
+      )}
+
       {/* Subscription Overview */}
       <div className="space-y-4">
         <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Subscription Overview</h3>
@@ -180,9 +205,15 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
                   <Badge variant="default" className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-semibold text-xs capitalize py-1">
                     {billingInfo?.planConfig?.name || (currentTier === "free" ? "Free Starter" : currentTier === "pro" ? "Freelancer Pro" : "Studio & Agency")}
                   </Badge>
-                  <Badge variant="outline" className="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 font-medium text-xs capitalize py-1">
-                    {subscriptionStatus}
-                  </Badge>
+                  {billingInfo?.isPendingCancellation ? (
+                    <Badge variant="outline" className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 font-medium text-xs py-1">
+                      Cancels at Period End
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 font-medium text-xs capitalize py-1">
+                      {subscriptionStatus}
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-3">
                   <span className="text-3xl font-black text-zinc-900 dark:text-zinc-100">
@@ -193,19 +224,34 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
                   </span>
                 </div>
               </div>
-              {currentTier !== "studio" && (
-                <Button
-                  onClick={() => handleUpgrade(currentTier === "pro" ? "studio" : "pro")}
-                  disabled={isPending}
-                  className="bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-semibold rounded-xl shadow-sm gap-1.5 shrink-0"
-                >
-                  {currentTier === "pro" ? "Upgrade to Studio" : "Upgrade Plan"}
-                </Button>
-              )}
+              <div className="flex flex-col gap-2 items-end shrink-0">
+                {currentTier !== "studio" && (
+                  <Button
+                    onClick={() => handleUpgrade(currentTier === "pro" ? "studio" : "pro")}
+                    disabled={isPending}
+                    className="bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-semibold rounded-xl shadow-sm gap-1.5"
+                  >
+                    {currentTier === "pro" ? "Upgrade to Studio" : "Upgrade Plan"}
+                  </Button>
+                )}
+                {currentTier !== "free" && !billingInfo?.isPendingCancellation && (
+                  <Button
+                    onClick={() => setIsCancelDialogOpen(true)}
+                    disabled={isPending}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40 h-8 px-2.5 font-medium rounded-lg"
+                  >
+                    Cancel Subscription
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-              <span>Next Billing Date:</span>
-              <span className="font-semibold text-zinc-800 dark:text-zinc-200">{renewalDate ?? "No recurring charge"}</span>
+              <span>{billingInfo?.isPendingCancellation ? "Plan Access Ends:" : "Next Billing Date:"}</span>
+              <span className={`font-semibold ${billingInfo?.isPendingCancellation ? "text-amber-600 dark:text-amber-400" : "text-zinc-800 dark:text-zinc-200"}`}>
+                {renewalDate ?? "No recurring charge"}
+              </span>
             </div>
           </div>
 
@@ -398,6 +444,20 @@ export function BillingSettingsTab({ workspaceId }: BillingSettingsTabProps) {
           </div>
         )}
       </div>
+
+      {currentTier !== "free" && (
+        <CancelSubscriptionDialog
+          open={isCancelDialogOpen}
+          onOpenChange={setIsCancelDialogOpen}
+          workspaceId={workspaceId}
+          planTier={currentTier}
+          currentPeriodEnd={billingInfo?.currentPeriodEnd}
+          onCancelled={() => {
+            setActionSuccess("Your subscription cancellation has been successfully scheduled.");
+            fetchBilling();
+          }}
+        />
+      )}
     </div>
   );
 }

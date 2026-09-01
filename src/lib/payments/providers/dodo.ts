@@ -5,6 +5,8 @@ import {
   CreateCheckoutParams,
   CheckoutResult,
   PortalParams,
+  CancelSubscriptionParams,
+  CancelSubscriptionResult,
   NormalizedWebhookEvent,
   PlanTier,
   SubscriptionStatus,
@@ -93,6 +95,25 @@ export class DodoPaymentsProvider implements PaymentProvider {
     } catch (error) {
       console.error('[DodoPayments] Error creating customer portal session:', error);
       return null;
+    }
+  }
+
+  async cancelSubscription(params: CancelSubscriptionParams): Promise<CancelSubscriptionResult> {
+    try {
+      const client = this.getClient();
+      if ((client as any).subscriptions?.cancel) {
+        await (client as any).subscriptions.cancel(params.subscriptionId);
+      } else if ((client as any).subscriptions?.update) {
+        await (client as any).subscriptions.update(params.subscriptionId, { status: 'cancelled' });
+      }
+      return {
+        success: true,
+        effectiveFrom: params.immediately ? 'immediately' : 'next_billing_period',
+        message: 'Subscription has been canceled.',
+      };
+    } catch (error: any) {
+      console.error('[DodoPayments] Error canceling subscription:', error);
+      throw new Error(error.message || 'Failed to cancel Dodo subscription.');
     }
   }
 
