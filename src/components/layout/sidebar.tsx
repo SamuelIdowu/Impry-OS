@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import Link from "next/link"
@@ -29,6 +29,7 @@ import type { User } from "better-auth"
 import { getTeamMembersAction, addTeamMemberAction, deleteTeamMemberAction } from "@/server/actions/team"
 import { getProfileAction } from "@/server/actions/user"
 import { AddTeamMemberModal } from "@/components/settings/AddTeamMemberModal"
+import { UpgradeModal } from "@/components/billing/UpgradeModal"
 
 interface TeamMember {
     id: string;
@@ -70,6 +71,7 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
     const subscriptionPlan = (profileData as any)?.subscription_plan || 'free'
 
     const [showAddModal, setShowAddModal] = React.useState(false)
+    const [showUpgradeModal, setShowUpgradeModal] = React.useState(false)
     const [dashboardExpanded, setDashboardExpanded] = React.useState(true)
 
     const handleDeleteMember = async (memberId: string) => {
@@ -134,7 +136,7 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                             <button
                                 onClick={() => setDashboardExpanded(!dashboardExpanded)}
                                 className={cn(
-                                    "w-full group flex items-center justify-between rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                    "w-full group flex items-center justify-between rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                                     pathname.includes("/dashboard")
                                         ? "bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-zinc-100"
                                         : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
@@ -166,7 +168,7 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                                                 href={subItem.href}
                                                 onClick={onNavigate}
                                                 className={cn(
-                                                    "group flex items-center rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                                    "group flex items-center rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-150 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                                                     isActive
                                                         ? "bg-zinc-900 text-white shadow-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                                                         : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
@@ -197,7 +199,7 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                                     href={item.href}
                                     onClick={onNavigate}
                                     className={cn(
-                                        "group flex items-center rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                                        "group flex items-center rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                                         isActive
                                             ? "bg-zinc-900 text-white shadow-xs hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                                             : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
@@ -214,6 +216,7 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                         })}
                     </div>
                 </div>
+
                 <div className="px-4 py-2">
                     <div className="flex items-center justify-between mb-1.5 px-2">
                         <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
@@ -221,7 +224,7 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                         </span>
                         <button
                             onClick={() => setShowAddModal(true)}
-                                className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors active:scale-[0.98]"
+                            className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors active:scale-[0.98]"
                             title="Add team member"
                         >
                             <Plus className="h-3 w-3" />
@@ -237,7 +240,7 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                         ) : members.length === 0 ? (
                             <button
                                 onClick={() => setShowAddModal(true)}
-                                        className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors my-0.5 active:scale-[0.98]"
+                                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors my-0.5 active:scale-[0.98]"
                             >
                                 <Plus className="h-3 w-3" />
                                 <span>Add team member</span>
@@ -275,6 +278,29 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                 </div>
             </div>
 
+            {/* Upgrade Sidebar Banner Card */}
+            {subscriptionPlan === 'free' && (
+                <div className="px-3 pb-2">
+                    <div className="p-3 rounded-xl bg-linear-to-b from-zinc-900 to-zinc-950 text-white border border-zinc-800 shadow-md flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2">
+                            <div className="size-6 rounded-md bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
+                                <Zap className="size-3.5 fill-current" />
+                            </div>
+                            <span className="text-xs font-bold tracking-tight">Upgrade to Pro</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 leading-snug">
+                            Unlock unlimited clients, invoices, & custom branding.
+                        </p>
+                        <button
+                            onClick={() => setShowUpgradeModal(true)}
+                            className="w-full py-1.5 px-3 rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-semibold text-center transition-all duration-150 active:scale-[0.98] shadow-xs"
+                        >
+                            View Plans
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Add Team Member Modal */}
             <AddTeamMemberModal
                 isOpen={showAddModal}
@@ -283,6 +309,15 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                 onSuccess={() => {
                     queryClient.invalidateQueries({ queryKey: ['teamMembers', workspaceId] });
                 }}
+            />
+
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                title="Upgrade Workspace"
+                description="Scale your freelance business with unlimited projects, custom domains, and automated reminders."
+                workspaceId={workspaceId}
             />
 
             <div className="mt-auto px-3 pb-3 w-full">

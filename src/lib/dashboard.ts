@@ -302,9 +302,11 @@ export async function getDashboardMetrics(user: any): Promise<DashboardMetrics> 
     const pendingInvoicesTotal = Number(pendingResult[0]?.total || 0);
     const pendingInvoicesCount = Number(pendingResult[0]?.count || 0);
 
-    // Revenue goal (hardcoded to $11,000 for now)
-    const revenueGoal = 11000;
-    const revenueGoalPercent = (monthlyRevenue / revenueGoal) * 100;
+    // Dynamic revenue goal based on monthly revenue + pending pipeline target
+    const baseGoal = 10000;
+    const rawTarget = Math.max(monthlyRevenue + pendingInvoicesTotal, baseGoal);
+    const revenueGoal = Math.ceil(rawTarget / 1000) * 1000;
+    const revenueGoalPercent = revenueGoal > 0 ? (monthlyRevenue / revenueGoal) * 100 : 0;
 
     return {
         monthlyRevenue: monthlyRevenue,

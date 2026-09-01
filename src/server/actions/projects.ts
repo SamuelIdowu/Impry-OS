@@ -20,18 +20,30 @@ import { z } from 'zod';
 const createProjectSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     clientId: z.string().min(1, 'Client is required'),
-    description: z.string().optional(),
+    description: z.string().optional().nullable(),
     status: z.enum(['planning', 'in_progress', 'review', 'completed', 'on_hold', 'cancelled']).optional(),
-    startDate: z.string().optional(),
-    deadline: z.string().optional(),
-    budget: z.number().optional(),
+    startDate: z.string().optional().nullable(),
+    deadline: z.string().optional().nullable(),
+    budget: z.union([z.number(), z.string()]).transform(val => {
+        if (val === '' || val === undefined || val === null) return undefined;
+        const num = Number(val);
+        return isNaN(num) ? undefined : num;
+    }).optional(),
     currency: z.string().optional(),
-    notes: z.string().optional(),
+    notes: z.string().optional().nullable(),
 });
 
 const updateProjectSchema = createProjectSchema.partial().extend({
-    progress: z.number().min(0).max(100).optional(),
-    total_value: z.number().optional(),
+    progress: z.union([z.number(), z.string()]).transform(val => {
+        if (val === '' || val === undefined || val === null) return undefined;
+        const num = Number(val);
+        return isNaN(num) ? undefined : Math.min(100, Math.max(0, num));
+    }).optional(),
+    total_value: z.union([z.number(), z.string()]).transform(val => {
+        if (val === '' || val === undefined || val === null) return undefined;
+        const num = Number(val);
+        return isNaN(num) ? undefined : num;
+    }).optional(),
 });
 
 /**

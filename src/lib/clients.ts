@@ -8,9 +8,10 @@ import type { Client, CreateClientInput, UpdateClientInput, ClientWithProjects }
 export async function getClients(): Promise<ClientWithProjects[]> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const result = await db.query.clients.findMany({
-        where: and(eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
+        where: eq(clients.workspaceId, workspaceId),
         orderBy: [desc(clients.createdAt)],
         limit: 100,
         with: {
@@ -35,9 +36,10 @@ export async function getClients(): Promise<ClientWithProjects[]> {
 export async function getClientById(id: string): Promise<ClientWithProjects | null> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const client = await db.query.clients.findFirst({
-        where: and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
+        where: and(eq(clients.id, id), eq(clients.workspaceId, workspaceId)),
         with: {
             projects: {
                 columns: { id: true, name: true, status: true }
@@ -62,12 +64,12 @@ export async function getClientById(id: string): Promise<ClientWithProjects | nu
 export async function createClient(input: CreateClientInput): Promise<Client> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const [newClient] = await db.insert(clients).values({
         ...input,
         userId: user.id,
-        workspaceId: await getCurrentWorkspaceId(),
-
+        workspaceId,
         lastContactDate: new Date(),
     }).returning();
 
@@ -77,12 +79,13 @@ export async function createClient(input: CreateClientInput): Promise<Client> {
 export async function updateClient(id: string, input: UpdateClientInput): Promise<Client> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const [updatedClient] = await db.update(clients).set({
         ...input,
         updatedAt: new Date(),
     })
-    .where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)))
+    .where(and(eq(clients.id, id), eq(clients.workspaceId, workspaceId)))
     .returning();
 
     return updatedClient as Client;
@@ -91,22 +94,25 @@ export async function updateClient(id: string, input: UpdateClientInput): Promis
 export async function deleteClient(id: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
-    await db.delete(clients).where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)));
+    await db.delete(clients).where(and(eq(clients.id, id), eq(clients.workspaceId, workspaceId)));
 }
 
 export async function updateLastContactDate(id: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     await db.update(clients)
         .set({ lastContactDate: new Date() })
-        .where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)));
+        .where(and(eq(clients.id, id), eq(clients.workspaceId, workspaceId)));
 }
 
 export async function updateClientNotes(id: string, notes: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     await db.update(clients)
         .set({ 
@@ -114,5 +120,5 @@ export async function updateClientNotes(id: string, notes: string): Promise<void
             lastContactDate: new Date(),
             updatedAt: new Date(),
         })
-        .where(and(eq(clients.id, id), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)));
+        .where(and(eq(clients.id, id), eq(clients.workspaceId, workspaceId)));
 }

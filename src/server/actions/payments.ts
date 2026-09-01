@@ -236,6 +236,8 @@ export async function updatePaymentStatus(
         .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
         .returning();
 
+    const workspaceId = await getCurrentWorkspaceId();
+
     if (updatedPayment.projectId) {
         let message = '';
         if (statusInput.status === 'paid') {
@@ -253,6 +255,13 @@ export async function updatePaymentStatus(
         }
     }
 
+    revalidatePath(`/${workspaceId}/invoices`);
+    revalidatePath(`/${workspaceId}/payments`);
+    revalidatePath(`/${workspaceId}/dashboard`);
+    if (updatedPayment.projectId) {
+        revalidatePath(`/${workspaceId}/projects/${updatedPayment.projectId}`);
+    }
+
     return updatedPayment as Payment;
 }
 
@@ -262,9 +271,10 @@ export async function updatePaymentStatus(
 export async function deletePayment(id: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const [deletedPayment] = await db.delete(payments)
-        .where(and(eq(payments.id, id), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)))
+        .where(and(eq(payments.id, id), eq(payments.workspaceId, workspaceId), eq(payments.userId, user.id)))
         .returning({ projectId: payments.projectId, milestoneName: payments.milestoneName });
 
     if (deletedPayment?.projectId) {
@@ -274,6 +284,13 @@ export async function deletePayment(id: string): Promise<void> {
             `Payment milestone deleted: ${deletedPayment.milestoneName}`,
             { payment_id: id }
         );
+    }
+
+    revalidatePath(`/${workspaceId}/invoices`);
+    revalidatePath(`/${workspaceId}/payments`);
+    revalidatePath(`/${workspaceId}/dashboard`);
+    if (deletedPayment?.projectId) {
+        revalidatePath(`/${workspaceId}/projects/${deletedPayment.projectId}`);
     }
 }
 

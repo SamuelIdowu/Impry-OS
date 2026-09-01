@@ -66,7 +66,14 @@ export const getSession = cache(async () => {
     return await auth.api.getSession({
       headers: headersList,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (
+      error?.digest === "DYNAMIC_SERVER_USAGE" ||
+      error?.message?.includes("Dynamic server usage") ||
+      (typeof error?.digest === "string" && error.digest.startsWith("NEXT_"))
+    ) {
+      throw error;
+    }
     console.warn(
       "Session lookup failed; treating request as signed out.",
       error,

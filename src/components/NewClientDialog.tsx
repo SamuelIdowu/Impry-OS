@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState } from "react"
 import {
@@ -21,9 +21,10 @@ interface NewClientDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onClientAdd: (client: Client) => void
+    onCreateProject?: (client: { id: string; name: string }) => void
 }
 
-export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDialogProps) {
+export function NewClientDialog({ open, onOpenChange, onClientAdd, onCreateProject }: NewClientDialogProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [showUpgradeModal, setShowUpgradeModal] = useState(false)
@@ -35,8 +36,8 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
         description: ""
     })
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+    const handleSubmit = async (e: React.FormEvent, createProjectAfter = false) => {
+        if (e) e.preventDefault()
         setIsLoading(true)
         setError("")
 
@@ -76,6 +77,10 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
                     location: "",
                     description: ""
                 })
+
+                if (createProjectAfter && onCreateProject) {
+                    onCreateProject({ id: newClient.id, name: newClient.name })
+                }
             } else if ((res as any).requiresUpgrade) {
                 onOpenChange(false)
                 setShowUpgradeModal(true)
@@ -111,7 +116,7 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
                         </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-4 py-4">
                         {error && (
                             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-md">
                                 {error}
@@ -172,10 +177,21 @@ export function NewClientDialog({ open, onOpenChange, onClientAdd }: NewClientDi
                             />
                         </div>
 
-                        <DialogFooter className="pt-2">
+                        <DialogFooter className="pt-2 flex flex-col sm:flex-row gap-2">
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                 Cancel
                             </Button>
+                            {onCreateProject && (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    disabled={isLoading || !formData.name || !formData.email}
+                                    onClick={(e) => handleSubmit(e, true)}
+                                    className="bg-zinc-100 hover:bg-zinc-200 text-zinc-900"
+                                >
+                                    Add & Create Project
+                                </Button>
+                            )}
                             <Button type="submit" disabled={isLoading} className="bg-zinc-900 text-white hover:bg-zinc-800">
                                 {isLoading ? "Adding..." : "Add Client"}
                             </Button>

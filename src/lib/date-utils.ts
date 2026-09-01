@@ -6,9 +6,10 @@ export function formatDistanceToNow(date: string | Date): string {
     const now = new Date();
     const targetDate = typeof date === 'string' ? new Date(date) : date;
     const diffInMs = targetDate.getTime() - now.getTime();
-    const diffInMinutes = Math.floor(diffInMs / 60000);
-    const diffInHours = Math.floor(diffInMs / 3600000);
-    const diffInDays = Math.floor(diffInMs / 86400000);
+    const absDiffInMs = Math.abs(diffInMs);
+    const diffInMinutes = Math.floor(absDiffInMs / 60000);
+    const diffInHours = Math.floor(absDiffInMs / 3600000);
+    const diffInDays = Math.floor(absDiffInMs / 86400000);
 
     if (diffInMs < 0) {
         // Past dates

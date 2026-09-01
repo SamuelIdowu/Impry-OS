@@ -7,11 +7,15 @@ import {
     Eye,
     EyeOff,
     Save,
-    Send,
     Calendar as CalendarIcon,
     Download,
     Settings,
-    Mail
+    Mail,
+    Send,
+    CreditCard,
+    Building2,
+    Link2,
+    CheckCircle2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +23,7 @@ import { Label } from "@/components/ui/label"
 import { ImageUpload } from "@/components/shared/ImageUpload"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { InvoiceDocument } from "@/components/invoices/InvoiceDocument"
+import { InvoiceDocument, StructuredPaymentInstructions } from "@/components/invoices/InvoiceDocument"
 import { InvoiceLineItems } from "@/components/invoices/InvoiceLineItems"
 import { createStandaloneInvoice, updateStandaloneInvoice } from "@/server/actions/invoices"
 import { getProfileAction, updateBrandingAction } from "@/server/actions/user"
@@ -32,7 +36,7 @@ import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 
 interface InvoiceEditorProps {
-    clients: { id: string; name: string; email?: string }[]
+    clients: { id: string; name: string; email?: string; company?: string; address?: string }[]
     projects: { id: string; name: string; clientId: string }[]
     initialData?: any
 }
@@ -47,49 +51,88 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     const [showEmailDialog, setShowEmailDialog] = useState(false)
 
     // Form State
-    const [clientId, setClientId] = useState(initialData?.clientId || "")
-    const [projectId, setProjectId] = useState(initialData?.projectId || "")
-    const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber || "")
-    const [issueDate, setIssueDate] = useState(initialData?.issueDate || new Date().toISOString().split('T')[0])
-    const [dueDate, setDueDate] = useState(initialData?.dueDate || "")
+    const [clientId, setClientId] = useState(initialData?.clientId || initialData?.client_id || "")
+    const [projectId, setProjectId] = useState(initialData?.projectId || initialData?.project_id || "")
+    const [invoiceNumber, setInvoiceNumber] = useState(initialData?.invoiceNumber || initialData?.invoice_number || "")
+    const [issueDate, setIssueDate] = useState(initialData?.issueDate || initialData?.issue_date || new Date().toISOString().split('T')[0])
+    const [dueDate, setDueDate] = useState(initialData?.dueDate || initialData?.due_date || "")
     const [notes, setNotes] = useState(initialData?.notes || "")
-    const [paymentInstructions, setPaymentInstructions] = useState(initialData?.paymentInstructions || "")
+
+    // Structured Payment Instructions
+    const [paymentMethodTab, setPaymentMethodTab] = useState<'bank' | 'link' | 'custom'>('bank')
+    const [bankName, setBankName] = useState("")
+    const [accountName, setAccountName] = useState("")
+    const [accountNumber, setAccountNumber] = useState("")
+    const [routingOrSwift, setRoutingOrSwift] = useState("")
+    const [paymentUrl, setPaymentUrl] = useState("")
+    const [paymentNotes, setPaymentNotes] = useState("")
 
     // New Feature State
     const [currency, setCurrency] = useState(initialData?.currency || "USD")
-    const [taxRate, setTaxRate] = useState<number>(initialData?.taxRate || 0)
-    const [discountRate, setDiscountRate] = useState<number>(initialData?.discountRate || 0)
+    const [taxRate, setTaxRate] = useState<number>(initialData?.taxRate || initialData?.tax_rate || 0)
+    const [discountRate, setDiscountRate] = useState<number>(initialData?.discountRate || initialData?.discount_rate || 0)
 
     // Branding State
     const [brandColor, setBrandColor] = useState("#18181b")
     const [logoUrl, setLogoUrl] = useState("")
-    const [isBrandingLoading, setIsBrandingLoading] = useState(true)
+    const [senderProfile, setSenderProfile] = useState<{ company?: string; name?: string; email?: string } | null>(null)
+    const [, setIsBrandingLoading] = useState(true)
 
-    const [items, setItems] = useState<any[]>(initialData?.lineItems || [
-        { description: "Services Rendered", quantity: 1, rate: 0, amount: 0, details: "" }
+    const [items, setItems] = useState<any[]>(initialData?.lineItems || initialData?.line_items || [
+        { description: "", quantity: 1, rate: 0, amount: 0, details: "" }
     ])
 
     // Initialize Invoice Number on mount if not provided
     useEffect(() => {
-        if (!initialData?.invoiceNumber) {
+        if (!initialData?.invoiceNumber && !initialData?.invoice_number) {
             const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
             const year = new Date().getFullYear()
             setInvoiceNumber(`INV-${year}-${random}`)
         }
 
         // Default due date +14 days if not provided
-        if (!initialData?.dueDate) {
+        if (!initialData?.dueDate && !initialData?.due_date) {
             const date = new Date()
             date.setDate(date.getDate() + 14)
             setDueDate(date.toISOString().split('T')[0])
         }
 
-        // Fetch Branding
+        // Initialize payment instructions if present
+        if (initialData?.paymentInstructions || initialData?.payment_instructions) {
+            const raw = initialData.paymentInstructions || initialData.payment_instructions
+            if (typeof raw === 'object') {
+                if (raw.bankName) setBankName(raw.bankName)
+                if (raw.accountName) setAccountName(raw.accountName)
+                if (raw.accountNumber) setAccountNumber(raw.accountNumber)
+                if (raw.routingOrSwift) setRoutingOrSwift(raw.routingOrSwift)
+                if (raw.paymentUrl) setPaymentUrl(raw.paymentUrl)
+                if (raw.notes) setPaymentNotes(raw.notes)
+            } else if (typeof raw === 'string') {
+                try {
+                    const parsed = JSON.parse(raw)
+                    if (parsed.bankName) setBankName(parsed.bankName)
+                    if (parsed.accountName) setAccountName(parsed.accountName)
+                    if (parsed.accountNumber) setAccountNumber(parsed.accountNumber)
+                    if (parsed.routingOrSwift) setRoutingOrSwift(parsed.routingOrSwift)
+                    if (parsed.paymentUrl) setPaymentUrl(parsed.paymentUrl)
+                    if (parsed.notes) setPaymentNotes(parsed.notes)
+                } catch {
+                    setPaymentNotes(raw)
+                }
+            }
+        }
+
+        // Fetch Branding & Profile
         const loadBranding = async () => {
             const res = await getProfileAction()
             if (res.success && res.profile) {
                 if (res.profile.brandColor) setBrandColor(res.profile.brandColor)
                 if (res.profile.logoUrl) setLogoUrl(res.profile.logoUrl)
+                setSenderProfile({
+                    company: res.profile.companyName || res.profile.name || undefined,
+                    name: res.profile.name || undefined,
+                    email: res.profile.email || undefined
+                })
             }
             setIsBrandingLoading(false)
         }
@@ -98,13 +141,62 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
 
     // Filter projects by client
     const clientProjects = projects.filter(p => p.clientId === clientId)
+    const selectedClient = clients.find(c => c.id === clientId)
 
     const calculateTotal = () => {
-        const subtotal = items.reduce((sum, item) => sum + (item.amount || 0), 0)
+        const subtotal = items.reduce((sum, item) => sum + (parseFloat(item.amount) || (parseFloat(item.quantity || 1) * parseFloat(item.rate || 0)) || 0), 0)
         const discountAmount = subtotal * (discountRate / 100)
         const afterDiscount = subtotal - discountAmount
         const taxAmount = afterDiscount * (taxRate / 100)
         return afterDiscount + taxAmount
+    }
+
+    const compiledPaymentInstructions: StructuredPaymentInstructions = {
+        bankName: bankName.trim() || undefined,
+        accountName: accountName.trim() || undefined,
+        accountNumber: accountNumber.trim() || undefined,
+        routingOrSwift: routingOrSwift.trim() || undefined,
+        paymentUrl: paymentUrl.trim() || undefined,
+        notes: paymentNotes.trim() || undefined
+    }
+
+    const isFormValid = Boolean(
+        clientId &&
+        invoiceNumber.trim() &&
+        issueDate &&
+        dueDate &&
+        items.length > 0 &&
+        items.some(it => it.description && it.description.trim().length > 0)
+    )
+
+    const saveInvoice = async (status: 'pending' = 'pending') => {
+        const invoiceData = {
+            clientId: clientId,
+            projectId: projectId === "none" || !projectId ? undefined : projectId,
+            invoiceNumber: invoiceNumber,
+            issueDate: issueDate,
+            dueDate: dueDate,
+            amount: calculateTotal(),
+            currency: currency,
+            status: status,
+            lineItems: items,
+            notes: notes,
+            paymentInstructions: JSON.stringify(compiledPaymentInstructions),
+            taxRate: taxRate,
+            discountRate: discountRate
+        }
+
+        let savedId = initialData?.id
+        if (savedId) {
+            await updateStandaloneInvoice(savedId, invoiceData)
+        } else {
+            const created = await createStandaloneInvoice(invoiceData)
+            savedId = created?.id
+        }
+
+        // Also update branding if changed
+        await updateBrandingAction({ brand_color: brandColor, logo_url: logoUrl })
+        return savedId
     }
 
     const handleSave = async (status: 'pending') => {
@@ -112,39 +204,20 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             alert("Please select a client")
             return
         }
+        if (!isFormValid) {
+            alert("Please ensure client, invoice number, due date, and at least one item description are filled.")
+            return
+        }
+
         setIsLoading(true)
         try {
-            const invoiceData = {
-                clientId: clientId,
-                projectId: projectId === "none" || !projectId ? undefined : projectId,
-                invoiceNumber: invoiceNumber,
-                issueDate: issueDate,
-                dueDate: dueDate,
-                amount: calculateTotal(),
-                currency: currency,
-                status: status, // This will be 'pending' as 'draft' is not yet supported in DB
-                lineItems: items,
-                notes: notes,
-                paymentInstructions: paymentInstructions,
-                taxRate: taxRate,
-                discountRate: discountRate
-            }
-
-            if (initialData?.id) {
-                await updateStandaloneInvoice(initialData.id, invoiceData)
-            } else {
-                await createStandaloneInvoice(invoiceData)
-            }
-
-            // Also update branding if changed
-            await updateBrandingAction({ brand_color: brandColor, logo_url: logoUrl })
-
+            await saveInvoice(status)
             router.push(`/${workspaceId}/invoices`)
             router.refresh()
         } catch (error) {
             console.error(error)
             alert("Failed to save invoice")
-            setIsLoading(false) // Only stop loading on error, as success navigates away
+            setIsLoading(false)
         }
     }
 
@@ -153,18 +226,12 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         if (!element) return
 
         try {
-            // Force light mode and ensure no modern color functions are used
             const htmlElement = document.documentElement
             const originalClass = htmlElement.className
-            const wasLight = !htmlElement.classList.contains('dark')
 
-            // Temporarily remove dark mode to ensure consistent color rendering
             htmlElement.classList.remove('dark')
-
-            // Wait for styles to be applied
             await new Promise(resolve => setTimeout(resolve, 50))
 
-            // Apply PDF-safe inline styles to all elements
             applyPdfSafeStyles(element as HTMLElement)
 
             const PDF_CAPTURE_WIDTH = 900
@@ -182,15 +249,12 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                 windowWidth: PDF_CAPTURE_WIDTH,
                 height: element.scrollHeight,
                 windowHeight: element.scrollHeight,
-                // Disable SVG rendering which might contain unsupported colors
                 foreignObjectRendering: false,
             })
 
-            // Restore element width
             element.style.width = originalElementWidth
             element.style.maxWidth = originalElementMaxWidth
 
-            // Remove the inline styles and restore original class
             removePdfSafeStyles(element as HTMLElement)
             htmlElement.className = originalClass
 
@@ -208,12 +272,16 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     }
 
     const handleSendEmail = async () => {
-        if (!initialData?.id) {
-            alert("Please save the invoice first")
+        if (!clientId) {
+            alert("Please select a client")
+            return
+        }
+        if (!isFormValid) {
+            alert("Please ensure client, invoice number, due date, and at least one item description are filled.")
             return
         }
 
-        const clientEmail = clients.find(c => c.id === clientId)?.email
+        const clientEmail = selectedClient?.email
         if (!clientEmail) {
             setShowEmailDialog(true)
             return
@@ -222,93 +290,130 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
         if (!confirm(`Send invoice to ${clientEmail}?`)) return
 
         setIsSending(true)
-        const res = await sendInvoiceEmailAction(initialData.id, clientEmail)
-        setIsSending(false)
+        try {
+            const savedInvoiceId = await saveInvoice('pending')
+            if (!savedInvoiceId) {
+                throw new Error("Could not retrieve invoice ID")
+            }
+            const res = await sendInvoiceEmailAction(savedInvoiceId, clientEmail)
+            setIsSending(false)
 
-        if (res.success) {
-            alert("Email sent successfully!")
-        } else {
-            alert("Failed to send email: " + res.error)
+            if (res.success) {
+                alert("Email sent successfully!")
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            } else {
+                alert("Invoice saved, but failed to send email: " + res.error)
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            }
+        } catch (error) {
+            console.error(error)
+            alert("Failed to send invoice: " + (error instanceof Error ? error.message : String(error)))
+            setIsSending(false)
         }
     }
 
     const handleEmailConfirm = async (email: string, saveToProfile: boolean) => {
-        if (!initialData?.id) return
-
         setIsSending(true)
+        try {
+            if (saveToProfile && clientId) {
+                await updateClientAction(clientId, { email })
+            }
 
-        if (saveToProfile && clientId) {
-            await updateClientAction(clientId, { email })
-        }
+            const savedInvoiceId = await saveInvoice('pending')
+            if (!savedInvoiceId) {
+                throw new Error("Could not retrieve invoice ID")
+            }
 
-        const res = await sendInvoiceEmailAction(initialData.id, email)
-        setIsSending(false)
+            const res = await sendInvoiceEmailAction(savedInvoiceId, email)
+            setIsSending(false)
 
-        if (res.success) {
-            alert("Email sent successfully!")
-            router.refresh()
-        } else {
-            alert("Failed to send email: " + res.error)
+            if (res.success) {
+                alert("Email sent successfully!")
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            } else {
+                alert("Invoice saved, but failed to send email: " + res.error)
+                router.push(`/${workspaceId}/invoices`)
+                router.refresh()
+            }
+        } catch (error) {
+            console.error(error)
+            alert("Failed to send invoice: " + (error instanceof Error ? error.message : String(error)))
+            setIsSending(false)
         }
     }
 
     // Construct preview object
     const previewInvoice = {
-        invoiceNumber: invoiceNumber,
-        issueDate: issueDate,
-        dueDate: dueDate,
+        invoiceNumber,
+        invoice_number: invoiceNumber,
+        issueDate,
+        issue_date: issueDate,
+        dueDate,
+        due_date: dueDate,
         amount: calculateTotal(),
         status: 'pending',
         lineItems: items,
-        clientId: clientId,
-        projectId: projectId,
+        line_items: items,
+        clientId,
+        projectId,
         currency,
-        taxRate: taxRate,
-        discountRate: discountRate,
-        paymentInstructions: paymentInstructions,
-        // Enriched data for preview
-        clientName: clients.find(c => c.id === clientId)?.name,
+        taxRate,
+        tax_rate: taxRate,
+        discountRate,
+        discount_rate: discountRate,
+        paymentInstructions: compiledPaymentInstructions,
+        payment_instructions: compiledPaymentInstructions,
+        clientName: selectedClient?.name,
+        clientEmail: selectedClient?.email,
+        clientAddress: selectedClient?.address,
         projectName: projects.find(p => p.id === projectId)?.name,
         projects: projectId ? { name: projects.find(p => p.id === projectId)?.name } : null,
-        clients: clientId ? { name: clients.find(c => c.id === clientId)?.name } : null
+        clients: selectedClient ? { name: selectedClient.name, email: selectedClient.email, address: selectedClient.address } : null
     }
 
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
             {/* Top Bar */}
-            <div className="flex items-center justify-between px-8 py-4 border-b border-zinc-200 bg-white shadow-sm z-10">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <div className="flex items-center justify-between px-6 lg:px-8 py-3.5 border-b border-zinc-200 bg-white shadow-sm z-10">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9">
                         <ChevronLeft className="h-5 w-5" />
                     </Button>
-                    <h1 className="text-xl font-bold text-zinc-900">{initialData ? 'Edit Invoice' : 'New Invoice'}</h1>
+                    <div>
+                        <h1 className="text-lg md:text-xl font-bold text-zinc-900">{initialData ? 'Edit Invoice' : 'New Invoice'}</h1>
+                        <p className="text-xs text-zinc-500 font-mono">#{invoiceNumber}</p>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" onClick={handleDownloadPdf} title="Download PDF">
-                        <Download className="h-4 w-4 mr-2" />
+                <div className="flex items-center gap-2.5">
+                    <Button variant="outline" size="sm" onClick={handleDownloadPdf} title="Download PDF">
+                        <Download className="h-4 w-4 mr-1.5" />
                         PDF
                     </Button>
-                    <Button variant="outline" onClick={() => setShowPreview(!showPreview)} className="hidden lg:flex">
+                    <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)} className="hidden lg:flex">
                         {showPreview ? (
                             <>
-                                <EyeOff className="h-4 w-4 mr-2" />
+                                <EyeOff className="h-4 w-4 mr-1.5" />
                                 Hide Preview
                             </>
                         ) : (
                             <>
-                                <Eye className="h-4 w-4 mr-2" />
+                                <Eye className="h-4 w-4 mr-1.5" />
                                 Show Preview
                             </>
                         )}
                     </Button>
-                    <div className="h-6 w-px bg-zinc-200 mx-2 hidden lg:block" />
-                    <Button variant="outline" onClick={() => handleSave('pending')} disabled={isLoading}>
-                        <Save className="h-4 w-4 mr-2" />
-                        Save
-                    </Button>
-                    <Button onClick={handleSendEmail} disabled={isLoading || isSending || !initialData?.id} title={!initialData?.id ? "Save first to send" : "Send Email"}>
-                        <Mail className="h-4 w-4 mr-2" />
+                    <div className="h-5 w-px bg-zinc-200 mx-1 hidden lg:block" />
+                    <Button
+                        size="sm"
+                        onClick={handleSendEmail}
+                        disabled={isLoading || isSending || !isFormValid}
+                        className="bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50"
+                    >
+                        <Send className="h-4 w-4 mr-1.5" />
                         {isSending ? "Sending..." : "Send"}
                     </Button>
                 </div>
@@ -317,17 +422,22 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
             {/* Main Content */}
             <div className="flex flex-1 overflow-hidden bg-zinc-50">
                 {/* Editor Pane */}
-                <div className={`flex-1 overflow-y-auto p-8 transition-[max-width] duration-300 ease-out ${showPreview ? 'lg:max-w-[50%]' : 'w-full mx-auto'}`}>
-                    <div className="space-y-8 pb-20">
+                <div className={`flex-1 overflow-y-auto p-6 md:p-8 transition-[max-width] duration-300 ease-out ${showPreview ? 'lg:max-w-[50%]' : 'w-full mx-auto'}`}>
+                    <div className="space-y-6 pb-24">
                         {/* Invoice Details Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-                            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                                <Settings className="h-5 w-5 text-zinc-400" />
+                            <h2 className="text-base font-semibold mb-5 flex items-center gap-2 text-zinc-900">
+                                <Settings className="h-4 w-4 text-zinc-500" />
                                 Invoice Details
                             </h2>
-                            <div className="grid gap-6">
+                            <div className="grid gap-5">
                                 <div className="space-y-2">
-                                    <Label>Client</Label>
+                                    <div className="flex items-center justify-between">
+                                        <Label className="text-xs font-semibold text-zinc-700">Client <span className="text-red-500">*</span></Label>
+                                        {selectedClient?.email && (
+                                            <span className="text-xs text-zinc-500">{selectedClient.email}</span>
+                                        )}
+                                    </div>
                                     <Select value={clientId} onValueChange={(val) => {
                                         setClientId(val)
                                         setProjectId("")
@@ -337,7 +447,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                         </SelectTrigger>
                                         <SelectContent>
                                             {clients.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                                <SelectItem key={c.id} value={c.id}>{c.name} {c.company ? `(${c.company})` : ''}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -345,7 +455,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Project</Label>
+                                        <Label className="text-xs font-semibold text-zinc-700">Project</Label>
                                         <Select value={projectId} onValueChange={setProjectId} disabled={!clientId}>
                                             <SelectTrigger><SelectValue placeholder="No Project" /></SelectTrigger>
                                             <SelectContent>
@@ -357,7 +467,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Currency</Label>
+                                        <Label className="text-xs font-semibold text-zinc-700">Currency</Label>
                                         <Select value={currency} onValueChange={setCurrency}>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
                                             <SelectContent>
@@ -373,45 +483,151 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Invoice Number</Label>
+                                        <Label className="text-xs font-semibold text-zinc-700">Invoice Number <span className="text-red-500">*</span></Label>
                                         <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Issue Date</Label>
+                                        <Label className="text-xs font-semibold text-zinc-700">Issue Date <span className="text-red-500">*</span></Label>
                                         <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Due Date</Label>
+                                    <Label className="text-xs font-semibold text-zinc-700">Due Date <span className="text-red-500">*</span></Label>
                                     <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Settings / Branding Card */}
+                        {/* Items Card */}
+                        <InvoiceLineItems items={items} currency={currency} onChange={setItems} />
+
+                        {/* Structured Payment Instructions Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-                            <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
-                                <Settings className="h-5 w-5 text-zinc-400" />
-                                Branding & Settings
-                            </h2>
-                            <p className="text-xs text-zinc-400 mb-6">Temporary — will pull from your business profile in a future update.</p>
-                            <div className="grid gap-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-base font-semibold flex items-center gap-2 text-zinc-900">
+                                    <CreditCard className="h-4 w-4 text-zinc-500" />
+                                    Payment Instructions
+                                </h2>
+                                <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethodTab('bank')}
+                                        className={`px-2.5 py-1 rounded-md font-medium transition-colors ${paymentMethodTab === 'bank' ? 'bg-white shadow-xs text-zinc-900' : 'text-zinc-500 hover:text-zinc-900'}`}
+                                    >
+                                        Bank Transfer
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethodTab('link')}
+                                        className={`px-2.5 py-1 rounded-md font-medium transition-colors ${paymentMethodTab === 'link' ? 'bg-white shadow-xs text-zinc-900' : 'text-zinc-500 hover:text-zinc-900'}`}
+                                    >
+                                        Payment Link
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethodTab('custom')}
+                                        className={`px-2.5 py-1 rounded-md font-medium transition-colors ${paymentMethodTab === 'custom' ? 'bg-white shadow-xs text-zinc-900' : 'text-zinc-500 hover:text-zinc-900'}`}
+                                    >
+                                        Custom Note
+                                    </button>
+                                </div>
+                            </div>
+
+                            {paymentMethodTab === 'bank' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-zinc-600">Bank Name</Label>
+                                        <Input
+                                            placeholder="e.g. Chase / Barclays"
+                                            value={bankName}
+                                            onChange={(e) => setBankName(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-zinc-600">Account Name</Label>
+                                        <Input
+                                            placeholder="e.g. Acme Studio LLC"
+                                            value={accountName}
+                                            onChange={(e) => setAccountName(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-zinc-600">Account Number / IBAN</Label>
+                                        <Input
+                                            placeholder="e.g. 123456789 or GB29..."
+                                            value={accountNumber}
+                                            onChange={(e) => setAccountNumber(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-zinc-600">Routing / Sort Code / SWIFT</Label>
+                                        <Input
+                                            placeholder="e.g. 021000021 / CHASUS33"
+                                            value={routingOrSwift}
+                                            onChange={(e) => setRoutingOrSwift(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {paymentMethodTab === 'link' && (
+                                <div className="space-y-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-zinc-600">Payment URL (Stripe, PayPal, Wise)</Label>
+                                        <Input
+                                            placeholder="https://buy.stripe.com/..."
+                                            value={paymentUrl}
+                                            onChange={(e) => setPaymentUrl(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {paymentMethodTab === 'custom' && (
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs text-zinc-600">Custom Payment Instructions</Label>
+                                    <Textarea
+                                        value={paymentNotes}
+                                        onChange={(e) => setPaymentNotes(e.target.value)}
+                                        placeholder="Add any specific instructions or notes..."
+                                        rows={4}
+                                    />
+                                </div>
+                            )}
+
+                            {paymentMethodTab !== 'custom' && (
+                                <div className="mt-3 pt-3 border-t border-zinc-100">
+                                    <Label className="text-xs text-zinc-500 mb-1 block">Additional Payment Memo (Optional)</Label>
+                                    <Input
+                                        placeholder="e.g. Please quote invoice number in transfer reference"
+                                        value={paymentNotes}
+                                        onChange={(e) => setPaymentNotes(e.target.value)}
+                                        className="text-xs"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Settings & Tax Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
+                            <h2 className="text-base font-semibold mb-4 text-zinc-900">Branding, Tax & Discounts</h2>
+                            <div className="grid gap-5">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Brand Color</Label>
+                                        <Label className="text-xs text-zinc-600">Brand Color</Label>
                                         <div className="flex gap-2">
                                             <Input type="color" value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className="w-12 p-1 h-10" />
                                             <Input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} placeholder="#000000" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Tax Rate (%)</Label>
-                                        <Input type="number" value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} />
+                                        <Label className="text-xs text-zinc-600">Tax Rate (%)</Label>
+                                        <Input type="number" min="0" max="100" step="0.1" value={taxRate || ''} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} placeholder="0" />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Logo</Label>
+                                        <Label className="text-xs text-zinc-600">Logo</Label>
                                         <ImageUpload
                                             value={logoUrl}
                                             onChange={setLogoUrl}
@@ -419,32 +635,44 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Discount (%)</Label>
-                                        <Input type="number" value={discountRate} onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)} />
+                                        <Label className="text-xs text-zinc-600">Discount (%)</Label>
+                                        <Input type="number" min="0" max="100" step="0.1" value={discountRate || ''} onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)} placeholder="0" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Payment Instructions Card */}
-                        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
-                            <h2 className="text-lg font-semibold mb-6">Payment Instructions</h2>
-                            <div className="grid gap-4">
-                                <div className="space-y-2">
-                                    <Label>How to Pay</Label>
-                                    <Textarea
-                                        value={paymentInstructions}
-                                        onChange={(e) => setPaymentInstructions(e.target.value)}
-                                        placeholder={"Bank Transfer:\nAccount Name: ...\nAccount Number: ...\nBank: ...\n\nOr pay via PayPal: your@email.com"}
-                                        rows={5}
-                                    />
-                                    <p className="text-xs text-zinc-400">Shown at the bottom of the invoice so clients know how to pay you.</p>
-                                </div>
+                        {/* Bottom Save & Action Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div>
+                                <h3 className="text-sm font-semibold text-zinc-900">Ready to finalize?</h3>
+                                <p className="text-xs text-zinc-500 mt-0.5">
+                                    {isFormValid
+                                        ? "All required fields are complete. You can now save your invoice."
+                                        : "Please complete required fields (Client, Invoice Number, Due Date, and items) to save."
+                                    }
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    onClick={() => router.back()}
+                                    className="w-full sm:w-auto"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={() => handleSave('pending')}
+                                    disabled={isLoading || !isFormValid}
+                                    className="bg-zinc-900 text-white hover:bg-zinc-800 w-full sm:w-auto flex items-center gap-2"
+                                >
+                                    <Save className="h-4 w-4" />
+                                    {isLoading ? "Saving..." : "Save Invoice"}
+                                </Button>
                             </div>
                         </div>
-
-                        {/* Items Card */}
-                        <InvoiceLineItems items={items} currency={currency} onChange={setItems} />
                     </div>
                 </div>
 
@@ -453,11 +681,10 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                     <div className="hidden lg:block w-1/2 overflow-y-auto p-8 border-l border-zinc-200 bg-zinc-100/50">
                         <div className="mx-auto sticky top-0">
                             <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-sm font-semibold text-zinc-500">Preview</h2>
-                                <div className="flex gap-2">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <CalendarIcon className="h-4 w-4" />
-                                    </Button>
+                                <h2 className="text-sm font-semibold text-zinc-500">Live Preview</h2>
+                                <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full font-medium">
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    Real-time Sync
                                 </div>
                             </div>
                             <div className="origin-top scale-[0.9]">
@@ -467,6 +694,8 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                         previewMode={true}
                                         brandColor={brandColor}
                                         logoUrl={logoUrl}
+                                        senderName={senderProfile?.name}
+                                        senderDetails={senderProfile || undefined}
                                     />
                                 </div>
                             </div>
@@ -479,7 +708,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                 isOpen={showEmailDialog}
                 onClose={() => setShowEmailDialog(false)}
                 onConfirm={handleEmailConfirm}
-                clientName={clients.find(c => c.id === clientId)?.name || "Client"}
+                clientName={selectedClient?.name || "Client"}
             />
         </div>
     )

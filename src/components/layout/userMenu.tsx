@@ -102,8 +102,7 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     </svg>
                     Dashboard
                 </DropdownMenuItem>
-                {/* Subscription menu item disabled
-                <DropdownMenuItem onClick={() => router.push("/pricing")}>
+                <DropdownMenuItem onClick={() => router.push(`/${workspaceId}/settings?tab=billing`)}>
                     <svg
                         className="mr-2 size-4"
                         fill="none"
@@ -112,9 +111,8 @@ export function UserMenu({ open, onOpenChange, user, subscriptionPlan }: UserMen
                     >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                     </svg>
-                    Subscription
+                    Billing & Plans
                 </DropdownMenuItem>
-                */}
                 <DropdownMenuItem onClick={() => router.push(`/${workspaceId}/settings`)}>
                     <svg
                         className="mr-2 size-4"

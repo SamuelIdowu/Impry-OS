@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { Hero } from "@/components/landing/Hero";
 import { Features } from "@/components/landing/Features";
 import { Pricing } from "@/components/landing/Pricing";
@@ -7,6 +8,7 @@ import { getSession } from "@/lib/auth";
 import { Logo } from "@/components/ui/logo";
 import { MobileNav } from "@/components/landing/MobileNav";
 import { generatePageMetadata } from "@/lib/metadata-config";
+import { JsonLd, generateSoftwareApplicationSchema, generateOrganizationSchema } from "@/components/shared/json-ld";
 
 export const metadata = generatePageMetadata({
   title: "Revenue Protection for Freelance Developers & Designers",
@@ -27,18 +29,28 @@ export const metadata = generatePageMetadata({
 });
 
 export default async function Home() {
+  const headersList = await headers();
+  const detectedCountry =
+    headersList.get("x-vercel-ip-country") ||
+    headersList.get("cf-ipcountry") ||
+    headersList.get("x-country-code") ||
+    "OTHERS";
+
   const session = await getSession();
   const hasSession = !!session;
+  const userEmail = session?.user?.email;
 
   return (
     <div className="flex min-h-screen flex-col">
+      <JsonLd data={generateSoftwareApplicationSchema()} />
+      <JsonLd data={generateOrganizationSchema()} />
       <header className="sticky top-6 z-50 mx-auto w-[95%] max-w-5xl rounded-full border border-white/40 bg-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.04)] backdrop-blur-xl">
         <div className="flex h-16 items-center justify-between px-6 lg:px-8">
           <div className="flex items-center gap-10">
             <Logo className="mr-2" textClassName="text-xl font-bold text-zinc-900" />
             <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-600">
               <a href="#features" className="hover:text-zinc-900 transition-colors">Features</a>
-              <a href="#pricing" className="hover:text-zinc-900 transition-colors">Pricing</a>
+              <a href="/pricing" className="hover:text-zinc-900 transition-colors">Pricing</a>
               <a href="#" className="hover:text-zinc-900 transition-colors">About</a>
             </nav>
           </div>
@@ -67,7 +79,7 @@ export default async function Home() {
       <main className="flex-1">
         <Hero hasSession={hasSession} />
         <Features />
-        <Pricing hasSession={hasSession} />
+        <Pricing country={detectedCountry} userEmail={userEmail} hasSession={hasSession} />
         <CallToAction hasSession={hasSession} />
       </main>
 

@@ -94,6 +94,8 @@ export const clients = pgTable('clients', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('clients_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('clients_workspace_idx').on(table.workspaceId),
+  workspaceStatusIdx: index('clients_workspace_status_idx').on(table.workspaceId, table.status),
 }));
 
 export const projects = pgTable('projects', {
@@ -113,6 +115,8 @@ export const projects = pgTable('projects', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('projects_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('projects_workspace_idx').on(table.workspaceId),
+  workspaceStatusIdx: index('projects_workspace_status_idx').on(table.workspaceId, table.status),
   clientIdx: index('projects_client_idx').on(table.clientId),
 }));
 
@@ -172,6 +176,8 @@ export const payments = pgTable('payments', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('payments_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('payments_workspace_idx').on(table.workspaceId),
+  workspaceStatusIdx: index('payments_workspace_status_idx').on(table.workspaceId, table.status),
   projectIdx: index('payments_project_idx').on(table.projectId),
   statusIdx: index('payments_status_idx').on(table.status),
   dueDateIdx: index('payments_due_date_idx').on(table.dueDate),
@@ -196,6 +202,7 @@ export const reminders = pgTable('reminders', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   workspaceUserIdx: index('reminders_workspace_user_idx').on(table.workspaceId, table.userId),
+  workspaceIdx: index('reminders_workspace_idx').on(table.workspaceId),
   isSentDateIdx: index('reminders_is_sent_date_idx').on(table.isSent, table.reminderDate),
   projectIdx: index('reminders_project_idx').on(table.projectId),
 }));
@@ -243,6 +250,32 @@ export const billingWebhookEvents = pgTable('billing_webhook_events', {
   payload: jsonb('payload'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+// Paddle Mirrored Tables
+export const customers = pgTable('customers', {
+  customerId: text('customer_id').primaryKey(),
+  email: text('email').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  emailIdx: index('customers_email_idx').on(table.email),
+}));
+
+export const subscriptions = pgTable('subscriptions', {
+  subscriptionId: text('subscription_id').primaryKey(),
+  customerId: text('customer_id').notNull().references(() => customers.customerId, { onDelete: 'cascade' }),
+  status: text('status').notNull(),
+  priceId: text('price_id').notNull(),
+  productId: text('product_id').notNull(),
+  scheduledChangeAction: text('scheduled_change_action'),
+  scheduledChangeAt: timestamp('scheduled_change_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  customerIdIdx: index('subscriptions_customer_id_idx').on(table.customerId),
+  statusIdx: index('subscriptions_status_idx').on(table.status),
+}));
+
 
 export const workspaceInvitations = pgTable('workspace_invitations', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -325,4 +358,13 @@ export const remindersRelations = relations(reminders, ({ one }) => ({
   payment: one(payments, { fields: [reminders.paymentId], references: [payments.id] }),
   user: one(users, { fields: [reminders.userId], references: [users.id] }),
 }));
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  subscriptions: many(subscriptions),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  customer: one(customers, { fields: [subscriptions.customerId], references: [customers.customerId] }),
+}));
+
 

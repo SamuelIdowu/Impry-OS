@@ -15,14 +15,15 @@ import type {
 } from './types/project';
 
 /**
- * Get all projects for the authenticated user
+ * Get all projects for the authenticated workspace
  */
 export async function getProjects(): Promise<ProjectWithClient[]> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const result = await db.query.projects.findMany({
-        where: and(eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        where: eq(projects.workspaceId, workspaceId),
         orderBy: [desc(projects.createdAt)],
         limit: 100,
         with: {
@@ -41,9 +42,10 @@ export async function getProjects(): Promise<ProjectWithClient[]> {
 export async function getProjectsByClient(clientId: string): Promise<Project[]> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const result = await db.query.projects.findMany({
-        where: and(eq(projects.clientId, clientId), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        where: and(eq(projects.clientId, clientId), eq(projects.workspaceId, workspaceId)),
         orderBy: [desc(projects.createdAt)],
         limit: 100,
     });
@@ -57,9 +59,10 @@ export async function getProjectsByClient(clientId: string): Promise<Project[]> 
 export async function getProjectById(id: string): Promise<ProjectWithDetails | null> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const result = await db.query.projects.findFirst({
-        where: and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        where: and(eq(projects.id, id), eq(projects.workspaceId, workspaceId)),
         with: {
             client: {
                 columns: { id: true, name: true, email: true, company: true }
@@ -80,29 +83,29 @@ export async function getProjectById(id: string): Promise<ProjectWithDetails | n
 export async function createProject(input: CreateProjectInput): Promise<Project> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const client = await db.query.clients.findFirst({
-        where: and(eq(clients.id, input.clientId), eq(clients.workspaceId, await getCurrentWorkspaceId()), eq(clients.userId, user.id)),
+        where: and(eq(clients.id, input.clientId), eq(clients.workspaceId, workspaceId)),
         columns: { id: true }
     });
 
     if (!client) {
-        throw new Error('Client not found or does not belong to user');
+        throw new Error('Client not found or does not belong to workspace');
     }
 
     const [newProject] = await db.insert(projects).values({
         name: input.name,
         clientId: input.clientId,
-        description: input.description,
+        description: input.description || null,
         status: input.status || 'planning',
-        startDate: input.startDate,
-        deadline: input.deadline,
-        budget: input.budget?.toString(),
+        startDate: input.startDate?.trim() || null,
+        deadline: input.deadline?.trim() || null,
+        budget: (input.budget !== undefined && input.budget !== null && !isNaN(Number(input.budget))) ? input.budget.toString() : null,
         currency: input.currency || 'USD',
-        notes: input.notes,
+        notes: input.notes || null,
         userId: user.id,
-        workspaceId: await getCurrentWorkspaceId(),
-
+        workspaceId,
     }).returning();
 
     return newProject as Project;
@@ -114,19 +117,25 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
 export async function updateProject(id: string, input: UpdateProjectInput): Promise<Project> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
-    const [updatedProject] = await db.update(projects).set({
-        name: input.name,
-        description: input.description,
-        status: input.status,
-        startDate: input.startDate,
-        deadline: input.deadline,
-        budget: input.budget?.toString(),
-        currency: input.currency,
-        notes: input.notes,
+    const updatePayload: Record<string, any> = {
         updatedAt: new Date(),
-    })
-    .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
+    };
+
+    if (input.name !== undefined) updatePayload.name = input.name;
+    if (input.description !== undefined) updatePayload.description = input.description || null;
+    if (input.status !== undefined) updatePayload.status = input.status;
+    if (input.startDate !== undefined) updatePayload.startDate = input.startDate?.trim() || null;
+    if (input.deadline !== undefined) updatePayload.deadline = input.deadline?.trim() || null;
+    if (input.budget !== undefined) {
+        updatePayload.budget = (input.budget !== null && !isNaN(Number(input.budget))) ? input.budget.toString() : null;
+    }
+    if (input.currency !== undefined) updatePayload.currency = input.currency;
+    if (input.notes !== undefined) updatePayload.notes = input.notes || null;
+
+    const [updatedProject] = await db.update(projects).set(updatePayload)
+    .where(and(eq(projects.id, id), eq(projects.workspaceId, workspaceId)))
     .returning();
 
     return updatedProject as Project;
@@ -138,12 +147,13 @@ export async function updateProject(id: string, input: UpdateProjectInput): Prom
 export async function updateProjectStatus(id: string, status: ProjectStatus): Promise<Project> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const { mapAppToDatabaseStatus } = await import('./types/project');
     const dbStatus = mapAppToDatabaseStatus(status);
 
     const currentProject = await db.query.projects.findFirst({
-        where: and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)),
+        where: and(eq(projects.id, id), eq(projects.workspaceId, workspaceId)),
         columns: { name: true, status: true }
     });
 
@@ -151,7 +161,7 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
         status: dbStatus,
         updatedAt: new Date(),
     })
-    .where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)))
+    .where(and(eq(projects.id, id), eq(projects.workspaceId, workspaceId)))
     .returning();
 
     if (currentProject && currentProject.status !== dbStatus) {
@@ -178,8 +188,9 @@ export async function updateProjectStatus(id: string, status: ProjectStatus): Pr
 export async function deleteProject(id: string): Promise<void> {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
-    await db.delete(projects).where(and(eq(projects.id, id), eq(projects.workspaceId, await getCurrentWorkspaceId()), eq(projects.userId, user.id)));
+    await db.delete(projects).where(and(eq(projects.id, id), eq(projects.workspaceId, workspaceId)));
 }
 
 /**
@@ -188,9 +199,10 @@ export async function deleteProject(id: string): Promise<void> {
 export async function getProjectPaymentSummary(projectId: string) {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const projectPayments = await db.query.payments.findMany({
-        where: and(eq(payments.projectId, projectId), eq(payments.workspaceId, await getCurrentWorkspaceId()), eq(payments.userId, user.id)),
+        where: and(eq(payments.projectId, projectId), eq(payments.workspaceId, workspaceId)),
         columns: { amount: true, status: true, currency: true }
     });
 
@@ -214,11 +226,12 @@ export async function getProjectPaymentSummary(projectId: string) {
 export async function getProjectNextReminder(projectId: string) {
     const user = await getUser();
     if (!user) throw new Error('User not authenticated');
+    const workspaceId = await getCurrentWorkspaceId();
 
     const nextReminder = await db.query.reminders.findFirst({
         where: and(
             eq(reminders.projectId, projectId),
-            eq(reminders.userId, user.id),
+            eq(reminders.workspaceId, workspaceId),
             eq(reminders.isSent, false),
             gte(reminders.reminderDate, new Date())
         ),
