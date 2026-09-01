@@ -32,6 +32,7 @@ import { updateClientAction } from "@/server/actions/clients"
 import { ClientEmailDialog } from "@/components/invoices/ClientEmailDialog"
 import { pdfStyles } from "@/lib/pdf-styles"
 import { applyPdfSafeStyles, removePdfSafeStyles } from "@/lib/pdf-color-utils"
+import { cn } from "@/lib/utils"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 
@@ -49,6 +50,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     const [isLoading, setIsLoading] = useState(false)
     const [isSending, setIsSending] = useState(false)
     const [showEmailDialog, setShowEmailDialog] = useState(false)
+    const [mobileTab, setMobileTab] = useState<'edit' | 'preview'>('edit')
 
     // Form State
     const [clientId, setClientId] = useState(initialData?.clientId || initialData?.client_id || "")
@@ -377,21 +379,46 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
             {/* Top Bar */}
-            <div className="flex items-center justify-between px-6 lg:px-8 py-3.5 border-b border-zinc-200 bg-white shadow-sm z-10">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9">
+            <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5 border-b border-zinc-200 bg-white shadow-sm z-10">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 shrink-0">
                         <ChevronLeft className="h-5 w-5" />
                     </Button>
-                    <div>
-                        <h1 className="text-lg md:text-xl font-bold text-zinc-900">{initialData ? 'Edit Invoice' : 'New Invoice'}</h1>
-                        <p className="text-xs text-zinc-500 font-mono">#{invoiceNumber}</p>
+                    <div className="min-w-0">
+                        <h1 className="text-base sm:text-lg md:text-xl font-bold text-zinc-900 truncate">{initialData ? 'Edit Invoice' : 'New Invoice'}</h1>
+                        <p className="text-xs text-zinc-500 font-mono truncate">#{invoiceNumber}</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
-                    <Button variant="outline" size="sm" onClick={handleDownloadPdf} title="Download PDF">
-                        <Download className="h-4 w-4 mr-1.5" />
-                        PDF
+                <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                    {/* Mobile Edit / Preview Toggle */}
+                    <div className="flex lg:hidden items-center bg-zinc-100 p-0.5 rounded-lg border border-zinc-200">
+                        <button
+                            type="button"
+                            onClick={() => setMobileTab('edit')}
+                            className={cn(
+                                "px-2.5 py-1 text-xs font-semibold rounded-md transition-all",
+                                mobileTab === 'edit' ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-500 hover:text-zinc-900"
+                            )}
+                        >
+                            Edit
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileTab('preview')}
+                            className={cn(
+                                "px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1",
+                                mobileTab === 'preview' ? "bg-white text-zinc-900 shadow-xs" : "text-zinc-500 hover:text-zinc-900"
+                            )}
+                        >
+                            <Eye className="size-3" />
+                            Preview
+                        </button>
+                    </div>
+
+                    <Button variant="outline" size="sm" onClick={handleDownloadPdf} title="Download PDF" className="h-8 sm:h-9 text-xs">
+                        <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+                        <span className="hidden sm:inline">PDF</span>
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)} className="hidden lg:flex">
                         {showPreview ? (
@@ -406,24 +433,28 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                             </>
                         )}
                     </Button>
-                    <div className="h-5 w-px bg-zinc-200 mx-1 hidden lg:block" />
+                    <div className="h-5 w-px bg-zinc-200 mx-0.5 hidden lg:block" />
                     <Button
                         size="sm"
                         onClick={handleSendEmail}
                         disabled={isLoading || isSending || !isFormValid}
-                        className="bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50"
+                        className="bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50 h-8 sm:h-9 text-xs sm:text-sm"
                     >
-                        <Send className="h-4 w-4 mr-1.5" />
+                        <Send className="h-3.5 w-3.5 mr-1 sm:mr-1.5" />
                         {isSending ? "Sending..." : "Send"}
                     </Button>
                 </div>
             </div>
 
             {/* Main Content */}
-            <div className="flex flex-1 overflow-hidden bg-zinc-50">
+            <div className="flex flex-1 overflow-hidden bg-zinc-50 relative">
                 {/* Editor Pane */}
-                <div className={`flex-1 overflow-y-auto p-6 md:p-8 transition-[max-width] duration-300 ease-out ${showPreview ? 'lg:max-w-[50%]' : 'w-full mx-auto'}`}>
-                    <div className="space-y-6 pb-24">
+                <div className={cn(
+                    "flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 transition-[max-width] duration-300 ease-out",
+                    showPreview ? 'lg:max-w-[50%]' : 'w-full mx-auto',
+                    mobileTab === 'preview' ? 'hidden lg:block' : 'block'
+                )}>
+                    <div className="space-y-6 pb-24 max-w-4xl mx-auto">
                         {/* Invoice Details Card */}
                         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6">
                             <h2 className="text-base font-semibold mb-5 flex items-center gap-2 text-zinc-900">
@@ -643,22 +674,22 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                         </div>
 
                         {/* Bottom Save & Action Card */}
-                        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div>
+                        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="min-w-0 flex-1">
                                 <h3 className="text-sm font-semibold text-zinc-900">Ready to finalize?</h3>
-                                <p className="text-xs text-zinc-500 mt-0.5">
+                                <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
                                     {isFormValid
                                         ? "All required fields are complete. You can now save your invoice."
                                         : "Please complete required fields (Client, Invoice Number, Due Date, and items) to save."
                                     }
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-end">
                                 <Button
                                     variant="outline"
                                     type="button"
                                     onClick={() => router.back()}
-                                    className="w-full sm:w-auto"
+                                    className="flex-1 sm:flex-none h-10 px-4 text-xs font-semibold"
                                 >
                                     Cancel
                                 </Button>
@@ -666,7 +697,7 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                                     type="button"
                                     onClick={() => handleSave('pending')}
                                     disabled={isLoading || !isFormValid}
-                                    className="bg-zinc-900 text-white hover:bg-zinc-800 w-full sm:w-auto flex items-center gap-2"
+                                    className="bg-zinc-900 text-white hover:bg-zinc-800 flex-1 sm:flex-none h-10 px-5 text-xs font-semibold flex items-center justify-center gap-2 shadow-sm shrink-0"
                                 >
                                     <Save className="h-4 w-4" />
                                     {isLoading ? "Saving..." : "Save Invoice"}
@@ -676,32 +707,34 @@ export function InvoiceEditor({ clients, projects, initialData }: InvoiceEditorP
                     </div>
                 </div>
 
-                {/* Preview Pane */}
-                {showPreview && (
-                    <div className="hidden lg:block w-1/2 overflow-y-auto p-8 border-l border-zinc-200 bg-zinc-100/50">
-                        <div className="mx-auto sticky top-0">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-sm font-semibold text-zinc-500">Live Preview</h2>
-                                <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full font-medium">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Real-time Sync
-                                </div>
+                {/* Preview Pane - Desktop & Mobile */}
+                <div className={cn(
+                    "overflow-y-auto p-4 sm:p-6 md:p-8 border-l border-zinc-200 bg-zinc-100/50",
+                    mobileTab === 'preview' ? 'w-full block lg:hidden' : 'hidden',
+                    showPreview ? 'lg:block lg:w-1/2' : 'lg:hidden'
+                )}>
+                    <div className="mx-auto sticky top-0 max-w-2xl">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-sm font-semibold text-zinc-600">Live Preview</h2>
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full font-medium border border-emerald-200">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Real-time Sync
                             </div>
-                            <div className="origin-top scale-[0.9]">
-                                <div id="invoice-document" style={pdfStyles}>
-                                    <InvoiceDocument
-                                        invoice={previewInvoice}
-                                        previewMode={true}
-                                        brandColor={brandColor}
-                                        logoUrl={logoUrl}
-                                        senderName={senderProfile?.name}
-                                        senderDetails={senderProfile || undefined}
-                                    />
-                                </div>
+                        </div>
+                        <div className="origin-top scale-[0.8] sm:scale-[0.88] lg:scale-[0.9] -mx-4 sm:mx-0 overflow-x-auto">
+                            <div id="invoice-document" style={pdfStyles}>
+                                <InvoiceDocument
+                                    invoice={previewInvoice}
+                                    previewMode={true}
+                                    brandColor={brandColor}
+                                    logoUrl={logoUrl}
+                                    senderName={senderProfile?.name}
+                                    senderDetails={senderProfile || undefined}
+                                />
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
             </div>
 
             <ClientEmailDialog

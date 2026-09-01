@@ -110,15 +110,19 @@ export function FollowUpInbox({ reminders, showViewAll = true }: FollowUpInboxPr
                         <div className="bg-zinc-100 p-1.5 rounded-md text-zinc-900 flex items-center justify-center">
                             <Bell className="h-5 w-5" />
                         </div>
-                        <h3 className="font-semibold text-lg text-zinc-900">Follow-Up Inbox</h3>
+                        <h3 className="font-bold text-lg text-zinc-900">Follow-Up Inbox</h3>
                     </div>
                 </div>
-                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="size-16 rounded-full bg-zinc-50 flex items-center justify-center mb-4 text-zinc-400">
-                        <CheckCircle2 className="h-8 w-8" />
+                <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="size-10 rounded-xl bg-zinc-100 text-zinc-600 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="size-5" />
+                        </div>
+                        <div className="space-y-1">
+                            <h4 className="text-sm font-bold text-zinc-900">All caught up!</h4>
+                            <p className="text-xs text-zinc-500 leading-relaxed">Great job clearing your inbox. You have no pending follow-ups for today.</p>
+                        </div>
                     </div>
-                    <h4 className="text-zinc-900 font-medium">All caught up!</h4>
-                    <p className="text-zinc-500 text-sm mt-1">Great job clearing your inbox.</p>
                 </CardContent>
             </Card>
         )

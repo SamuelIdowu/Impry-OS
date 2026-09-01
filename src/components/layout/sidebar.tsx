@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
@@ -276,30 +276,30 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                         )}
                     </div>
                 </div>
-            </div>
 
-            {/* Upgrade Sidebar Banner Card */}
-            {subscriptionPlan === 'free' && (
-                <div className="px-3 pb-2">
-                    <div className="p-3 rounded-xl bg-linear-to-b from-zinc-900 to-zinc-950 text-white border border-zinc-800 shadow-md flex flex-col gap-2.5">
-                        <div className="flex items-center gap-2">
-                            <div className="size-6 rounded-md bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
-                                <Zap className="size-3.5 fill-current" />
+                {/* Upgrade Sidebar Banner Card - In natural flow */}
+                {subscriptionPlan !== 'studio' && (
+                    <div className="px-3 pt-2 pb-1">
+                        <div className="p-3.5 rounded-xl bg-linear-to-b from-zinc-900 to-zinc-950 text-white border border-zinc-800 shadow-sm flex flex-col gap-2.5">
+                            <div className="flex items-center gap-2">
+                                <div className="size-6 rounded-md bg-amber-400/20 text-amber-300 flex items-center justify-center shrink-0">
+                                    <Zap className="size-3.5 fill-current" />
+                                </div>
+                                <span className="text-xs font-bold tracking-tight">Upgrade Plan</span>
                             </div>
-                            <span className="text-xs font-bold tracking-tight">Upgrade to Pro</span>
+                            <p className="text-[11px] text-zinc-400 leading-snug">
+                                Unlock unlimited clients, invoices, & custom branding.
+                            </p>
+                            <button
+                                onClick={() => setShowUpgradeModal(true)}
+                                className="w-full py-1.5 px-3 rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-semibold text-center transition-all duration-150 active:scale-[0.98] shadow-xs cursor-pointer"
+                            >
+                                View Plans
+                            </button>
                         </div>
-                        <p className="text-[11px] text-zinc-400 leading-snug">
-                            Unlock unlimited clients, invoices, & custom branding.
-                        </p>
-                        <button
-                            onClick={() => setShowUpgradeModal(true)}
-                            className="w-full py-1.5 px-3 rounded-lg bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-semibold text-center transition-all duration-150 active:scale-[0.98] shadow-xs"
-                        >
-                            View Plans
-                        </button>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Add Team Member Modal */}
             <AddTeamMemberModal
@@ -320,10 +320,8 @@ export function Sidebar({ className, user, onNavigate }: SidebarProps) {
                 workspaceId={workspaceId}
             />
 
-            <div className="mt-auto px-3 pb-3 w-full">
-                <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3">
-                    {user && <UserMenu user={user} subscriptionPlan={subscriptionPlan} />}
-                </div>
+            <div className="p-3 border-t border-zinc-100 dark:border-zinc-800">
+                {user && <UserMenu user={user} subscriptionPlan={subscriptionPlan} />}
             </div>
         </aside>
     )

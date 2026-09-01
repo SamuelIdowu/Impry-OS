@@ -102,15 +102,17 @@ export default async function DashboardPage({ params }: { params: Promise<{ work
                         <AtRiskProjects projects={risks} />
 
                         {/* Pro Tip Widget */}
-                        <div className="bg-zinc-950 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden group">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="bg-white/10 p-3 rounded-full mb-4">
-                                    <Lightbulb className="h-6 w-6 text-white" />
+                        <div className="bg-zinc-950 rounded-2xl p-6 text-white shadow-md relative overflow-hidden group border border-zinc-800">
+                            <div className="flex items-start gap-4">
+                                <div className="bg-white/10 p-2.5 rounded-xl shrink-0 text-amber-300">
+                                    <Lightbulb className="h-5 w-5" />
                                 </div>
-                                <h3 className="font-bold text-lg mb-2">Pro Tip</h3>
-                                <p className="text-zinc-400 text-sm leading-relaxed">
-                                    Sending a polite "Project Update" email often prompts clients to pay overdue invoices faster than a direct payment reminder.
-                                </p>
+                                <div className="space-y-1">
+                                    <h3 className="font-bold text-sm text-white">Pro Tip</h3>
+                                    <p className="text-zinc-400 text-xs leading-relaxed">
+                                        Sending a polite "Project Update" email often prompts clients to pay overdue invoices faster than a direct payment reminder.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
